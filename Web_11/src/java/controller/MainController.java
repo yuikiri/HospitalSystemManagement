@@ -44,6 +44,8 @@ public class MainController extends HttpServlet {
             // Tất cả action có chữ "University" như: addUniversity, deleteUniversity...
             url = "UniversityController";
             //haha
+            //haha2
+            
         }
 
         request.getRequestDispatcher(url).forward(request, response);
