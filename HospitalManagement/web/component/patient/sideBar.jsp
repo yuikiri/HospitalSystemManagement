@@ -7,8 +7,13 @@
         </button>
         
         <button class="nav-item active">
+            <i data-lucide="addAppointment" class="nav-icon"></i>
+            <span class="nav-label">Add appointment</span>
+        </button>
+        
+        <button class="nav-item active">
             <i data-lucide="appointments" class="nav-icon"></i>
-            <span class="nav-label">appointments</span>
+            <span class="nav-label">Appointments</span>
         </button>
         
         <button class="nav-item active">

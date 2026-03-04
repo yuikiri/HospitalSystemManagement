@@ -29,7 +29,7 @@
                     </div>
                 </button>
                 <div class="dropdown-menu">
-                    <button class="dropdown-item"><i data-lucide="user" class="dropdown-icon"></i>profile settings</button>
+                    <button class="dropdown-item"><i data-lucide="user" class="dropdown-icon"></i>Feed Back</button>
                     <div class="dropdown-separator"></div>
                     <button class="dropdown-item text-red"><i data-lucide="log-out" class="dropdown-icon"></i>logout</button>
                 </div>
