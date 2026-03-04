@@ -12,6 +12,6 @@
         <title>JSP Page</title>
     </head>
     <body>
-        <a href="./component/patient/dashboardPatient.jsp">aa</a>
+        <a href="./component/patient/indexPatient.jsp">aa</a>
     </body>
 </html>
