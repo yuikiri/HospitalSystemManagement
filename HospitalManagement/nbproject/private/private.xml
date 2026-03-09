@@ -3,11 +3,21 @@
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
-            <file>file:/D:/FPT/KY%20IV/PRJ%20301/github/HospitalSystemManagement/HospitalManagement/web/component/patient/dashboardPatient.jsp</file>
-            <file>file:/D:/FPT/KY%20IV/PRJ%20301/github/HospitalSystemManagement/HospitalManagement/web/component/patient/style/dashbroad.css</file>
-            <file>file:/D:/FPT/KY%20IV/PRJ%20301/github/HospitalSystemManagement/HospitalManagement/src/java/util/DbUtils.java</file>
-            <file>file:/D:/FPT/KY%20IV/PRJ%20301/github/HospitalSystemManagement/HospitalManagement/web/index.jsp</file>
-            <file>file:/D:/FPT/KY%20IV/PRJ%20301/github/HospitalSystemManagement/HospitalManagement/web/login.jsp</file>
+            <file>file:/C:/Users/Dang%20Khoa/Documents/GitHub/HospitalSystemManagement/HospitalManagement/web/component/staff/style/sideBar.css</file>
+            <file>file:/C:/Users/Dang%20Khoa/Documents/GitHub/HospitalSystemManagement/HospitalManagement/web/register.jsp</file>
+            <file>file:/C:/Users/Dang%20Khoa/Documents/GitHub/HospitalSystemManagement/HospitalManagement/web/component/doctor/style/doctor_dashboard.jsp</file>
+            <file>file:/C:/Users/Dang%20Khoa/Documents/GitHub/HospitalSystemManagement/HospitalManagement/web/WEB-INF/web.xml</file>
+            <file>file:/C:/Users/Dang%20Khoa/Documents/GitHub/HospitalSystemManagement/HospitalManagement/web/component/patient/style/hearder.css</file>
+            <file>file:/C:/Users/Dang%20Khoa/Documents/GitHub/HospitalSystemManagement/HospitalManagement/web/component/patient/indexPatient.jsp</file>
+            <file>file:/C:/Users/Dang%20Khoa/Documents/GitHub/HospitalSystemManagement/HospitalManagement/web/component/staff/dashboardStaff.jsp</file>
+            <file>file:/C:/Users/Dang%20Khoa/Documents/GitHub/HospitalSystemManagement/HospitalManagement/web/component/patient/sideBar.jsp</file>
+            <file>file:/C:/Users/Dang%20Khoa/Documents/GitHub/HospitalSystemManagement/HospitalManagement/web/component/admin/style/admin_dashboard.jsp</file>
+            <file>file:/C:/Users/Dang%20Khoa/Documents/GitHub/HospitalSystemManagement/HospitalManagement/src/java/controller/loginController.java</file>
+            <file>file:/C:/Users/Dang%20Khoa/Documents/GitHub/HospitalSystemManagement/HospitalManagement/src/java/dao/UserDAO.java</file>
+            <file>file:/C:/Users/Dang%20Khoa/Documents/GitHub/HospitalSystemManagement/HospitalManagement/web/component/patient/dashboardPatient.jsp</file>
+            <file>file:/C:/Users/Dang%20Khoa/Documents/GitHub/HospitalSystemManagement/HospitalManagement/web/component/patient/hearder.jsp</file>
+            <file>file:/C:/Users/Dang%20Khoa/Documents/GitHub/HospitalSystemManagement/HospitalManagement/web/component/patient/style/dashbroad.css</file>
+            <file>file:/C:/Users/Dang%20Khoa/Documents/GitHub/HospitalSystemManagement/HospitalManagement/web/index.jsp</file>
         </group>
     </open-files>
 </project-private>

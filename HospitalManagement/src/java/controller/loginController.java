@@ -32,13 +32,13 @@ public class loginController extends HttpServlet {
             String role = user.getRole().toLowerCase(); // Lấy từ DB
 
             if ("admin".equals(role)) {
-                response.sendRedirect(request.getContextPath() + "/component/admin/style/admin_dashboard.jsp");
+                response.sendRedirect(request.getContextPath() + "/component/admin/admin_dashboard.jsp");
             } else if ("doctor".equals(role)) {
-                response.sendRedirect(request.getContextPath() + "/view/doctor_dashboard.jsp");
+                response.sendRedirect(request.getContextPath() + "/component/doctor/doctor_dashboard.jsp");
             } else if ("staff".equals(role)) {
-                response.sendRedirect(request.getContextPath() + "/view/staff_dashboard.jsp");
+                response.sendRedirect(request.getContextPath() + "/component/staff/staff_dashboard.jsp");
             } else {
-                response.sendRedirect(request.getContextPath() + "/view/PatientDashboard.jsp");
+                response.sendRedirect(request.getContextPath() + "/component/patient/patient_dashboard.jsp");
             }
         } else {
             // 6. Thất bại -> Quay lại index.jsp kèm thông báo lỗi

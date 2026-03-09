@@ -1,6 +1,6 @@
 <%-- 
-    Document   : staff_dashboard
-    Created on : Mar 5, 2026, 6:59:11 PM
+    Document   : dashboardStaff
+    Created on : Mar 7, 2026, 12:17:21 PM
     Author     : Dang Khoa
 --%>
 
@@ -21,7 +21,7 @@
 <body>
     <nav class="navbar navbar-staff px-4 py-2">
         <span class="navbar-brand fw-bold text-primary"><i class="fas fa-user-tie me-2"></i> STAFF PORTAL</span>
-        <div class="ms-auto"><span class="me-3">Nhân viên: ${sessionScope.account.username}</span>
+        <div class="ms-auto"><span class="me-3">Nhân viên: ${sessionScope.account.userName}</span>
             <a href="${pageContext.request.contextPath}/logout" class="btn btn-sm btn-outline-danger">Đăng xuất</a>
         </div>
     </nav>
@@ -47,3 +47,4 @@
     </div>
 </body>
 </html>
+
