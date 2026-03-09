@@ -4,82 +4,46 @@
  */
 package controller;
 
-import java.io.IOException;
-import java.io.PrintWriter;
+import entity.Users;
+import dao.UserDAO;
 import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.*;
+import java.io.IOException;
 
-/**
- *
- * @author Yuikiri
- */
+
 public class loginController extends HttpServlet {
 
-    /**
-     * Processes requests for both HTTP <code>GET</code> and <code>POST</code>
-     * methods.
-     *
-     * @param request servlet request
-     * @param response servlet response
-     * @throws ServletException if a servlet-specific error occurs
-     * @throws IOException if an I/O error occurs
-     */
-    protected void processRequest(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-        response.setContentType("text/html;charset=UTF-8");
-        try ( PrintWriter out = response.getWriter()) {
-            /* TODO output your page here. You may use following sample code. */
-            out.println("<!DOCTYPE html>");
-            out.println("<html>");
-            out.println("<head>");
-            out.println("<title>Servlet loginController</title>");            
-            out.println("</head>");
-            out.println("<body>");
-            out.println("<h1>Servlet loginController at " + request.getContextPath() + "</h1>");
-            out.println("</body>");
-            out.println("</html>");
-        }
-    }
-
-    // <editor-fold defaultstate="collapsed" desc="HttpServlet methods. Click on the + sign on the left to edit the code.">
-    /**
-     * Handles the HTTP <code>GET</code> method.
-     *
-     * @param request servlet request
-     * @param response servlet response
-     * @throws ServletException if a servlet-specific error occurs
-     * @throws IOException if an I/O error occurs
-     */
-    @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-        processRequest(request, response);
-    }
-
-    /**
-     * Handles the HTTP <code>POST</code> method.
-     *
-     * @param request servlet request
-     * @param response servlet response
-     * @throws ServletException if a servlet-specific error occurs
-     * @throws IOException if an I/O error occurs
-     */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        processRequest(request, response);
+
+        String email = request.getParameter("txtUser");
+        String pass = request.getParameter("txtPass");
+
+        UserDAO dao = new UserDAO();
+        Users user = dao.checkLogin(email, pass);
+
+        if (user != null) {
+            // 4. Đăng nhập thành công -> Tạo Session
+            HttpSession session = request.getSession();
+            session.setAttribute("account", user);
+
+            // 5. Điều hướng theo Role
+            String role = user.getRole().toLowerCase(); // Lấy từ DB
+
+            if ("admin".equals(role)) {
+                response.sendRedirect(request.getContextPath() + "/component/admin/admin_dashboard.jsp");
+            } else if ("doctor".equals(role)) {
+                response.sendRedirect(request.getContextPath() + "/component/doctor/doctor_dashboard.jsp");
+            } else if ("staff".equals(role)) {
+                response.sendRedirect(request.getContextPath() + "/component/staff/staff_dashboard.jsp");
+            } else {
+                response.sendRedirect(request.getContextPath() + "/component/patient/patient_dashboard.jsp");
+            }
+        } else {
+            // 6. Thất bại -> Quay lại index.jsp kèm thông báo lỗi
+            request.setAttribute("error", "Invalid email or password");
+            request.getRequestDispatcher("index.jsp").forward(request, response);
+        }
     }
-
-    /**
-     * Returns a short description of the servlet.
-     *
-     * @return a String containing servlet description
-     */
-    @Override
-    public String getServletInfo() {
-        return "Short description";
-    }// </editor-fold>
-
 }
