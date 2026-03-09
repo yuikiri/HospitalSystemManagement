@@ -23,7 +23,7 @@ CREATE TABLE Users (
     email VARCHAR(255) NOT NULL UNIQUE,
     passwordHash NVARCHAR(255) NOT NULL,
     role VARCHAR(20) CHECK (role IN ('admin','doctor','staff','patient')),
-    isActive BIT,
+    isActive Int,
     createdAt DATETIME2
 );
 
@@ -53,10 +53,10 @@ CREATE TABLE Doctors (
     id INT IDENTITY PRIMARY KEY,
     userId INT NOT NULL UNIQUE,
     name NVARCHAR(255) NOT NULL,
-    position VARCHAR(100) NOT NULL,
+	gender int,
+    position NVARCHAR(100) NOT NULL,
     phone varchar(15),
     licenseNumber VARCHAR(100) NOT NULL,
-    status VARCHAR(50),
     CONSTRAINT FK_Doctors_Users FOREIGN KEY (userId) REFERENCES Users(id)
 );
 
@@ -67,9 +67,9 @@ CREATE TABLE Staffs (
     id INT IDENTITY PRIMARY KEY,
     userId INT NOT NULL UNIQUE,
     name NVARCHAR(255) NOT NULL,
+	gender int,
     position VARCHAR(100) NOT NULL,
     phone varchar(15),
-    status VARCHAR(50),
     CONSTRAINT FK_Staffs_Users FOREIGN KEY (userId) REFERENCES Users(id)
 );
 
@@ -81,7 +81,7 @@ CREATE TABLE Patients (
     userId INT UNIQUE NULL,
     name NVARCHAR(255) NOT NULL,
     dob DATE,
-    gender CHAR(15),
+    gender int,
     phone varchar(15),
     address NVARCHAR(MAX),
     CONSTRAINT FK_Patients_Users FOREIGN KEY (userId) REFERENCES Users(id)
@@ -115,7 +115,7 @@ CREATE TABLE Rooms (
     departmentId INT NOT NULL,
     roomType INT NOT NULL,
     roomNumber INT NOT NULL,
-    status varchar(50),
+    status VARCHAR(30),
     CONSTRAINT FK_Rooms_Departments FOREIGN KEY (departmentId) REFERENCES Departments(id),
     CONSTRAINT FK_Rooms_RoomType FOREIGN KEY (roomType) REFERENCES RoomType(id)
 );
@@ -128,7 +128,7 @@ CREATE TABLE Shifts (
     roomId INT NOT NULL,
     startTime DATETIME2 NOT NULL,
     endTime DATETIME2 NOT NULL,
-    status BIT,
+    status VARCHAR(30),
     note NVARCHAR(MAX),
     CONSTRAINT FK_Shifts_Rooms FOREIGN KEY (roomId) REFERENCES Rooms(id)
 );
@@ -167,8 +167,8 @@ CREATE TABLE Appointments (
     roomId INT NOT NULL,
     startTime DATETIME2 NOT NULL,
 	endTime DATETIME2,
-    status BIT,
-    created_at DATETIME2,
+    status VARCHAR(30),
+    createdAt DATETIME2,
     CONSTRAINT FK_App_Patients FOREIGN KEY (patientId) REFERENCES Patients(id),
     CONSTRAINT FK_App_Doctors FOREIGN KEY (doctorId) REFERENCES Doctors(id),
     CONSTRAINT FK_App_Rooms FOREIGN KEY (roomId) REFERENCES Rooms(id)
@@ -182,7 +182,7 @@ CREATE TABLE MedicalRecords (
     appointmentId INT NOT NULL UNIQUE,
     diagnosis NVARCHAR(MAX) NOT NULL,
     notes NVARCHAR(MAX),
-    created_at DATETIME2,
+    createdAt DATETIME2,
     CONSTRAINT FK_MR_Appointments FOREIGN KEY (appointmentId) REFERENCES Appointments(id)
 );
 
@@ -194,7 +194,7 @@ CREATE TABLE Prescriptions (
     medicalRecordId INT NOT NULL UNIQUE,
     notes NVARCHAR(MAX),
     createdAt DATETIME2,
-    status BIT,
+    status VARCHAR(30),
     CONSTRAINT FK_Pres_MR FOREIGN KEY (medicalRecordId) REFERENCES MedicalRecords(id)
 );
 
@@ -233,7 +233,7 @@ CREATE TABLE Payments (
     medicalRecordId INT NOT NULL UNIQUE,
     totalAmount decimal(18,2) NOT NULL,
     paymentMethod VARCHAR(20) CHECK (paymentMethod IN ('cash','card','banking')),
-    status BIT,
+    status VARCHAR(30),
     paidAt DATETIME2,
     CONSTRAINT FK_Pay_MR FOREIGN KEY (medicalRecordId) REFERENCES MedicalRecords(id)
 );
@@ -242,121 +242,102 @@ CREATE TABLE Payments (
 
 
 
-/* ================================================================
-   TẦNG 1: DỮ LIỆU DANH MỤC & NỀN TẢNG (Không phụ thuộc khóa ngoại)
-================================================================ */
+/* ================================
+   SAMPLE DATA
+================================ */
 
--- 1. USERS (Tài khoản)
--- Chú ý: Cột role bị giới hạn CHECK ('admin','doctor','staff','patient')
-INSERT INTO Users (userName, email, passwordHash, role, isActive, createdAt) VALUES 
-(N'admin_hethong', 'admin@hospital.com', 'pass1', 'admin', 1, '2026-01-01'),
-(N'bs_hoang', 'hoang@hospital.com', 'pass12', 'doctor', 1, '2026-01-02'),
-(N'bs_lan', 'lan@hospital.com', 'pass13', 'doctor', 1, '2026-01-02'),
-(N'nv_tuan', 'tuan@hospital.com', 'pass14', 'staff', 1, '2026-01-03'),
-(N'bn_huong', 'huong@gmail.com', 'pass15', 'patient', 1, '2026-01-04'),
-(N'bn_minh', 'minh@gmail.com', 'pass16', 'patient', 1, '2026-01-05');
--- => ID tự tăng sẽ lần lượt là 1 (admin), 2,3 (doctor), 4 (staff), 5,6 (patient)
+/* USERS */
+INSERT INTO Users (userName,email,passwordHash,role,isActive,createdAt) VALUES
+(N'Admin System','admin@hospital.com','hash_admin','admin',1,GETDATE()),
+(N'Dr Nguyen Van A','doctorA@hospital.com','hash_doc1','doctor',1,GETDATE()),
+(N'Dr Tran Thi B','doctorB@hospital.com','hash_doc2','doctor',1,GETDATE()),
+(N'Staff Le Van C','staffC@hospital.com','hash_staff1','staff',1,GETDATE()),
+(N'Patient Pham Van D','patient1@gmail.com','hash_patient1','patient',1,GETDATE()),
+(N'Patient Nguyen Thi E','patient2@gmail.com','hash_patient2','patient',1,GETDATE());
 
--- 2. DEPARTMENTS (Khoa khám)
-INSERT INTO Departments (name, description) VALUES 
-(N'Khoa Tim Mạch', N'Chuyên khám và điều trị các bệnh lý về tim và mạch máu'),
-(N'Khoa Nhi', N'Chuyên khám và điều trị bệnh cho trẻ em dưới 15 tuổi'),
-(N'Khoa Nội Tổng Hợp', N'Khám sức khỏe tổng quát và các bệnh nội khoa');
+/* DEPARTMENTS */
+INSERT INTO Departments (name,description) VALUES
+(N'Cardiology',N'Heart related treatment'),
+(N'Neurology',N'Brain and nervous system'),
+(N'Orthopedics',N'Bone and joint treatment');
 
--- 3. ROOM TYPE (Loại phòng)
-INSERT INTO RoomType (name, price, createdAt) VALUES 
-(N'Phòng Khám Thường', 150000, '2026-01-01'),
-(N'Phòng Khám VIP', 500000, '2026-01-01'),
-(N'Phòng Cấp Cứu', 300000, '2026-01-01');
+/* ROOM TYPES */
+INSERT INTO RoomType (name,price,createdAt) VALUES
+(N'Standard',300000,GETDATE()),
+(N'VIP',800000,GETDATE()),
+(N'ICU',1500000,GETDATE());
 
--- 4. MEDICINES (Thuốc)
--- lý do sửa: bổ sung thêm dữ liệu cho cột stockquantity (số lượng tồn kho) thay vì chỉ để mặc định là 0.
-INSERT INTO Medicines (name, unit, price, stockquantity, description) VALUES 
-(N'Paracetamol 500mg', N'Viên', 2000, 500, N'Giảm đau, hạ sốt'),
-(N'Amoxicillin 250mg', N'Viên', 5000, 1000, N'Kháng sinh điều trị nhiễm khuẩn'),
-(N'Vitamin C 1000mg', N'Ống', 15000, 200, N'Tăng cường sức đề kháng'),
-(N'Omeprazole 20mg', N'Viên', 8000, 300, N'Điều trị viêm loét dạ dày');
+/* DOCTORS */
+INSERT INTO Doctors (userId,name,gender,position,phone,licenseNumber) VALUES
+(2,N'Nguyen Van A',1,N'Cardiologist','0900000001','LIC001'),
+(3,N'Tran Thi B',2,N'Neurologist','0900000002','LIC002');
 
-/* ================================================================
-   TẦNG 2: DỮ LIỆU THỰC THỂ (Phụ thuộc Tầng 1)
-================================================================ */
+/* STAFFS */
+INSERT INTO Staffs (userId,name,gender,position,phone) VALUES
+(4,N'Le Van C',1,N'Nurse','0900000003');
 
--- 5. DOCTORS (Bác sĩ - Tham chiếu Users 2, 3)
-INSERT INTO Doctors (userId, name, position, phone, licenseNumber, status) VALUES 
-(2, N'BS. Trần Trọng Hoàng', 'Trưởng Khoa', '0901112222', 'CCHN-11111', 'Active'),
-(3, N'BS. Lê Thị Lan', 'Bác Sĩ Chính', '0912223333', 'CCHN-22222', 'Active');
+/* PATIENTS */
+INSERT INTO Patients (userId,name,dob,gender,phone,address) VALUES
+(5,N'Pham Van D','2000-05-12',1,'0900000004',N'Ho Chi Minh City'),
+(6,N'Nguyen Thi E','1998-09-21',2,'0900000005',N'Ha Noi'),
+(NULL,N'Le Van F','1985-01-10',1,'0900000006',N'Da Nang');
 
--- 6. STAFFS (Nhân viên / Y tá - Tham chiếu Users 4)
-INSERT INTO Staffs (userId, name, position, phone, status) VALUES 
-(4, N'Nguyễn Văn Tuấn', 'Điều Dưỡng', '0933445566', 'Active');
+/* DOCTOR DEPARTMENTS */
+INSERT INTO DoctorDepartments (doctorId,departmentId) VALUES
+(1,1),
+(2,2);
 
--- 7. PATIENTS (Bệnh nhân - Tham chiếu Users 5, 6)
-INSERT INTO Patients (userId, name, dob, gender, phone, address) VALUES 
-(5, N'Trần Thị Hương', '1995-08-20', N'Nữ', '0987654321', N'123 Lê Lợi, TP.HCM'),
-(6, N'Phạm Văn Minh', '1988-12-10', N'Nam', '0909888777', N'456 Nguyễn Huệ, TP.HCM');
+/* STAFF DEPARTMENTS */
+INSERT INTO StaffDepartments (staffId,departmentId) VALUES
+(1,1);
 
--- 8. ROOMS (Phòng khám)
-INSERT INTO Rooms (departmentId, roomType, roomNumber, status) VALUES 
-(1, 2, 101, 1), -- Khoa Tim Mạch, Phòng VIP, Phòng số 101
-(2, 1, 102, 1), -- Khoa Nhi, Phòng Thường, Phòng số 102
-(3, 1, 103, 1); -- Khoa Nội, Phòng Thường, Phòng số 103
+/* ROOMS */
+INSERT INTO Rooms (departmentId,roomType,roomNumber,status) VALUES
+(1,1,101,'available'),
+(2,2,201,'available'),
+(3,1,301,'maintenance');
 
-/* ================================================================
-   TẦNG 3: DỮ LIỆU PHÂN CÔNG & LỊCH TRỰC (Phụ thuộc Tầng 1, 2)
-================================================================ */
+/* SHIFTS */
+INSERT INTO Shifts (roomId,startTime,endTime,status,note) VALUES
+(1,'2026-03-10 08:00','2026-03-10 12:00','active',N'Morning shift'),
+(2,'2026-03-10 13:00','2026-03-10 17:00','active',N'Afternoon shift');
 
--- 9. DOCTOR DEPARTMENTS & STAFF DEPARTMENTS
-INSERT INTO DoctorDepartments (doctorId, departmentId) VALUES (1, 1), (2, 2);
-INSERT INTO StaffDepartments (staffId, departmentId) VALUES (1, 1);
+/* DOCTOR SHIFTS */
+INSERT INTO DoctorShifts (doctorId,shiftId,role) VALUES
+(1,1,'main'),
+(2,2,'main');
 
--- 10. SHIFTS (Ca trực)
-INSERT INTO Shifts (roomId, startTime, endTime, status, note) VALUES 
-(1, '2026-03-01 07:00:00', '2026-03-01 11:30:00', 1, N'Ca sáng phòng 101'),
-(2, '2026-03-01 13:00:00', '2026-03-01 17:00:00', 1, N'Ca chiều phòng 102');
+/* STAFF SHIFTS */
+INSERT INTO StaffShifts (staffId,shiftId,role) VALUES
+(1,1,N'assistant');
 
--- 11. DOCTOR SHIFTS & STAFF SHIFTS
--- Chú ý: role của DoctorShifts bị giới hạn CHECK ('main','support','on_call')
-INSERT INTO DoctorShifts (doctorId, shiftId, role) VALUES 
-(1, 1, 'main'), 
-(2, 2, 'main');
-INSERT INTO StaffShifts (staffId, shiftId, role) VALUES 
-(1, 1, N'Phụ tá đo huyết áp');
+/* APPOINTMENTS */
+INSERT INTO Appointments (patientId,doctorId,roomId,startTime,endTime,status,createdAt) VALUES
+(1,1,1,'2026-03-10 09:00','2026-03-10 09:30','completed',GETDATE()),
+(2,2,2,'2026-03-10 14:00','2026-03-10 14:30','completed',GETDATE());
 
-/* ================================================================
-   TẦNG 4: DỮ LIỆU NGHIỆP VỤ / GIAO DỊCH KHÁM BỆNH
-================================================================ */
+/* MEDICAL RECORDS */
+INSERT INTO MedicalRecords (appointmentId,diagnosis,notes,createdAt) VALUES
+(1,N'Hypertension',N'Patient needs blood pressure monitoring',GETDATE()),
+(2,N'Migraine',N'Frequent headaches reported',GETDATE());
 
--- 12. APPOINTMENTS (Cuộc hẹn)
--- lý do sửa: bảng mới dùng startTime và endTime thay cho cột appointmentTime.
-INSERT INTO Appointments (patientId, doctorId, roomId, startTime, endTime, status, created_at) VALUES 
-(1, 1, 1, '2026-03-01 08:30:00', '2026-03-01 09:00:00', 1, '2026-02-25'),
-(2, 2, 2, '2026-03-01 14:00:00', '2026-03-01 14:30:00', 1, '2026-02-25');
+/* PRESCRIPTIONS */
+INSERT INTO Prescriptions (medicalRecordId,notes,createdAt,status) VALUES
+(1,N'Take medicine after meal',GETDATE(),'active'),
+(2,N'Use when headache occurs',GETDATE(),'active');
 
--- 13. MEDICAL RECORDS (Hồ sơ bệnh án)
-INSERT INTO MedicalRecords (appointmentId, diagnosis, notes, created_at) VALUES 
-(1, N'Rối loạn nhịp tim nhẹ', N'Cần theo dõi và uống thuốc đều đặn', '2026-03-01'),
-(2, N'Viêm phế quản cấp', N'Giữ ấm cổ, hạn chế nước đá', '2026-03-01');
+/* MEDICINES */
+INSERT INTO Medicines (name,unit,price,stockquantity,description) VALUES
+(N'Paracetamol','tablet',2000,500,N'Pain relief'),
+(N'Aspirin','tablet',3000,300,N'Blood thinner'),
+(N'Vitamin C','tablet',1500,800,N'Supplement');
 
-/* ================================================================
-   TẦNG 5: HẬU KỲ (Kê đơn thuốc & Thanh toán)
-================================================================ */
+/* PRESCRIPTION ITEMS */
+INSERT INTO PrescriptionItems (prescriptionId,medicineId,quantity,dosage,frequency,duration) VALUES
+(1,1,10,N'500mg',N'2 times/day',N'5 days'),
+(2,2,5,N'100mg',N'1 time/day',N'5 days');
 
--- 14. PRESCRIPTIONS (Đơn thuốc)
-INSERT INTO Prescriptions (medicalRecordId, notes, createdAt, status) VALUES 
-(1, N'Đơn thuốc tim mạch', '2026-03-01', 1),
-(2, N'Đơn thuốc kháng sinh', '2026-03-01', 1);
-
--- 15. PRESCRIPTION ITEMS (Chi tiết đơn thuốc)
--- lý do sửa: cột usage đã được tách nhỏ thành dosage (liều lượng), frequency (tần suất), và duration (thời gian dùng).
-INSERT INTO PrescriptionItems (prescriptionId, medicineId, quantity, dosage, frequency, duration) VALUES 
-(1, 1, 10, N'1 viên', N'khi đau đầu', N'khi cần'),
-(2, 2, 20, N'1 viên', N'2 lần/ngày sau ăn', N'10 ngày'),
-(2, 3, 10, N'1 ống', N'1 lần/ngày buổi sáng', N'10 ngày');
-
--- 16. PAYMENTS (Thanh toán)
--- Chú ý: paymentMethod bị giới hạn CHECK ('cash','card','banking')
-INSERT INTO Payments (medicalRecordId, totalAmount, paymentMethod, status, paidAt) VALUES 
-(1, 520000, 'banking', 1, '2026-03-01'), -- 500k khám VIP + 20k thuốc
-(2, 265000, 'cash', 1, '2026-03-01');    -- 150k khám + 115k thuốc
-
-SELECT * FROM Users
+/* PAYMENTS */
+INSERT INTO Payments (medicalRecordId,totalAmount,paymentMethod,status,paidAt) VALUES
+(1,500000,'cash','paid',GETDATE()),
+(2,300000,'card','paid',GETDATE());
