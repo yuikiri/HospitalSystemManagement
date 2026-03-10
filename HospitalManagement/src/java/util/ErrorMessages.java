@@ -20,7 +20,7 @@ public class ErrorMessages {
     public static final ErrorInfo ROOM_TYPE_NOT_FOUND = new ErrorInfo(404, "Không tìm thấy thông tin Loại phòng.");
     public static final ErrorInfo MEDICINE_NOT_FOUND = new ErrorInfo(404, "Không tìm thấy thuôc.");
     //group 2:
-    public static final ErrorInfo ROOM_NOT_FOUND = new ErrorInfo(404, "Phòng khám không tồn tại hoặc đã bị xóa.");
+    public static final ErrorInfo ROOM_NOT_FOUND = new ErrorInfo(404, "Phòng khám không tồn tại hoặc đã bị xóa.");  
     //500
     public static final ErrorInfo SYSTEM_ERROR = new ErrorInfo(500, "Hệ thống gặp sự cố. Vui lòng thử lại sau.");
 
