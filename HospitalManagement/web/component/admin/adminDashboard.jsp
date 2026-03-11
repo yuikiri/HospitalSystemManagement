@@ -7,7 +7,7 @@ các ô sidebar:
 - patient: xóa(status = 0), sua thong tin, tim kiem, total(status=1??, status=0??)
 - doctor: them bac si, xóa(status = 0), sua thong tin, tim kiem, total(status=1??, status=0??)
 - staff: them nhan vien, xóa(status = 0), sua thong tin, tim kiem, total(status=1??, status=0??)
--
+- Departments: xóa(status = 0), sua thong tin, tim kiem, total(status=1??, status=0??)
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
 <!DOCTYPE html>
 <html>

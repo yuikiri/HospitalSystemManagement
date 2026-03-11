@@ -5,6 +5,7 @@
 package service;
 
 import dao.PrescriptionDAO;
+import dao.PrescriptionDTO;
 import dao.PrescriptionItemDAO;
 import java.util.List;
 import entity.Prescription;
@@ -16,36 +17,47 @@ import util.ErrorMessages;
  * @author Yuikiri
  */
 public class PrescriptionService {
-    private final PrescriptionDAO presDAO = new PrescriptionDAO();
-    private final PrescriptionItemDAO itemDAO = new PrescriptionItemDAO();
+    private PrescriptionDAO prescriptionDAO;
 
-    // 1. NGHIỆP VỤ: Kê đơn thuốc mới (Lưu cả Cha lẫn Con)
-    public boolean createFullPrescription(Prescription header, List<PrescriptionItem> items) throws ErrorMessages.AppException {
-        try {
-            // Bước 1: Lưu Bảng Cha trước, hứng lấy ID
-            int newPrescriptionId = presDAO.insertPrescription(header);
-            
-            if (newPrescriptionId == -1) {
-                // Nếu trùng MedicalRecordId, SQL sẽ văng lỗi UNIQUE
-                throw new ErrorMessages.AppException(ErrorMessages.PRESCRIPTION_EXISTED);
-            }
-
-            // Bước 2: Duyệt qua danh sách thuốc, gán ID cha cho nó rồi lưu vào DB
-            for (PrescriptionItem item : items) {
-                item.setPrescriptionId(newPrescriptionId);
-                itemDAO.insertItem(item);
-            }
-            
-            return true;
-
-        } catch (ErrorMessages.AppException e) {
-            throw e;
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new ErrorMessages.AppException(ErrorMessages.SYSTEM_ERROR);
-        }
+    public PrescriptionService() {
+        this.prescriptionDAO = new PrescriptionDAO();
     }
-    
-    // (Lưu ý: Bạn có thể viết thêm hàm getPrescriptionDetail(...) ở đây
-    // Bằng cách gọi DAO lấy thông tin bệnh nhân + itemDAO.getItemsByPrescriptionId)
+
+    public List<PrescriptionDTO> getActiveList() {
+        return prescriptionDAO.getAllActivePrescriptions();
+    }
+
+    public List<PrescriptionDTO> getListForAdmin() {
+        return prescriptionDAO.getAllPrescriptionsForAdmin();
+    }
+
+    public PrescriptionDTO getByMedicalRecordId(int medicalRecordId) {
+        return prescriptionDAO.getByMedicalRecordId(medicalRecordId);
+    }
+
+    // TẠO ĐƠN THUỐC MỚI
+    public int createNewPrescription(int medicalRecordId, String notes) {
+        // RÀNG BUỘC UNIQUE: Một bệnh án chỉ được có MỘT đơn thuốc (Vỏ bọc ngoài)
+        if (prescriptionDAO.getByMedicalRecordId(medicalRecordId) != null) {
+            return -1; // Đã tồn tại đơn thuốc cho lần khám này!
+        }
+        
+        // Trả về ID của đơn thuốc để Controller tiếp tục gọi hàm thêm chi tiết từng viên thuốc (PrescriptionItems)
+        return prescriptionDAO.insertPrescription(medicalRecordId, notes);
+    }
+
+    // CẬP NHẬT TRẠNG THÁI (Quy trình cấp phát thuốc)
+    public boolean markAsDispensed(int id) {
+        // Gọi khi nhân viên Kho Dược đã giao thuốc cho bệnh nhân
+        return prescriptionDAO.updatePrescriptionStatus(id, "dispensed");
+    }
+
+    // BẬT / TẮT (XÓA MỀM)
+    public boolean deactivatePrescription(int id) {
+        return prescriptionDAO.togglePrescriptionActive(id, 0); 
+    }
+
+    public boolean activatePrescription(int id) {
+        return prescriptionDAO.togglePrescriptionActive(id, 1); 
+    }
 }

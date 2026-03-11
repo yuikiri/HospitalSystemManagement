@@ -10,46 +10,53 @@ package entity;
  */
 public class Room {
     private int id;
-    private int roomNumber;
     private int departmentId;
-    private int roomTypeId; // Trong DB của bạn có thể tên là roomType
-    private String status;  // VD: 'available', 'maintenance'
+    private int roomType; // Khóa ngoại trỏ tới bảng RoomType
+    private int roomNumber;
+    private String status; // 'available', 'maintenance', 'occupied'
+    private int isActive;
     //constructor
 
     public Room() {
     }
 
-    public Room(int id, int roomNumber, int departmentId, int roomTypeId, String status) {
+    public Room(int id, int departmentId, int roomType, int roomNumber, String status, int isActive) {
         this.id = id;
-        this.roomNumber = roomNumber;
         this.departmentId = departmentId;
-        this.roomTypeId = roomTypeId;
+        this.roomType = roomType;
+        this.roomNumber = roomNumber;
         this.status = status;
+        this.isActive = isActive;
     }
 
     public int getId() {
         return id;
     }
 
-    public int getRoomNumber() {
-        return roomNumber;
-    }
-
     public int getDepartmentId() {
         return departmentId;
     }
 
-    public int getRoomTypeId() {
-        return roomTypeId;
+    public int getRoomType() {
+        return roomType;
+    }
+
+    public int getRoomNumber() {
+        return roomNumber;
     }
 
     public String getStatus() {
         return status;
     }
 
+    public int getIsActive() {
+        return isActive;
+    }
+
     @Override
     public String toString() {
-        return "Room{" + "id=" + id + ", roomNumber=" + roomNumber + ", departmentId=" + departmentId + ", roomTypeId=" + roomTypeId + ", status=" + status + '}';
+        return "Room{" + "id=" + id + ", departmentId=" + departmentId + ", roomType=" + roomType + ", roomNumber=" + roomNumber + ", status=" + status + ", isActive=" + isActive + '}';
     }
+
     
 }

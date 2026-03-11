@@ -17,82 +17,100 @@ import util.DbUtils;
  * @author Yuikiri
  */
 public class RoomDAO {
-    // Hàm tiện ích nội bộ để định dạng trạng thái
-    private String formatStatus(String rawStatus) {
-        if (rawStatus == null) return "Không xác định";
-        switch (rawStatus.toLowerCase()) {
-            case "available": return "Sẵn sàng";
-            case "maintenance": return "Đang bảo trì";
-            default: return rawStatus;
-        }
-    }
+    // KỸ THUẬT JOIN 3 BẢNG ĐỂ LẤY TÊN HIỂN THỊ
+    private final String SELECT_JOIN_SQL = 
+        "SELECT r.*, d.name AS departmentName, rt.name AS roomTypeName " +
+        "FROM Rooms r " +
+        "JOIN Departments d ON r.departmentId = d.id " +
+        "JOIN RoomType rt ON r.roomType = rt.id ";
 
-    public List<RoomDTO> getAllRooms() {
+    // 1. LẤY PHÒNG ĐANG HOẠT ĐỘNG (Cho Bệnh nhân / Bác sĩ)
+    public List<RoomDTO> getAllActiveRooms() {
         List<RoomDTO> list = new ArrayList<>();
-        // Lệnh JOIN lấy thông tin từ Rooms r, Departments d, và RoomType rt
-        String sql = "SELECT r.id, r.roomNumber, r.status, d.name AS deptName, rt.name AS typeName, rt.price " +
-                     "FROM Rooms r " +
-                     "JOIN Departments d ON r.departmentId = d.id " +
-                     "JOIN RoomType rt ON r.roomType = rt.id";
-                     
+        String sql = SELECT_JOIN_SQL + "WHERE r.isActive = 1 ORDER BY r.roomNumber ASC";
         try (Connection conn = new DbUtils().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
-            
-            DecimalFormat formatter = new DecimalFormat("###,###,###");
-            
             while (rs.next()) {
-                // Định dạng tiền tệ
-                String priceFormatted = formatter.format(rs.getDouble("price")) + " VNĐ";
-                // Định dạng trạng thái
-                String statusStr = formatStatus(rs.getString("status"));
-                
                 list.add(new RoomDTO(
-                    rs.getInt("id"),
-                    rs.getInt("roomNumber"),
-                    rs.getString("deptName"),
-                    rs.getString("typeName"),
-                    priceFormatted,
-                    statusStr
+                    rs.getInt("id"), rs.getInt("departmentId"), rs.getString("departmentName"),
+                    rs.getInt("roomType"), rs.getString("roomTypeName"),
+                    rs.getInt("roomNumber"), rs.getString("status"), rs.getInt("isActive")
                 ));
             }
-        } catch (Exception e) { 
-            e.printStackTrace(); 
-        }
+        } catch (Exception e) { e.printStackTrace(); }
         return list;
     }
 
-    public RoomDTO getRoomById(int id) {
-        String sql = "SELECT r.id, r.roomNumber, r.status, d.name AS deptName, rt.name AS typeName, rt.price " +
-                     "FROM Rooms r " +
-                     "JOIN Departments d ON r.departmentId = d.id " +
-                     "JOIN RoomType rt ON r.roomType = rt.id " +
-                     "WHERE r.id = ?";
-                     
+    // 2. LẤY TOÀN BỘ PHÒNG (Cho Admin Dashboard)
+    public List<RoomDTO> getAllRoomsForAdmin() {
+        List<RoomDTO> list = new ArrayList<>();
+        String sql = SELECT_JOIN_SQL + "ORDER BY r.id DESC";
+        try (Connection conn = new DbUtils().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                list.add(new RoomDTO(
+                    rs.getInt("id"), rs.getInt("departmentId"), rs.getString("departmentName"),
+                    rs.getInt("roomType"), rs.getString("roomTypeName"),
+                    rs.getInt("roomNumber"), rs.getString("status"), rs.getInt("isActive")
+                ));
+            }
+        } catch (Exception e) { e.printStackTrace(); }
+        return list;
+    }
+
+    // 3. KIỂM TRA TRÙNG SỐ PHÒNG (Tránh việc 1 Khoa có 2 phòng cùng mang số 101)
+    public boolean checkRoomNumberExist(int departmentId, int roomNumber) {
+        String sql = "SELECT id FROM Rooms WHERE departmentId = ? AND roomNumber = ?";
         try (Connection conn = new DbUtils().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
-            
-            ps.setInt(1, id);
-            
+            ps.setInt(1, departmentId);
+            ps.setInt(2, roomNumber);
             try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    DecimalFormat formatter = new DecimalFormat("###,###,###");
-                    String priceFormatted = formatter.format(rs.getDouble("price")) + " VNĐ";
-                    String statusStr = formatStatus(rs.getString("status"));
-                    
-                    return new RoomDTO(
-                        rs.getInt("id"),
-                        rs.getInt("roomNumber"),
-                        rs.getString("deptName"),
-                        rs.getString("typeName"),
-                        priceFormatted,
-                        statusStr
-                    );
-                }
+                return rs.next();
             }
-        } catch (Exception e) { 
-            e.printStackTrace(); 
-        }
-        return null;
+        } catch (Exception e) { e.printStackTrace(); }
+        return true; 
+    }
+
+    // 4. THÊM MỚI PHÒNG (Mặc định status là 'available', isActive = 1)
+    public boolean insertRoom(int departmentId, int roomType, int roomNumber) {
+        String sql = "INSERT INTO Rooms (departmentId, roomType, roomNumber, status, isActive) VALUES (?, ?, ?, 'available', 1)";
+        try (Connection conn = new DbUtils().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, departmentId);
+            ps.setInt(2, roomType);
+            ps.setInt(3, roomNumber);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) { e.printStackTrace(); }
+        return false;
+    }
+
+    // 5. CẬP NHẬT THÔNG TIN PHÒNG (Có thể dùng để đổi trạng thái 'maintenance' v.v.)
+    public boolean updateRoom(int id, int departmentId, int roomType, int roomNumber, String status) {
+        String sql = "UPDATE Rooms SET departmentId = ?, roomType = ?, roomNumber = ?, status = ? WHERE id = ?";
+        try (Connection conn = new DbUtils().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, departmentId);
+            ps.setInt(2, roomType);
+            ps.setInt(3, roomNumber);
+            ps.setString(4, status);
+            ps.setInt(5, id);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) { e.printStackTrace(); }
+        return false;
+    }
+
+    // 6. BẬT/TẮT TRẠNG THÁI (Xóa mềm / Khôi phục)
+    public boolean toggleRoomStatus(int id, int isActive) {
+        String sql = "UPDATE Rooms SET isActive = ? WHERE id = ?";
+        try (Connection conn = new DbUtils().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, isActive);
+            ps.setInt(2, id);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) { e.printStackTrace(); }
+        return false;
     }
 }

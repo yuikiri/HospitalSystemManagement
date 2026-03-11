@@ -5,35 +5,43 @@
 package dao;
 
 import java.math.BigDecimal;
+import java.sql.Timestamp;
 
 /**
  *
  * @author Yuikiri
  */
 public class PaymentDTO {
-    private final int paymentId;
-    private final int medicalRecordId;
-    private final String patientName;
-    private final String diagnosis;    // Bệnh lý (lấy từ MedicalRecords)
-    private final BigDecimal totalAmount;
-    private final String paymentMethod;
-    private final String status;
-    private final String paidAtStr;
+    private int id;
+    private int medicalRecordId;
+    
+    private String patientName; // MỚI: Tên khách hàng cần thu tiền (Lấy qua JOIN)
+    private String diagnosis;   // MỚI: Chẩn đoán (Để in lên biên lai cho rõ ràng)
+    
+    private double totalAmount;
+    private String paymentMethod;
+    private String status;
+    private Timestamp paidAt;
+    private int isActive;
     //constructor
 
-    public PaymentDTO(int paymentId, int medicalRecordId, String patientName, String diagnosis, BigDecimal totalAmount, String paymentMethod, String status, String paidAtStr) {
-        this.paymentId = paymentId;
+    public PaymentDTO() {
+    }
+
+    public PaymentDTO(int id, int medicalRecordId, String patientName, String diagnosis, double totalAmount, String paymentMethod, String status, Timestamp paidAt, int isActive) {
+        this.id = id;
         this.medicalRecordId = medicalRecordId;
         this.patientName = patientName;
         this.diagnosis = diagnosis;
         this.totalAmount = totalAmount;
         this.paymentMethod = paymentMethod;
         this.status = status;
-        this.paidAtStr = paidAtStr;
+        this.paidAt = paidAt;
+        this.isActive = isActive;
     }
 
-    public int getPaymentId() {
-        return paymentId;
+    public int getId() {
+        return id;
     }
 
     public int getMedicalRecordId() {
@@ -48,7 +56,7 @@ public class PaymentDTO {
         return diagnosis;
     }
 
-    public BigDecimal getTotalAmount() {
+    public double getTotalAmount() {
         return totalAmount;
     }
 
@@ -60,13 +68,18 @@ public class PaymentDTO {
         return status;
     }
 
-    public String getPaidAtStr() {
-        return paidAtStr;
+    public Timestamp getPaidAt() {
+        return paidAt;
+    }
+
+    public int getIsActive() {
+        return isActive;
     }
 
     @Override
     public String toString() {
-        return "PaymentDTO{" + "paymentId=" + paymentId + ", medicalRecordId=" + medicalRecordId + ", patientName=" + patientName + ", diagnosis=" + diagnosis + ", totalAmount=" + totalAmount + ", paymentMethod=" + paymentMethod + ", status=" + status + ", paidAtStr=" + paidAtStr + '}';
+        return "PaymentDTO{" + "id=" + id + ", medicalRecordId=" + medicalRecordId + ", patientName=" + patientName + ", diagnosis=" + diagnosis + ", totalAmount=" + totalAmount + ", paymentMethod=" + paymentMethod + ", status=" + status + ", paidAt=" + paidAt + ", isActive=" + isActive + '}';
     }
+
     
 }

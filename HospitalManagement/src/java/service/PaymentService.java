@@ -16,63 +16,55 @@ import util.ErrorMessages;
  * @author Yuikiri
  */
 public class PaymentService {
-    private final PaymentDAO paymentDAO = new PaymentDAO();
-    
-    // Danh sách các phương thức thanh toán hợp lệ (Khớp với CHECK constraint trong SQL)
-    private static final List<String> VALID_METHODS = Arrays.asList("cash", "card", "banking");
+    private PaymentDAO paymentDAO;
 
-    // Tạo hóa đơn mới
-    public boolean createPayment(Payment p) throws ErrorMessages.AppException {
-        try {
-            // Kiểm tra phương thức thanh toán (Nếu có truyền vào)
-            if (p.getPaymentMethod() != null && !VALID_METHODS.contains(p.getPaymentMethod())) {
-                throw new ErrorMessages.AppException(ErrorMessages.INVALID_PAYMENT_METHOD);
-            }
-
-            boolean isSuccess = paymentDAO.insertPayment(p);
-            if (!isSuccess) {
-                // Vi phạm UNIQUE medicalRecordId
-                throw new ErrorMessages.AppException(ErrorMessages.PAYMENT_EXISTED);
-            }
-            return true;
-        } catch (ErrorMessages.AppException e) {
-            throw e;
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new ErrorMessages.AppException(ErrorMessages.SYSTEM_ERROR);
-        }
+    public PaymentService() {
+        this.paymentDAO = new PaymentDAO();
     }
 
-    // Thu ngân xác nhận bệnh nhân đã trả tiền
-    public boolean processPayment(int paymentId, String paymentMethod) throws ErrorMessages.AppException {
-        try {
-            if (!VALID_METHODS.contains(paymentMethod)) {
-                throw new ErrorMessages.AppException(ErrorMessages.INVALID_PAYMENT_METHOD);
-            }
-            
-            return paymentDAO.markAsPaid(paymentId, paymentMethod);
-            
-        } catch (ErrorMessages.AppException e) {
-            throw e;
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new ErrorMessages.AppException(ErrorMessages.SYSTEM_ERROR);
-        }
+    public List<PaymentDTO> getActiveList() {
+        return paymentDAO.getAllActivePayments();
     }
-    
-    // Lấy hóa đơn cho bệnh nhân xem
-    public PaymentDTO getInvoice(int medicalRecordId) throws ErrorMessages.AppException {
-        try {
-            PaymentDTO invoice = paymentDAO.getPaymentByMedicalRecordId(medicalRecordId);
-            if (invoice == null) {
-                throw new ErrorMessages.AppException(ErrorMessages.PAYMENT_NOT_FOUND);
-            }
-            return invoice;
-        } catch (ErrorMessages.AppException e) {
-            throw e;
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new ErrorMessages.AppException(ErrorMessages.SYSTEM_ERROR);
+
+    public List<PaymentDTO> getListForAdmin() {
+        return paymentDAO.getAllPaymentsForAdmin();
+    }
+
+    public PaymentDTO getPaymentByRecordId(int medicalRecordId) {
+        return paymentDAO.getByMedicalRecordId(medicalRecordId);
+    }
+
+    // TẠO HÓA ĐƠN MỚI
+    public boolean createNewPayment(int medicalRecordId, double totalAmount) {
+        // Ràng buộc Tài chính 1: Số tiền không được âm
+        if (totalAmount < 0) {
+            return false;
         }
+
+        // Ràng buộc Tài chính 2: UNIQUE (Một ca khám chỉ xuất 1 hóa đơn tổng)
+        if (paymentDAO.getByMedicalRecordId(medicalRecordId) != null) {
+            return false; // Hóa đơn cho ca này đã tồn tại!
+        }
+
+        return paymentDAO.insertPayment(medicalRecordId, totalAmount);
+    }
+
+    // THU NGÂN XÁC NHẬN NHẬN TIỀN
+    public boolean processPayment(int id, String paymentMethod) {
+        // Kiểm tra phương thức thanh toán hợp lệ theo Constraint trong Database
+        if (!paymentMethod.equals("cash") && !paymentMethod.equals("card") && !paymentMethod.equals("banking")) {
+            return false;
+        }
+        
+        return paymentDAO.markAsPaid(id, paymentMethod);
+    }
+
+    // BẬT / TẮT (Hủy hóa đơn)
+    public boolean deactivatePayment(int id) {
+        return paymentDAO.togglePaymentStatus(id, 0); 
+    }
+
+    public boolean activatePayment(int id) {
+        return paymentDAO.togglePaymentStatus(id, 1); 
     }
 }

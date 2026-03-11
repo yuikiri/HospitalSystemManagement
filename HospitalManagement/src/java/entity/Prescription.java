@@ -11,22 +11,24 @@ import java.sql.Timestamp;
  * @author Yuikiri
  */
 public class Prescription {
-    private int id; // Bỏ 'final' ở id để có thể set lại sau khi insert
+    private int id;
     private int medicalRecordId;
-    private String notes;
+    private String notes; // Lời dặn dò của bác sĩ (VD: Uống sau ăn, kiêng đồ biển)
     private Timestamp createdAt;
-    private String status;
-    //constructor
+    private String status; // 'active', 'dispensed' (đã phát thuốc), 'cancelled'
+    private int isActive;
 
+    //constructor
     public Prescription() {
     }
 
-    public Prescription(int id, int medicalRecordId, String notes, Timestamp createdAt, String status) {
+    public Prescription(int id, int medicalRecordId, String notes, Timestamp createdAt, String status, int isActive) {
         this.id = id;
         this.medicalRecordId = medicalRecordId;
         this.notes = notes;
         this.createdAt = createdAt;
         this.status = status;
+        this.isActive = isActive;
     }
 
     public int getId() {
@@ -49,9 +51,14 @@ public class Prescription {
         return status;
     }
 
+    public int getIsActive() {
+        return isActive;
+    }
+
     @Override
     public String toString() {
-        return "Prescription{" + "id=" + id + ", medicalRecordId=" + medicalRecordId + ", notes=" + notes + ", createdAt=" + createdAt + ", status=" + status + '}';
+        return "Prescription{" + "id=" + id + ", medicalRecordId=" + medicalRecordId + ", notes=" + notes + ", createdAt=" + createdAt + ", status=" + status + ", isActive=" + isActive + '}';
     }
+
     
 }

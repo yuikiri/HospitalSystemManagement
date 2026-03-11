@@ -16,17 +16,19 @@ public class MedicalRecord {
     private String diagnosis;
     private String notes;
     private Timestamp createdAt;
+    private int isActive;
     //constructor
 
     public MedicalRecord() {
     }
 
-    public MedicalRecord(int id, int appointmentId, String diagnosis, String notes, Timestamp createdAt) {
+    public MedicalRecord(int id, int appointmentId, String diagnosis, String notes, Timestamp createdAt, int isActive) {
         this.id = id;
         this.appointmentId = appointmentId;
         this.diagnosis = diagnosis;
         this.notes = notes;
         this.createdAt = createdAt;
+        this.isActive = isActive;
     }
 
     public int getId() {
@@ -49,9 +51,13 @@ public class MedicalRecord {
         return createdAt;
     }
 
+    public int getIsActive() {
+        return isActive;
+    }
+
     @Override
     public String toString() {
-        return "MedicalRecord{" + "id=" + id + ", appointmentId=" + appointmentId + ", diagnosis=" + diagnosis + ", notes=" + notes + ", createdAt=" + createdAt + '}';
+        return "MedicalRecord{" + "id=" + id + ", appointmentId=" + appointmentId + ", diagnosis=" + diagnosis + ", notes=" + notes + ", createdAt=" + createdAt + ", isActive=" + isActive + '}';
     }
-    
+
 }

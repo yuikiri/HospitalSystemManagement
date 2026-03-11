@@ -5,6 +5,7 @@
 package service;
 
 import dao.DepartmentDAO;
+import dao.DepartmentDTO;
 import java.util.List;
 import entity.Department;
 import util.ErrorMessages;
@@ -13,35 +14,55 @@ import util.ErrorMessages;
  * @author Yuikiri
  */
 public class DepartmentService {
-    private final DepartmentDAO departmentDAO = new DepartmentDAO();
+    private DepartmentDAO departmentDAO;
 
-    // Dịch vụ lấy danh sách (Không có khả năng trả về null, nếu rỗng thì trả về list rỗng)
-    public List<Department> getAllDepartments() throws ErrorMessages.AppException {
-        try {
-            return departmentDAO.getAllDepartments();
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new ErrorMessages.AppException(ErrorMessages.SYSTEM_ERROR);
-        }
+    public DepartmentService() {
+        this.departmentDAO = new DepartmentDAO();
     }
 
-    // Dịch vụ lấy chi tiết (Có kiểm tra lỗi 404)
-    public Department getDepartmentById(int id) throws ErrorMessages.AppException {
-        try {
-            Department dept = departmentDAO.getDepartmentById(id);
-            
-            if (dept == null) {
-                // Ném lỗi 404 nếu không tìm thấy ID Khoa
-                throw new ErrorMessages.AppException(ErrorMessages.DEPARTMENT_NOT_FOUND);
-            }
-            
-            return dept;
-            
-        } catch (ErrorMessages.AppException e) {
-            throw e; // Ném tiếp lỗi 404
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new ErrorMessages.AppException(ErrorMessages.SYSTEM_ERROR);
+    // 1. Lấy danh sách
+    public List<DepartmentDTO> getActiveList() {
+        return departmentDAO.getAllActiveDepartments();
+    }
+
+    public List<DepartmentDTO> getListForAdmin() {
+        return departmentDAO.getAllDepartmentsForAdmin();
+    }
+    
+    public DepartmentDTO getById(int id) {
+        return departmentDAO.getDepartmentById(id);
+    }
+
+    // 2. Thêm mới Khoa (Có check trùng tên)
+    public boolean createNewDepartment(String name, String description) {
+        if (departmentDAO.checkNameExist(name)) {
+            return false; // Tên đã tồn tại, từ chối thêm
         }
+        return departmentDAO.insertDepartment(name, description);
+    }
+
+    // 3. Sửa thông tin Khoa
+    public boolean updateDepartment(int id, String newName, String description) {
+        // Lấy thông tin khoa cũ
+        DepartmentDTO oldDept = departmentDAO.getDepartmentById(id);
+        if (oldDept == null) return false;
+
+        // Nếu Admin đổi tên Khoa, phải kiểm tra xem tên mới đó có bị trùng với khoa khác không
+        if (!oldDept.getName().equalsIgnoreCase(newName)) {
+            if (departmentDAO.checkNameExist(newName)) {
+                return false; // Tên mới bị trùng, từ chối sửa
+            }
+        }
+        
+        return departmentDAO.updateDepartment(id, newName, description);
+    }
+
+    // 4. Bật / Tắt trạng thái
+    public boolean deactivateDepartment(int id) {
+        return departmentDAO.toggleDepartmentStatus(id, 0); // 0 = Ẩn đi / Đóng cửa
+    }
+
+    public boolean activateDepartment(int id) {
+        return departmentDAO.toggleDepartmentStatus(id, 1); // 1 = Mở cửa lại
     }
 }

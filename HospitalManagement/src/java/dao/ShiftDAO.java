@@ -7,6 +7,7 @@ package dao;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
@@ -17,65 +18,109 @@ import util.DbUtils;
  * @author Yuikiri
  */
 public class ShiftDAO {
-    public List<ShiftDTO> getAllShifts() {
+    // CÂU LỆNH JOIN CHUẨN ĐỂ LẤY THÔNG TIN PHÒNG VÀ KHOA
+    private final String SELECT_JOIN_SQL = 
+        "SELECT s.*, r.roomNumber, d.name AS departmentName " +
+        "FROM Shifts s " +
+        "JOIN Rooms r ON s.roomId = r.id " +
+        "JOIN Departments d ON r.departmentId = d.id ";
+
+    // 1. LẤY CA TRỰC ĐANG HOẠT ĐỘNG (Dành cho Bác sĩ xem lịch)
+    public List<ShiftDTO> getAllActiveShifts() {
         List<ShiftDTO> list = new ArrayList<>();
-        // JOIN bảng Shifts với bảng Rooms để lấy số phòng
-        String sql = "SELECT s.id, s.startTime, s.endTime, r.roomNumber " +
-                     "FROM Shifts s " +
-                     "JOIN Rooms r ON s.roomId = r.id " +
-                     "ORDER BY s.startTime DESC";
-                     
+        String sql = SELECT_JOIN_SQL + "WHERE s.isActive = 1 ORDER BY s.startTime ASC";
         try (Connection conn = new DbUtils().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
-            
-            // Công cụ định dạng ngày giờ chuẩn Việt Nam
-            SimpleDateFormat sdf = new SimpleDateFormat("HH:mm dd/MM/yyyy");
-            
             while (rs.next()) {
-                String startStr = sdf.format(rs.getTimestamp("startTime"));
-                String endStr = sdf.format(rs.getTimestamp("endTime"));
-                String roomName = "Phòng " + rs.getInt("roomNumber");
-                
                 list.add(new ShiftDTO(
-                    rs.getInt("id"),
-                    roomName,
-                    startStr,
-                    endStr
+                    rs.getInt("id"), rs.getInt("roomId"), rs.getInt("roomNumber"),
+                    rs.getString("departmentName"), rs.getTimestamp("startTime"),
+                    rs.getTimestamp("endTime"), rs.getString("status"),
+                    rs.getInt("isActive"), rs.getString("note")
                 ));
             }
-        } catch (Exception e) { 
-            e.printStackTrace(); 
-        }
+        } catch (Exception e) { e.printStackTrace(); }
         return list;
     }
 
-    public ShiftDTO getShiftById(int id) {
-        String sql = "SELECT s.id, s.startTime, s.endTime, r.roomNumber " +
-                     "FROM Shifts s " +
-                     "JOIN Rooms r ON s.roomId = r.id " +
-                     "WHERE s.id = ?";
-                     
+    // 2. LẤY TOÀN BỘ CA TRỰC (Dành cho Admin quản lý)
+    public List<ShiftDTO> getAllShiftsForAdmin() {
+        List<ShiftDTO> list = new ArrayList<>();
+        String sql = SELECT_JOIN_SQL + "ORDER BY s.id DESC";
+        try (Connection conn = new DbUtils().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                list.add(new ShiftDTO(
+                    rs.getInt("id"), rs.getInt("roomId"), rs.getInt("roomNumber"),
+                    rs.getString("departmentName"), rs.getTimestamp("startTime"),
+                    rs.getTimestamp("endTime"), rs.getString("status"),
+                    rs.getInt("isActive"), rs.getString("note")
+                ));
+            }
+        } catch (Exception e) { e.printStackTrace(); }
+        return list;
+    }
+
+    // 3. KIỂM TRA ĐỤNG LỊCH (Phòng này đã có ca trực nào trong khung giờ này chưa?)
+    public boolean checkTimeConflict(int roomId, Timestamp start, Timestamp end) {
+        String sql = "SELECT id FROM Shifts WHERE roomId = ? AND isActive = 1 " +
+                     "AND ((startTime < ? AND endTime > ?) " +
+                     "OR (startTime >= ? AND startTime < ?))";
         try (Connection conn = new DbUtils().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
-            
-            ps.setInt(1, id);
-            
+            ps.setInt(1, roomId);
+            ps.setTimestamp(2, end);
+            ps.setTimestamp(3, start);
+            ps.setTimestamp(4, start);
+            ps.setTimestamp(5, end);
             try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    SimpleDateFormat sdf = new SimpleDateFormat("HH:mm dd/MM/yyyy");
-                    
-                    return new ShiftDTO(
-                        rs.getInt("id"),
-                        "Phòng " + rs.getInt("roomNumber"),
-                        sdf.format(rs.getTimestamp("startTime")),
-                        sdf.format(rs.getTimestamp("endTime"))
-                    );
-                }
+                return rs.next(); // Trả về true nếu bị trùng lịch
             }
-        } catch (Exception e) { 
-            e.printStackTrace(); 
-        }
-        return null;
+        } catch (Exception e) { e.printStackTrace(); }
+        return true; 
+    }
+
+    // 4. THÊM CA TRỰC MỚI (Mặc định status = 'scheduled', isActive = 1)
+    public boolean insertShift(int roomId, Timestamp startTime, Timestamp endTime, String note) {
+        String sql = "INSERT INTO Shifts (roomId, startTime, endTime, status, isActive, note) VALUES (?, ?, ?, 'scheduled', 1, ?)";
+        try (Connection conn = new DbUtils().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, roomId);
+            ps.setTimestamp(2, startTime);
+            ps.setTimestamp(3, endTime);
+            ps.setString(4, note);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) { e.printStackTrace(); }
+        return false;
+    }
+
+    // 5. CẬP NHẬT CA TRỰC
+    public boolean updateShift(int id, int roomId, Timestamp startTime, Timestamp endTime, String status, String note) {
+        String sql = "UPDATE Shifts SET roomId = ?, startTime = ?, endTime = ?, status = ?, note = ? WHERE id = ?";
+        try (Connection conn = new DbUtils().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, roomId);
+            ps.setTimestamp(2, startTime);
+            ps.setTimestamp(3, endTime);
+            ps.setString(4, status);
+            ps.setString(5, note);
+            ps.setInt(6, id);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) { e.printStackTrace(); }
+        return false;
+    }
+
+    // 6. BẬT / TẮT TRẠNG THÁI CA TRỰC
+    public boolean toggleShiftStatus(int id, int isActive) {
+        String sql = "UPDATE Shifts SET isActive = ? WHERE id = ?";
+        try (Connection conn = new DbUtils().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, isActive);
+            ps.setInt(2, id);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) { e.printStackTrace(); }
+        return false;
     }
 }

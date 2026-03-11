@@ -9,50 +9,68 @@ package dao;
  * @author Yuikiri
  */
 public class RoomDTO {
-    private final int roomId;
-    private final int roomNumber;
-    private final String departmentName; // Kéo từ Departments
-    private final String roomTypeName;   // Kéo từ RoomType
-    private final String priceStr;       // Giá tiền đã format (VD: "500,000 VNĐ")
-    private final String statusStr;      // Trạng thái tiếng Việt (VD: "Sẵn sàng", "Bảo trì")
+    private int id;
+    private int departmentId;
+    private String departmentName; // MỚI: Tên khoa (Để hiển thị)
+    
+    private int roomType; 
+    private String roomTypeName; // MỚI: Tên loại phòng (Để hiển thị)
+    
+    private int roomNumber;
+    private String status;
+    private int isActive;
     //constructor
 
-    public RoomDTO(int roomId, int roomNumber, String departmentName, String roomTypeName, String priceStr, String statusStr) {
-        this.roomId = roomId;
-        this.roomNumber = roomNumber;
+    public RoomDTO() {
+    }
+
+    public RoomDTO(int id, int departmentId, String departmentName, int roomType, String roomTypeName, int roomNumber, String status, int isActive) {
+        this.id = id;
+        this.departmentId = departmentId;
         this.departmentName = departmentName;
+        this.roomType = roomType;
         this.roomTypeName = roomTypeName;
-        this.priceStr = priceStr;
-        this.statusStr = statusStr;
+        this.roomNumber = roomNumber;
+        this.status = status;
+        this.isActive = isActive;
     }
 
-    public int getRoomId() {
-        return roomId;
+    public int getId() {
+        return id;
     }
 
-    public int getRoomNumber() {
-        return roomNumber;
+    public int getDepartmentId() {
+        return departmentId;
     }
 
     public String getDepartmentName() {
         return departmentName;
     }
 
+    public int getRoomType() {
+        return roomType;
+    }
+
     public String getRoomTypeName() {
         return roomTypeName;
     }
 
-    public String getPriceStr() {
-        return priceStr;
+    public int getRoomNumber() {
+        return roomNumber;
     }
 
-    public String getStatusStr() {
-        return statusStr;
+    public String getStatus() {
+        return status;
+    }
+
+    public int getIsActive() {
+        return isActive;
     }
 
     @Override
     public String toString() {
-        return "RoomDTO{" + "roomId=" + roomId + ", roomNumber=" + roomNumber + ", departmentName=" + departmentName + ", roomTypeName=" + roomTypeName + ", priceStr=" + priceStr + ", statusStr=" + statusStr + '}';
+        return "RoomDTO{" + "id=" + id + ", departmentId=" + departmentId + ", departmentName=" + departmentName + ", roomType=" + roomType + ", roomTypeName=" + roomTypeName + ", roomNumber=" + roomNumber + ", status=" + status + ", isActive=" + isActive + '}';
     }
+
     
 }

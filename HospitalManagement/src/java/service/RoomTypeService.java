@@ -5,6 +5,7 @@
 package service;
 
 import dao.RoomTypeDAO;
+import dao.RoomTypeDTO;
 import java.util.List;
 import entity.RoomType;
 import util.ErrorMessages;
@@ -13,35 +14,59 @@ import util.ErrorMessages;
  * @author Yuikiri
  */
 public class RoomTypeService {
-    private final RoomTypeDAO roomTypeDAO = new RoomTypeDAO();
+    private RoomTypeDAO roomTypeDAO;
 
-    // Lấy toàn bộ danh sách
-    public List<RoomType> getAllRoomTypes() throws ErrorMessages.AppException {
-        try {
-            return roomTypeDAO.getAllRoomTypes();
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new ErrorMessages.AppException(ErrorMessages.SYSTEM_ERROR);
-        }
+    public RoomTypeService() {
+        this.roomTypeDAO = new RoomTypeDAO();
     }
 
-    // Lấy chi tiết 1 Loại phòng (Kiểm tra 404)
-    public RoomType getRoomTypeById(int id) throws ErrorMessages.AppException {
-        try {
-            RoomType type = roomTypeDAO.getRoomTypeById(id);
-            
-            if (type == null) {
-                // Ném lỗi 404 nếu Admin nhập sai ID hoặc ID không tồn tại
-                throw new ErrorMessages.AppException(ErrorMessages.ROOM_TYPE_NOT_FOUND);
-            }
-            
-            return type;
-            
-        } catch (ErrorMessages.AppException e) {
-            throw e; // Lỗi 404 thì ném đi tiếp
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new ErrorMessages.AppException(ErrorMessages.SYSTEM_ERROR);
+    // 1. Lấy danh sách
+    public List<RoomTypeDTO> getActiveList() {
+        return roomTypeDAO.getAllActiveRoomTypes();
+    }
+
+    public List<RoomTypeDTO> getListForAdmin() {
+        return roomTypeDAO.getAllRoomTypesForAdmin();
+    }
+
+    public RoomTypeDTO getById(int id) {
+        return roomTypeDAO.getRoomTypeById(id);
+    }
+
+    // 2. Thêm mới Loại phòng
+    public boolean createNewRoomType(String name, double price) {
+        // Kiểm tra logic: Giá tiền không được âm và tên không được trùng
+        if (price < 0) return false;
+        
+        if (roomTypeDAO.checkNameExist(name)) {
+            return false; // Tên đã tồn tại
         }
+        return roomTypeDAO.insertRoomType(name, price);
+    }
+
+    // 3. Sửa thông tin Loại phòng
+    public boolean updateRoomType(int id, String newName, double price) {
+        if (price < 0) return false;
+
+        RoomTypeDTO oldRoomType = roomTypeDAO.getRoomTypeById(id);
+        if (oldRoomType == null) return false;
+
+        // Nếu đổi tên, kiểm tra xem tên mới có trùng với loại phòng khác không
+        if (!oldRoomType.getName().equalsIgnoreCase(newName)) {
+            if (roomTypeDAO.checkNameExist(newName)) {
+                return false; 
+            }
+        }
+        
+        return roomTypeDAO.updateRoomType(id, newName, price);
+    }
+
+    // 4. Bật / Tắt trạng thái
+    public boolean deactivateRoomType(int id) {
+        return roomTypeDAO.toggleRoomTypeStatus(id, 0); // 0 = Ngưng sử dụng
+    }
+
+    public boolean activateRoomType(int id) {
+        return roomTypeDAO.toggleRoomTypeStatus(id, 1); // 1 = Mở lại
     }
 }

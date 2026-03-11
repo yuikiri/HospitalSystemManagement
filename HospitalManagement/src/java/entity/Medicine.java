@@ -11,22 +11,24 @@ package entity;
 public class Medicine {
     private int id;
     private String name;
+    private String unit; // Viên, Gói, Lọ...
     private double price;
-    private int stock;
-    private String unit;
+    private int stockQuantity; 
     private String description;
+    private int isActive;
     //constructor
 
     public Medicine() {
     }
 
-    public Medicine(int id, String name, double price, int stock, String unit, String description) {
+    public Medicine(int id, String name, String unit, double price, int stockQuantity, String description, int isActive) {
         this.id = id;
         this.name = name;
-        this.price = price;
-        this.stock = stock;
         this.unit = unit;
+        this.price = price;
+        this.stockQuantity = stockQuantity;
         this.description = description;
+        this.isActive = isActive;
     }
 
     public int getId() {
@@ -37,25 +39,30 @@ public class Medicine {
         return name;
     }
 
+    public String getUnit() {
+        return unit;
+    }
+
     public double getPrice() {
         return price;
     }
 
-    public int getStock() {
-        return stock;
-    }
-
-    public String getUnit() {
-        return unit;
+    public int getStockQuantity() {
+        return stockQuantity;
     }
 
     public String getDescription() {
         return description;
     }
 
+    public int getIsActive() {
+        return isActive;
+    }
+
     @Override
     public String toString() {
-        return "Medicine{" + "id=" + id + ", name=" + name + ", price=" + price + ", stock=" + stock + ", unit=" + unit + ", description=" + description + '}';
+        return "Medicine{" + "id=" + id + ", name=" + name + ", unit=" + unit + ", price=" + price + ", stockQuantity=" + stockQuantity + ", description=" + description + ", isActive=" + isActive + '}';
     }
+
     
 }

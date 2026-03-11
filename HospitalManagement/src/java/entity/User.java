@@ -14,27 +14,27 @@ public class User {
     private int id;
     private String userName;
     private String email;
+    private String avatarUrl;
     private String passwordHash;
     private String role;
-    private int isActive; // 1: Active, 0: Banned
+    private int isActive;
     private Timestamp createdAt;
+    
     //constructor
 
     public User() {
     }
 
-    public User(int id, String userName, String email, String passwordHash, String role, int isActive, Timestamp createdAt) {
+    public User(int id, String userName, String email, String avatarUrl, String passwordHash, String role, int isActive, Timestamp createdAt) {
         this.id = id;
         this.userName = userName;
         this.email = email;
+        this.avatarUrl = avatarUrl;
         this.passwordHash = passwordHash;
         this.role = role;
         this.isActive = isActive;
         this.createdAt = createdAt;
     }
-
-  
-    //
 
     public int getId() {
         return id;
@@ -46,6 +46,10 @@ public class User {
 
     public String getEmail() {
         return email;
+    }
+
+    public String getAvatarUrl() {
+        return avatarUrl;
     }
 
     public String getPasswordHash() {
@@ -66,8 +70,9 @@ public class User {
 
     @Override
     public String toString() {
-        return "User{" + "id=" + id + ", userName=" + userName + ", email=" + email + ", passwordHash=" + passwordHash + ", role=" + role + ", isActive=" + isActive + ", createdAt=" + createdAt + '}';
+        return "User{" + "id=" + id + ", userName=" + userName + ", email=" + email + ", avatarUrl=" + avatarUrl + ", passwordHash=" + passwordHash + ", role=" + role + ", isActive=" + isActive + ", createdAt=" + createdAt + '}';
     }
+
     
     
 }

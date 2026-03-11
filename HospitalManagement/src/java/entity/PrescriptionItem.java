@@ -10,12 +10,12 @@ package entity;
  */
 public class PrescriptionItem {
     private int id;
-    private int prescriptionId; // Sẽ được set bằng ID của bảng Cha
-    private int medicineId;
+    private int prescriptionId; // Trỏ về Đơn thuốc tổng
+    private int medicineId;     // Trỏ về kho thuốc
     private int quantity;
-    private String dosage;
-    private String frequency;
-    private String duration;
+    private String dosage;      // VD: "1 viên"
+    private String frequency;   // VD: "Sáng, Tối"
+    private String duration;    // VD: "5 ngày"
     //constructor
 
     public PrescriptionItem() {
@@ -37,10 +37,6 @@ public class PrescriptionItem {
 
     public int getPrescriptionId() {
         return prescriptionId;
-    }
-
-    public void setPrescriptionId(int prescriptionId) {
-        this.prescriptionId = prescriptionId;
     }
 
     public int getMedicineId() {
@@ -67,5 +63,7 @@ public class PrescriptionItem {
     public String toString() {
         return "PrescriptionItem{" + "id=" + id + ", prescriptionId=" + prescriptionId + ", medicineId=" + medicineId + ", quantity=" + quantity + ", dosage=" + dosage + ", frequency=" + frequency + ", duration=" + duration + '}';
     }
+
+    
     
 }

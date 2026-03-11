@@ -14,30 +14,36 @@ import entity.DoctorShift;
  * @author Yuikiri
  */
 public class DoctorShiftService {
-    private final DoctorShiftDAO doctorShiftDAO = new DoctorShiftDAO();
+    private DoctorShiftDAO dsDAO = new DoctorShiftDAO();
 
-    public List<DoctorShiftDTO> getDoctorShifts(int doctorId) throws ErrorMessages.AppException {
-        try {
-            return doctorShiftDAO.getDoctorShiftsByDoctorId(doctorId);
-        } catch (Exception e) {
-            e.printStackTrace();
+    // =========================================================
+    // ADMIN PHÂN CÔNG TRỰC (KHÔNG CẦN XÁC NHẬN MAIL)
+    // =========================================================
+    public void assignDoctorToShift(int doctorId, int shiftId, String role) throws ErrorMessages.AppException {
+        // 1. Kiểm tra bác sĩ đã có mặt trong ca này chưa (Tránh lỗi UNIQUE)
+        // (Nếu dùng hàm assign mà lỗi SQL UNIQUE thì cũng bắt được, nhưng check trước sẽ tốt hơn)
+        
+        // 2. Kiểm tra đụng lịch (Conflict Check)
+        if (dsDAO.hasTimeConflict(doctorId, shiftId)) {
+            throw new ErrorMessages.AppException(ErrorMessages.SHIFT_TIME_CONFLICT);
+        }
+
+        // 3. Thực thi
+        if (!dsDAO.assignDoctor(doctorId, shiftId, role)) {
+            throw new ErrorMessages.AppException(ErrorMessages.SHIFT_ASSIGN_ERROR);
+        }
+    }
+
+    // =========================================================
+    // ADMIN GỠ BÁC SĨ KHỎI CA
+    // =========================================================
+    public void removeDoctor(int doctorId, int shiftId) throws ErrorMessages.AppException {
+        if (!dsDAO.removeDoctorFromShift(doctorId, shiftId)) {
             throw new ErrorMessages.AppException(ErrorMessages.SYSTEM_ERROR);
         }
     }
 
-    public boolean addDoctorShift(DoctorShift doctorShift) throws ErrorMessages.AppException {
-        try {
-            boolean isSuccess = doctorShiftDAO.insertDoctorShift(doctorShift);
-            if (!isSuccess) {
-                // Sẽ nhảy vào đây nếu vi phạm UQ_Doctor_Shift trong SQL
-                throw new ErrorMessages.AppException(ErrorMessages.SHIFT_ASSIGN_ERROR);
-            }
-            return true;
-        } catch (ErrorMessages.AppException e) {
-            throw e;
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new ErrorMessages.AppException(ErrorMessages.SYSTEM_ERROR);
-        }
+    public List<DoctorShiftDTO> getDoctorsInShift(int shiftId) {
+        return dsDAO.getDoctorsByShift(shiftId);
     }
 }

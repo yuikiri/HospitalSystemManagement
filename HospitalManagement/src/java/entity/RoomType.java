@@ -13,16 +13,18 @@ public class RoomType {
     private String name;
     private double price;
     private String description; // Có thể null trong DB, nhưng ta vẫn lấy lên
+    private int isActive; // 1: Active, 0: Banned
     //constructor
 
     public RoomType() {
     }
 
-    public RoomType(int id, String name, double price, String description) {
+    public RoomType(int id, String name, double price, String description, int isActive) {
         this.id = id;
         this.name = name;
         this.price = price;
         this.description = description;
+        this.isActive = isActive;
     }
 
     public int getId() {
@@ -41,9 +43,15 @@ public class RoomType {
         return description;
     }
 
+    public int getIsActive() {
+        return isActive;
+    }
+
     @Override
     public String toString() {
-        return "RoomType{" + "id=" + id + ", name=" + name + ", price=" + price + ", description=" + description + '}';
+        return "RoomType{" + "id=" + id + ", name=" + name + ", price=" + price + ", description=" + description + ", isActive=" + isActive + '}';
     }
+
+    
     
 }

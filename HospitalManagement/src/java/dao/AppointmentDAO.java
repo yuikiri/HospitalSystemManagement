@@ -18,99 +18,90 @@ import util.DbUtils;
  * @author Yuikiri
  */
 public class AppointmentDAO {
-    // 1. SIÊU QUAN TRỌNG: Kiểm tra trùng lịch (Overlap Check)
-    // Trả về true nếu bị trùng (Bác sĩ hoặc Phòng khám đã kẹt cứng ở khung giờ đó)
-    public boolean isTimeSlotConflict(int doctorId, int roomId, Timestamp newStart, Timestamp newEnd) {
-        // Logic chồng lấp: (start1 < end2) AND (end1 > start2) và Lịch hẹn đó chưa bị Hủy
-        String sql = "SELECT COUNT(*) FROM Appointments " +
-                     "WHERE (doctorId = ? OR roomId = ?) " +
-                     "AND status != 'cancelled' " +
-                     "AND (startTime < ? AND endTime > ?)";
-                     
+    // CÚ JOIN LỊCH SỬ NỐI 5 BẢNG LẠI VỚI NHAU
+    private final String SELECT_JOIN_SQL = 
+        "SELECT a.*, p.name AS patientName, d.name AS doctorName, " +
+        "r.roomNumber, dept.name AS departmentName " +
+        "FROM Appointments a " +
+        "JOIN Patients p ON a.patientId = p.id " +
+        "JOIN Doctors d ON a.doctorId = d.id " +
+        "JOIN Rooms r ON a.roomId = r.id " +
+        "JOIN Departments dept ON r.departmentId = dept.id ";
+
+    // 1. DÀNH CHO BÁC SĨ / LỄ TÂN (Chỉ xem lịch đang hoạt động)
+    public List<AppointmentDTO> getAllActiveAppointments() {
+        List<AppointmentDTO> list = new ArrayList<>();
+        String sql = SELECT_JOIN_SQL + "WHERE a.isActive = 1 ORDER BY a.startTime DESC";
         try (Connection conn = new DbUtils().getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, doctorId);
-            ps.setInt(2, roomId);
-            ps.setTimestamp(3, newEnd);
-            ps.setTimestamp(4, newStart);
-            
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    return rs.getInt(1) > 0; // Nếu có > 0 dòng tức là bị trùng
-                }
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                list.add(extractDTO(rs));
             }
         } catch (Exception e) { e.printStackTrace(); }
-        return true; // Mặc định trả về true (có lỗi) để an toàn nếu DB lỗi
+        return list;
     }
 
-    // 2. Thêm lịch hẹn (Chỉ gọi khi đã pass qua check trùng)
-    public boolean insertAppointment(Appointment app) {
-        String sql = "INSERT INTO Appointments (patientId, doctorId, roomId, startTime, endTime, status, createdAt) VALUES (?, ?, ?, ?, ?, ?, GETDATE())";
+    // 2. DÀNH CHO ADMIN (Xem toàn bộ, kể cả lịch đã xóa mềm)
+    public List<AppointmentDTO> getAllAppointmentsForAdmin() {
+        List<AppointmentDTO> list = new ArrayList<>();
+        String sql = SELECT_JOIN_SQL + "ORDER BY a.id DESC";
+        try (Connection conn = new DbUtils().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                list.add(extractDTO(rs));
+            }
+        } catch (Exception e) { e.printStackTrace(); }
+        return list;
+    }
+
+    // Hàm phụ trợ để tái sử dụng việc móc dữ liệu từ ResultSet (Cho code DAO gọn hơn)
+    private AppointmentDTO extractDTO(ResultSet rs) throws Exception {
+        return new AppointmentDTO(
+            rs.getInt("id"), rs.getInt("patientId"), rs.getString("patientName"),
+            rs.getInt("doctorId"), rs.getString("doctorName"),
+            rs.getInt("roomId"), rs.getInt("roomNumber"), rs.getString("departmentName"),
+            rs.getTimestamp("startTime"), rs.getTimestamp("endTime"),
+            rs.getString("status"), rs.getTimestamp("createdAt"), rs.getInt("isActive")
+        );
+    }
+
+    // 3. THÊM LỊCH HẸN MỚI (Mặc định status = 'pending', isActive = 1, createdAt tự sinh)
+    public boolean insertAppointment(int patientId, int doctorId, int roomId, Timestamp startTime, Timestamp endTime) {
+        String sql = "INSERT INTO Appointments (patientId, doctorId, roomId, startTime, endTime, status, isActive, createdAt) " +
+                     "VALUES (?, ?, ?, ?, ?, 'pending', 1, GETDATE())";
         try (Connection conn = new DbUtils().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, app.getPatientId());
-            ps.setInt(2, app.getDoctorId());
-            ps.setInt(3, app.getRoomId());
-            ps.setTimestamp(4, app.getStartTime());
-            ps.setTimestamp(5, app.getEndTime());
-            ps.setString(6, app.getStatus());
+            ps.setInt(1, patientId);
+            ps.setInt(2, doctorId);
+            ps.setInt(3, roomId);
+            ps.setTimestamp(4, startTime);
+            ps.setTimestamp(5, endTime);
             return ps.executeUpdate() > 0;
         } catch (Exception e) { e.printStackTrace(); }
         return false;
     }
 
-    // 3. Lấy danh sách Lịch hẹn THEO BÁC SĨ (Dành cho Dashboard của Bác sĩ)
-    public List<AppointmentDTO> getAppointmentsByDoctor(int doctorId) {
-        return getAppointmentsByCondition("a.doctorId = ?", doctorId);
-    }
-
-    // 4. Lấy danh sách Lịch hẹn THEO BỆNH NHÂN (Dành cho Lịch sử khám của Bệnh nhân)
-    public List<AppointmentDTO> getAppointmentsByPatient(int patientId) {
-        return getAppointmentsByCondition("a.patientId = ?", patientId);
-    }
-
-    // Hàm dùng chung nội bộ để tránh lặp code (DRY Principle)
-    private List<AppointmentDTO> getAppointmentsByCondition(String condition, int paramValue) {
-        List<AppointmentDTO> list = new ArrayList<>();
-        String sql = "SELECT a.id, p.name AS pName, p.phone AS pPhone, d.name AS dName, r.roomNumber, a.startTime, a.endTime, a.status " +
-                     "FROM Appointments a " +
-                     "JOIN Patients p ON a.patientId = p.id " +
-                     "JOIN Doctors d ON a.doctorId = d.id " +
-                     "JOIN Rooms r ON a.roomId = r.id " +
-                     "WHERE " + condition + " " +
-                     "ORDER BY a.startTime DESC";
-                     
-        try (Connection conn = new DbUtils().getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            
-            ps.setInt(1, paramValue);
-            
-            try (ResultSet rs = ps.executeQuery()) {
-                SimpleDateFormat sdf = new SimpleDateFormat("HH:mm dd/MM/yyyy");
-                while (rs.next()) {
-                    list.add(new AppointmentDTO(
-                        rs.getInt("id"),
-                        rs.getString("pName"),
-                        rs.getString("pPhone"),
-                        rs.getString("dName"),
-                        rs.getInt("roomNumber"),
-                        sdf.format(rs.getTimestamp("startTime")),
-                        rs.getTimestamp("endTime") != null ? sdf.format(rs.getTimestamp("endTime")) : "Chưa xác định",
-                        rs.getString("status")
-                    ));
-                }
-            }
-        } catch (Exception e) { e.printStackTrace(); }
-        return list;
-    }
-    
-    // 5. Cập nhật trạng thái (Dùng khi Bác sĩ khám xong hoặc Lễ tân hủy lịch)
-    public boolean updateStatus(int appId, String status) {
+    // 4. CẬP NHẬT TRẠNG THÁI QUY TRÌNH (VD: Từ 'pending' sang 'confirmed' hoặc 'completed')
+    public boolean updateAppointmentStatus(int id, String newStatus) {
         String sql = "UPDATE Appointments SET status = ? WHERE id = ?";
         try (Connection conn = new DbUtils().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, status);
-            ps.setInt(2, appId);
+            ps.setString(1, newStatus);
+            ps.setInt(2, id);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) { e.printStackTrace(); }
+        return false;
+    }
+
+    // 5. XÓA MỀM / KHÔI PHỤC LỊCH HẸN (Dành riêng cho Admin dọn dẹp data rác)
+    public boolean toggleAppointmentActive(int id, int isActive) {
+        String sql = "UPDATE Appointments SET isActive = ? WHERE id = ?";
+        try (Connection conn = new DbUtils().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, isActive);
+            ps.setInt(2, id);
             return ps.executeUpdate() > 0;
         } catch (Exception e) { e.printStackTrace(); }
         return false;

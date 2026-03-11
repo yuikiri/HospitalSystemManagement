@@ -8,6 +8,7 @@ import dao.MedicalRecordDAO;
 import util.ErrorMessages;
 import dao.MedicalRecordDTO;
 import entity.MedicalRecord;
+import java.util.List;
 
 
 /**
@@ -15,38 +16,46 @@ import entity.MedicalRecord;
  * @author Yuikiri
  */
 public class MedicalRecordService {
-    private final MedicalRecordDAO recordDAO = new MedicalRecordDAO();
+    private MedicalRecordDAO medicalRecordDAO;
 
-    // Lấy chi tiết bệnh án (Ví dụ: khi Bác sĩ/Bệnh nhân bấm vào 1 ca khám đã hoàn thành)
-    public MedicalRecordDTO getRecordByAppointment(int appointmentId) throws ErrorMessages.AppException {
-        try {
-            MedicalRecordDTO record = recordDAO.getRecordByAppointmentId(appointmentId);
-            if (record == null) {
-                throw new ErrorMessages.AppException(ErrorMessages.MEDICAL_RECORD_NOT_FOUND);
-            }
-            return record;
-        } catch (ErrorMessages.AppException e) {
-            throw e;
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new ErrorMessages.AppException(ErrorMessages.SYSTEM_ERROR);
-        }
+    public MedicalRecordService() {
+        this.medicalRecordDAO = new MedicalRecordDAO();
     }
 
-    // Bác sĩ lập bệnh án mới sau khi khám xong
-    public boolean createRecord(MedicalRecord mr) throws ErrorMessages.AppException {
-        try {
-            boolean isSuccess = recordDAO.insertMedicalRecord(mr);
-            if (!isSuccess) {
-                // Sẽ nhảy vào đây nếu vi phạm UNIQUE (appointmentId) trong SQL
-                throw new ErrorMessages.AppException(ErrorMessages.MEDICAL_RECORD_EXISTED);
-            }
-            return true;
-        } catch (ErrorMessages.AppException e) {
-            throw e;
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new ErrorMessages.AppException(ErrorMessages.SYSTEM_ERROR);
+    public List<MedicalRecordDTO> getActiveList() {
+        return medicalRecordDAO.getAllActiveMedicalRecords();
+    }
+
+    public List<MedicalRecordDTO> getListForAdmin() {
+        return medicalRecordDAO.getAllMedicalRecordsForAdmin();
+    }
+
+    public MedicalRecordDTO getRecordByAppointmentId(int appointmentId) {
+        return medicalRecordDAO.getByAppointmentId(appointmentId);
+    }
+
+    // TẠO HỒ SƠ BỆNH ÁN
+    public boolean createNewRecord(int appointmentId, String diagnosis, String notes) {
+        // RÀNG BUỘC CỰC KỲ QUAN TRỌNG: Check UNIQUE appointmentId
+        // Tránh tình trạng Bác sĩ bấm "Lưu" 2 lần tạo ra 2 bệnh án trùng lặp cho 1 lần khám
+        if (medicalRecordDAO.getByAppointmentId(appointmentId) != null) {
+            return false; // Lịch hẹn này đã có bệnh án rồi, không được tạo thêm!
         }
+        
+        return medicalRecordDAO.insertMedicalRecord(appointmentId, diagnosis, notes);
+    }
+
+    // CẬP NHẬT
+    public boolean updateRecord(int id, String diagnosis, String notes) {
+        return medicalRecordDAO.updateMedicalRecord(id, diagnosis, notes);
+    }
+
+    // BẬT / TẮT (XÓA MỀM)
+    public boolean deactivateRecord(int id) {
+        return medicalRecordDAO.toggleMedicalRecordStatus(id, 0); 
+    }
+
+    public boolean activateRecord(int id) {
+        return medicalRecordDAO.toggleMedicalRecordStatus(id, 1); 
     }
 }

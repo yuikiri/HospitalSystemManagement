@@ -14,35 +14,53 @@ import util.ErrorMessages;
  * @author Yuikiri
  */
 public class RoomService {
-    private final RoomDAO roomDAO = new RoomDAO();
+    private RoomDAO roomDAO;
 
-    // Lấy danh sách toàn bộ phòng (Dùng cho trang Quản lý của Admin)
-    public List<RoomDTO> getAllRooms() throws ErrorMessages.AppException {
-        try {
-            return roomDAO.getAllRooms();
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new ErrorMessages.AppException(ErrorMessages.SYSTEM_ERROR);
-        }
+    public RoomService() {
+        this.roomDAO = new RoomDAO();
     }
 
-    // Lấy chi tiết phòng (Dùng khi Bệnh nhân bấm xem phòng trước khi đặt lịch)
-    public RoomDTO getRoomById(int roomId) throws ErrorMessages.AppException {
-        try {
-            RoomDTO room = roomDAO.getRoomById(roomId);
-            
-            if (room == null) {
-                // Ném lỗi 404
-                throw new ErrorMessages.AppException(ErrorMessages.ROOM_NOT_FOUND);
-            }
-            
-            return room;
-            
-        } catch (ErrorMessages.AppException e) {
-            throw e;
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new ErrorMessages.AppException(ErrorMessages.SYSTEM_ERROR);
+    // 1. Lấy danh sách
+    public List<RoomDTO> getActiveList() {
+        return roomDAO.getAllActiveRooms();
+    }
+
+    public List<RoomDTO> getListForAdmin() {
+        return roomDAO.getAllRoomsForAdmin();
+    }
+
+    // 2. Thêm mới Phòng
+    public boolean createNewRoom(int departmentId, int roomType, int roomNumber) {
+        // Kiểm tra logic: Số phòng không được âm
+        if (roomNumber <= 0) return false;
+        
+        // Ràng buộc quan trọng: Không được có 2 số phòng trùng nhau trong 1 khoa
+        if (roomDAO.checkRoomNumberExist(departmentId, roomNumber)) {
+            return false; 
         }
+        return roomDAO.insertRoom(departmentId, roomType, roomNumber);
+    }
+
+    // 3. Sửa thông tin Phòng
+    public boolean updateRoomInfo(int id, int oldDepartmentId, int newDepartmentId, int oldRoomNumber, int newRoomNumber, int roomType, String status) {
+        if (newRoomNumber <= 0) return false;
+
+        // Nếu Admin đổi Khoa hoặc đổi số phòng, phải check trùng lại
+        if (oldDepartmentId != newDepartmentId || oldRoomNumber != newRoomNumber) {
+            if (roomDAO.checkRoomNumberExist(newDepartmentId, newRoomNumber)) {
+                return false; // Số phòng này đã tồn tại ở khoa đó rồi!
+            }
+        }
+        
+        return roomDAO.updateRoom(id, newDepartmentId, roomType, newRoomNumber, status);
+    }
+
+    // 4. Bật / Tắt trạng thái
+    public boolean deactivateRoom(int id) {
+        return roomDAO.toggleRoomStatus(id, 0); 
+    }
+
+    public boolean activateRoom(int id) {
+        return roomDAO.toggleRoomStatus(id, 1); 
     }
 }

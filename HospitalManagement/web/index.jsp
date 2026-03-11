@@ -248,7 +248,7 @@
 
                             <div class="mb-3">
                                 <label class="form-label fw-bold" for="phoneReg">Phone Number</label>
-                                <input id="phoneReg" type="text" placeholder="0123456789" name="phone" class="form-control" value="<%= request.getAttribute("tempPhone")!=null ? request.getAttribute("tempPhone") : "" %>">
+                                <input id="phoneReg" type="text" placeholder="0123456789" name="phone" class="form-control" required value="<%= request.getAttribute("tempPhone")!=null ? request.getAttribute("tempPhone") : "" %>">
                             </div>
                             <button type="submit" class="btn btn-primary w-100 py-2 fs-5 mt-2 shadow-sm">Sign Up</button>
                         </form>
@@ -300,6 +300,7 @@
                     }
                 });
             });
+            
         </script>
     </body>
 </html>

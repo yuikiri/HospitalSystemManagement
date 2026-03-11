@@ -4,40 +4,65 @@
  */
 package dao;
 
+import java.sql.Timestamp;
+
 /**
  *
  * @author Yuikiri
  */
 public class PrescriptionItemDTO {
-    private final int itemId;
-    private final String medicineName; // JOIN từ Medicines
-    private final String unit;         // JOIN từ Medicines (Viên, Vỉ, Lọ...)
-    private final int quantity;
-    private final String dosage;
-    private final String frequency;
-    private final String duration;
+    private int id;
+    private int prescriptionId;
+    
+    private int medicineId;
+    private String medicineName; // MỚI: Tên thuốc
+    private String medicineUnit; // MỚI: Đơn vị tính (Viên, Gói)
+    private double medicinePrice; // MỚI: Giá gốc của 1 viên (Để sau tính tiền)
+    
+    private int quantity;
+    private String dosage;
+    private String frequency;
+    private String duration;
     //constructor
 
-    public PrescriptionItemDTO(int itemId, String medicineName, String unit, int quantity, String dosage, String frequency, String duration) {
-        this.itemId = itemId;
+    public PrescriptionItemDTO() {
+    }
+
+    public PrescriptionItemDTO(int id, int prescriptionId, int medicineId, String medicineName, String medicineUnit, double medicinePrice, int quantity, String dosage, String frequency, String duration) {
+        this.id = id;
+        this.prescriptionId = prescriptionId;
+        this.medicineId = medicineId;
         this.medicineName = medicineName;
-        this.unit = unit;
+        this.medicineUnit = medicineUnit;
+        this.medicinePrice = medicinePrice;
         this.quantity = quantity;
         this.dosage = dosage;
         this.frequency = frequency;
         this.duration = duration;
     }
 
-    public int getItemId() {
-        return itemId;
+    public int getId() {
+        return id;
+    }
+
+    public int getPrescriptionId() {
+        return prescriptionId;
+    }
+
+    public int getMedicineId() {
+        return medicineId;
     }
 
     public String getMedicineName() {
         return medicineName;
     }
 
-    public String getUnit() {
-        return unit;
+    public String getMedicineUnit() {
+        return medicineUnit;
+    }
+
+    public double getMedicinePrice() {
+        return medicinePrice;
     }
 
     public int getQuantity() {
@@ -58,7 +83,7 @@ public class PrescriptionItemDTO {
 
     @Override
     public String toString() {
-        return "PrescriptionItemDTO{" + "itemId=" + itemId + ", medicineName=" + medicineName + ", unit=" + unit + ", quantity=" + quantity + ", dosage=" + dosage + ", frequency=" + frequency + ", duration=" + duration + '}';
+        return "PrescriptionItemDTO{" + "id=" + id + ", prescriptionId=" + prescriptionId + ", medicineId=" + medicineId + ", medicineName=" + medicineName + ", medicineUnit=" + medicineUnit + ", medicinePrice=" + medicinePrice + ", quantity=" + quantity + ", dosage=" + dosage + ", frequency=" + frequency + ", duration=" + duration + '}';
     }
-    
+
 }

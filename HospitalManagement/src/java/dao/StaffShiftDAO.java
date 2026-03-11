@@ -16,43 +16,65 @@ import util.DbUtils;
  * @author Yuikiri
  */
 public class StaffShiftDAO {
-    public boolean insertStaffShift(StaffShift ss) {
+    // 1. PHÂN CÔNG (INSERT)
+    public boolean assignStaff(int staffId, int shiftId, String role) {
         String sql = "INSERT INTO StaffShifts (staffId, shiftId, role) VALUES (?, ?, ?)";
         try (Connection conn = new DbUtils().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, ss.getStaffId());
-            ps.setInt(2, ss.getShiftId());
-            ps.setString(3, ss.getRole());
+            ps.setInt(1, staffId);
+            ps.setInt(2, shiftId);
+            ps.setString(3, role);
             return ps.executeUpdate() > 0;
-        } catch (Exception e) { 
-            e.printStackTrace(); 
-        }
+        } catch (Exception e) { e.printStackTrace(); }
         return false;
     }
 
-    public List<StaffShiftDTO> getStaffShiftsByStaffId(int staffId) {
+    // 2. GỠ NHÂN VIÊN (DELETE)
+    public boolean removeStaffFromShift(int staffId, int shiftId) {
+        String sql = "DELETE FROM StaffShifts WHERE staffId = ? AND shiftId = ?";
+        try (Connection conn = new DbUtils().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, staffId);
+            ps.setInt(2, shiftId);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) { e.printStackTrace(); }
+        return false;
+    }
+
+    // 3. KIỂM TRA ĐỤNG LỊCH (Logic: (StartA < EndB) AND (EndA > StartB))
+    public boolean hasTimeConflict(int staffId, int targetShiftId) {
+        String sql = "SELECT 1 FROM StaffShifts ss " +
+                     "JOIN Shifts s1 ON ss.shiftId = s1.id " +
+                     "JOIN Shifts s2 ON s2.id = ? " +
+                     "WHERE ss.staffId = ? " +
+                     "AND s1.startTime < s2.endTime AND s1.endTime > s2.startTime";
+        try (Connection conn = new DbUtils().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, targetShiftId);
+            ps.setInt(2, staffId);
+            try (ResultSet rs = ps.executeQuery()) { return rs.next(); }
+        } catch (Exception e) { e.printStackTrace(); }
+        return false;
+    }
+
+    // 4. LẤY DANH SÁCH NHÂN VIÊN TRONG 1 CA
+    public List<StaffShiftDTO> getStaffsByShift(int shiftId) {
         List<StaffShiftDTO> list = new ArrayList<>();
-        String sql = "SELECT ss.staffId, ss.shiftId, ss.role, st.name AS staffName, s.startTime, s.endTime, r.roomNumber " +
+        String sql = "SELECT ss.*, st.name, s.startTime, s.endTime, r.roomNumber " +
                      "FROM StaffShifts ss " +
                      "JOIN Staffs st ON ss.staffId = st.id " +
                      "JOIN Shifts s ON ss.shiftId = s.id " +
                      "JOIN Rooms r ON s.roomId = r.id " +
-                     "WHERE ss.staffId = ?";
-                     
+                     "WHERE ss.shiftId = ?";
         try (Connection conn = new DbUtils().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, staffId);
+            ps.setInt(1, shiftId);
             try (ResultSet rs = ps.executeQuery()) {
-                SimpleDateFormat sdf = new SimpleDateFormat("HH:mm dd/MM/yyyy");
                 while (rs.next()) {
                     list.add(new StaffShiftDTO(
-                        rs.getInt("staffId"),
-                        rs.getInt("shiftId"),
-                        rs.getString("staffName"),
-                        rs.getString("role"),
-                        sdf.format(rs.getTimestamp("startTime")),
-                        sdf.format(rs.getTimestamp("endTime")),
-                        rs.getInt("roomNumber")
+                        rs.getInt("staffId"), rs.getInt("shiftId"), rs.getString("role"),
+                        rs.getString("name"), rs.getTimestamp("startTime"),
+                        rs.getTimestamp("endTime"), rs.getInt("roomNumber")
                     ));
                 }
             }

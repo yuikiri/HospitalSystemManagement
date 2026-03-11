@@ -5,6 +5,7 @@
 package controller;
 
 import dao.UserDAO;
+import dao.UserDTO;
 import entity.User;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -14,6 +15,8 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+import service.UserService;
+import util.ErrorMessages;
 
 /**
  *
@@ -29,64 +32,59 @@ public class LoginController extends HttpServlet {
      * @param response servlet response
      * @throws ServletException if a servlet-specific error occurs
      * @throws IOException if an I/O error occurs
-     */
+     */private UserService userService = new UserService();
+    
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         response.setContentType("text/html;charset=UTF-8");
-        try ( PrintWriter out = response.getWriter()) {
-            response.setContentType("text/html;charset=UTF-8");
-            request.setCharacterEncoding("UTF-8");
-            response.setCharacterEncoding("UTF-8");
+        response.setContentType("text/html;charset=UTF-8");
+        request.setCharacterEncoding("UTF-8");
+        
+        String url = "index.jsp";
+        HttpSession session = request.getSession();
 
-            String url = "index.jsp"; // LƯU Ý: Mặc định nếu lỗi thì quay về trang chủ
-            HttpSession session = request.getSession();
+        // 1. Nếu đã có Session, đẩy thẳng vào Dashboard
+        if (session.getAttribute("user") != null) {
+            UserDTO user = (UserDTO) session.getAttribute("user");
+            url = getDashboardUrl(user.getRole());
+        } 
+        // 2. Nếu chưa, xử lý Đăng nhập
+        else {
+            String email = request.getParameter("txtEmail");
+            String password = request.getParameter("txtPassword");
 
-            // LƯU Ý: Khớp với code của bạn, dùng session name là "user"
-            if (session.getAttribute("user") == null) {
+            if (email != null && password != null) {
+                try {
+                    // Gọi Service (Trả về DTO - Chuẩn hệ thống)
+                    UserDTO user = userService.authenticate(email, password);
+                    
+                    // Lưu DTO vào session để dùng ở các trang JSP
+                    session.setAttribute("user", user);
+                    url = getDashboardUrl(user.getRole());
+                    
+                    // Dùng sendRedirect để URL sạch đẹp (Tránh lỗi F5 lặp form)
+                    response.sendRedirect(url);
+                    return; 
 
-                // LƯU Ý: Đổi tên biến cho khớp form mới (txtUsername, txtPassword)
-                String txtEmail = request.getParameter("txtEmail");
-                String txtPassword = request.getParameter("txtPassword");
-
-                UserDAO udao = new UserDAO();
-                User user = udao.checkLogin(txtEmail, txtPassword); 
-
-                if (user != null) {
-                    if (user.getIsActive() == 1) {
-                        session.setAttribute("user", user);
-
-                        // LƯU Ý: Biến role đã được .trim() bên DAO nên giờ sẽ chạy chuẩn 100%
-                        String role = user.getRole().toLowerCase();
-                        if(role.equals("admin")) url = "component/admin/adminDashboard.jsp";
-                        else if(role.equals("doctor")) url = "component/doctor/doctorDashboard.jsp";
-                        else if(role.equals("staff")) url = "component/staff/staffDashboard.jsp";
-                        else url = "component/patient/patientDashboard.jsp";
-
-                    } else {
-                        request.setAttribute("message", "Tài khoản của bạn đã bị khóa!"); 
-                        request.setAttribute("tempEmail", txtEmail); // Giữ lại email
-                        url = "index.jsp";
-                    }
-                } else {
-                    request.setAttribute("message", "Email hoặc mật khẩu không chính xác!");
-                    request.setAttribute("tempEmail", txtEmail); // Giữ lại email
+                } catch (ErrorMessages.AppException e) {
+                    // Bắt lỗi từ ErrorMessages (Sai pass, Bị khóa...)
+                    request.setAttribute("message", e.getMessage());
+                    request.setAttribute("tempEmail", email);
                     url = "index.jsp";
                 }
-
-            } else {
-                // LƯU Ý: Nếu đã có session thì chuyển thẳng vào dashboard tương ứng
-                User user = (User) session.getAttribute("user");
-                String role = user.getRole().toLowerCase();
-                if(role.equals("admin")) url = "component/admin/adminDashboard.jsp";
-                else if(role.equals("doctor")) url = "component/doctor/doctorDashboard.jsp";
-                else if(role.equals("staff")) url = "component/staff/staffDashboard.jsp";
-                else url = "component/patient/patientDashboard.jsp";
             }
-        
-            // Chuyen trang
-            RequestDispatcher rd = request.getRequestDispatcher(url);
-            rd.forward(request, response);
-            
+        }
+
+        request.getRequestDispatcher(url).forward(request, response);
+    }
+
+    private String getDashboardUrl(String role) {
+        if (role == null) return "index.jsp";
+        switch (role.toLowerCase().trim()) {
+            case "admin": return "component/admin/adminDashboard.jsp";
+            case "doctor": return "component/doctor/doctorDashboard.jsp";
+            case "staff": return "component/staff/staffDashboard.jsp";
+            default: return "component/patient/patientDashboard.jsp";
         }
     }
 

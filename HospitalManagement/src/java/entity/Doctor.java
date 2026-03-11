@@ -3,10 +3,9 @@ package entity;
 
 public class Doctor {
     private int id;
-    private User user; 
-    
+    private int userId;
     private String name;
-    private int gender; // Vẫn giữ nguyên kiểu số nguyên (1, 2) của Database
+    private int gender; // 1: Nam, 0: Nữ
     private String position;
     private String phone;
     private String licenseNumber;
@@ -15,9 +14,9 @@ public class Doctor {
     public Doctor() {
     }
 
-    public Doctor(int id, User user, String name, int gender, String position, String phone, String licenseNumber) {
+    public Doctor(int id, int userId, String name, int gender, String position, String phone, String licenseNumber) {
         this.id = id;
-        this.user = user;
+        this.userId = userId;
         this.name = name;
         this.gender = gender;
         this.position = position;
@@ -29,8 +28,8 @@ public class Doctor {
         return id;
     }
 
-    public User getUser() {
-        return user;
+    public int getUserId() {
+        return userId;
     }
 
     public String getName() {
@@ -55,7 +54,7 @@ public class Doctor {
 
     @Override
     public String toString() {
-        return "Doctor{" + "id=" + id + ", user=" + user + ", name=" + name + ", gender=" + gender + ", position=" + position + ", phone=" + phone + ", licenseNumber=" + licenseNumber + '}';
+        return "Doctor{" + "id=" + id + ", userId=" + userId + ", name=" + name + ", gender=" + gender + ", position=" + position + ", phone=" + phone + ", licenseNumber=" + licenseNumber + '}';
     }
 
     

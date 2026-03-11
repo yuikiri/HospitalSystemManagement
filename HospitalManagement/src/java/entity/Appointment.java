@@ -17,14 +17,15 @@ public class Appointment {
     private int roomId;
     private Timestamp startTime;
     private Timestamp endTime;
-    private String status;
+    private String status; // 'pending', 'confirmed', 'cancelled', 'completed'
     private Timestamp createdAt;
+    private int isActive;
     //constructor
 
     public Appointment() {
     }
 
-    public Appointment(int id, int patientId, int doctorId, int roomId, Timestamp startTime, Timestamp endTime, String status, Timestamp createdAt) {
+    public Appointment(int id, int patientId, int doctorId, int roomId, Timestamp startTime, Timestamp endTime, String status, Timestamp createdAt, int isActive) {
         this.id = id;
         this.patientId = patientId;
         this.doctorId = doctorId;
@@ -33,6 +34,7 @@ public class Appointment {
         this.endTime = endTime;
         this.status = status;
         this.createdAt = createdAt;
+        this.isActive = isActive;
     }
 
     public int getId() {
@@ -67,11 +69,13 @@ public class Appointment {
         return createdAt;
     }
 
-    @Override
-    public String toString() {
-        return "Appointment{" + "id=" + id + ", patientId=" + patientId + ", doctorId=" + doctorId + ", roomId=" + roomId + ", startTime=" + startTime + ", endTime=" + endTime + ", status=" + status + ", createdAt=" + createdAt + '}';
+    public int getIsActive() {
+        return isActive;
     }
 
-    
-    
+    @Override
+    public String toString() {
+        return "Appointment{" + "id=" + id + ", patientId=" + patientId + ", doctorId=" + doctorId + ", roomId=" + roomId + ", startTime=" + startTime + ", endTime=" + endTime + ", status=" + status + ", createdAt=" + createdAt + ", isActive=" + isActive + '}';
+    }
+
 }

@@ -7,76 +7,105 @@ package dao;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.Timestamp;
-import java.text.SimpleDateFormat;
 import util.DbUtils;
-import entity.Payment;
+import java.util.ArrayList;
+import java.util.List;
 /**
  *
  * @author Yuikiri
  */
 public class PaymentDAO {
-    // 1. Tạo hóa đơn mới (Khi bệnh nhân vừa khám xong)
-    public boolean insertPayment(Payment p) {
-        String sql = "INSERT INTO Payments (medicalRecordId, totalAmount, paymentMethod, status, paidAt) VALUES (?, ?, ?, ?, ?)";
+    /// Lấy thông tin Bệnh nhân xuyên qua Bệnh án và Lịch hẹn
+    private final String SELECT_JOIN_SQL = 
+        "SELECT pay.*, mr.diagnosis, pat.name AS patientName " +
+        "FROM Payments pay " +
+        "JOIN MedicalRecords mr ON pay.medicalRecordId = mr.id " +
+        "JOIN Appointments a ON mr.appointmentId = a.id " +
+        "JOIN Patients pat ON a.patientId = pat.id ";
+
+    // 1. DÀNH CHO THU NGÂN (Lấy các hóa đơn Đang hoạt động)
+    public List<PaymentDTO> getAllActivePayments() {
+        List<PaymentDTO> list = new ArrayList<>();
+        // Ưu tiên hiện các hóa đơn 'unpaid' (chưa thanh toán) lên đầu bảng
+        String sql = SELECT_JOIN_SQL + "WHERE pay.isActive = 1 ORDER BY pay.status DESC, pay.id DESC";
         try (Connection conn = new DbUtils().getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            
-            ps.setInt(1, p.getMedicalRecordId());
-            ps.setBigDecimal(2, p.getTotalAmount());
-            ps.setString(3, p.getPaymentMethod());
-            ps.setString(4, p.getStatus());
-            ps.setTimestamp(5, p.getPaidAt()); // Nếu 'pending' thì có thể truyền null
-            
-            return ps.executeUpdate() > 0;
-            
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                list.add(extractDTO(rs));
+            }
         } catch (Exception e) { e.printStackTrace(); }
-        return false;
+        return list;
     }
 
-    // 2. Lấy thông tin Hóa đơn theo MedicalRecordId (để Thu ngân in ra)
-    public PaymentDTO getPaymentByMedicalRecordId(int medicalRecordId) {
-        String sql = "SELECT pay.id, pay.medicalRecordId, pat.name AS patientName, mr.diagnosis, " +
-                     "pay.totalAmount, pay.paymentMethod, pay.status, pay.paidAt " +
-                     "FROM Payments pay " +
-                     "JOIN MedicalRecords mr ON pay.medicalRecordId = mr.id " +
-                     "JOIN Appointments a ON mr.appointmentId = a.id " +
-                     "JOIN Patients pat ON a.patientId = pat.id " +
-                     "WHERE pay.medicalRecordId = ?";
-                     
+    // 2. DÀNH CHO ADMIN QUẢN LÝ DOANH THU
+    public List<PaymentDTO> getAllPaymentsForAdmin() {
+        List<PaymentDTO> list = new ArrayList<>();
+        String sql = SELECT_JOIN_SQL + "ORDER BY pay.id DESC";
+        try (Connection conn = new DbUtils().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                list.add(extractDTO(rs));
+            }
+        } catch (Exception e) { e.printStackTrace(); }
+        return list;
+    }
+
+    // TÌM HÓA ĐƠN THEO BỆNH ÁN (Ràng buộc UNIQUE)
+    public PaymentDTO getByMedicalRecordId(int medicalRecordId) {
+        String sql = SELECT_JOIN_SQL + "WHERE pay.medicalRecordId = ?";
         try (Connection conn = new DbUtils().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
-            
             ps.setInt(1, medicalRecordId);
-            
             try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    Timestamp paidAt = rs.getTimestamp("paidAt");
-                    String paidAtStr = (paidAt != null) ? new SimpleDateFormat("HH:mm dd/MM/yyyy").format(paidAt) : "Chưa thanh toán";
-                    
-                    return new PaymentDTO(
-                        rs.getInt("id"),
-                        rs.getInt("medicalRecordId"),
-                        rs.getString("patientName"),
-                        rs.getString("diagnosis"),
-                        rs.getBigDecimal("totalAmount"),
-                        rs.getString("paymentMethod"),
-                        rs.getString("status"),
-                        paidAtStr
-                    );
-                }
+                if (rs.next()) return extractDTO(rs);
             }
         } catch (Exception e) { e.printStackTrace(); }
         return null;
     }
 
-    // 3. Cập nhật trạng thái "Đã thanh toán"
-    public boolean markAsPaid(int paymentId, String method) {
+    private PaymentDTO extractDTO(ResultSet rs) throws Exception {
+        return new PaymentDTO(
+            rs.getInt("id"), rs.getInt("medicalRecordId"), 
+            rs.getString("patientName"), rs.getString("diagnosis"),
+            rs.getDouble("totalAmount"), rs.getString("paymentMethod"), 
+            rs.getString("status"), rs.getTimestamp("paidAt"), rs.getInt("isActive")
+        );
+    }
+
+    // 3. TẠO HÓA ĐƠN MỚI (Mặc định 'unpaid', paidAt = NULL, isActive = 1)
+    public boolean insertPayment(int medicalRecordId, double totalAmount) {
+        // Lúc mới tạo chưa thu tiền nên paymentMethod có thể để NULL hoặc rỗng
+        String sql = "INSERT INTO Payments (medicalRecordId, totalAmount, status, isActive) VALUES (?, ?, 'unpaid', 1)";
+        try (Connection conn = new DbUtils().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, medicalRecordId);
+            ps.setDouble(2, totalAmount);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) { e.printStackTrace(); }
+        return false;
+    }
+
+    // 4. XÁC NHẬN ĐÃ THU TIỀN (Chuyển sang 'paid' và lưu lại thời gian đóng tiền)
+    public boolean markAsPaid(int id, String paymentMethod) {
         String sql = "UPDATE Payments SET status = 'paid', paymentMethod = ?, paidAt = GETDATE() WHERE id = ?";
         try (Connection conn = new DbUtils().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, method);
-            ps.setInt(2, paymentId);
+            ps.setString(1, paymentMethod); // 'cash', 'card', 'banking'
+            ps.setInt(2, id);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) { e.printStackTrace(); }
+        return false;
+    }
+
+    // 5. XÓA MỀM (Hủy hóa đơn do tính sai)
+    public boolean togglePaymentStatus(int id, int isActive) {
+        String sql = "UPDATE Payments SET isActive = ? WHERE id = ?";
+        try (Connection conn = new DbUtils().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, isActive);
+            ps.setInt(2, id);
             return ps.executeUpdate() > 0;
         } catch (Exception e) { e.printStackTrace(); }
         return false;

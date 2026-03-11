@@ -14,22 +14,24 @@ import java.sql.Timestamp;
 public class Payment {
     private int id;
     private int medicalRecordId;
-    private BigDecimal totalAmount;
-    private String paymentMethod;
-    private String status; // 'pending', 'paid', 'refunded'
-    private Timestamp paidAt;
+    private double totalAmount;
+    private String paymentMethod; // 'cash', 'card', 'banking'
+    private String status;        // 'unpaid', 'paid', 'refunded'
+    private Timestamp paidAt;     // Thời gian khách chuyển tiền
+    private int isActive;
     //constructor
 
     public Payment() {
     }
 
-    public Payment(int id, int medicalRecordId, BigDecimal totalAmount, String paymentMethod, String status, Timestamp paidAt) {
+    public Payment(int id, int medicalRecordId, double totalAmount, String paymentMethod, String status, Timestamp paidAt, int isActive) {
         this.id = id;
         this.medicalRecordId = medicalRecordId;
         this.totalAmount = totalAmount;
         this.paymentMethod = paymentMethod;
         this.status = status;
         this.paidAt = paidAt;
+        this.isActive = isActive;
     }
 
     public int getId() {
@@ -40,7 +42,7 @@ public class Payment {
         return medicalRecordId;
     }
 
-    public BigDecimal getTotalAmount() {
+    public double getTotalAmount() {
         return totalAmount;
     }
 
@@ -56,9 +58,14 @@ public class Payment {
         return paidAt;
     }
 
+    public int getIsActive() {
+        return isActive;
+    }
+
     @Override
     public String toString() {
-        return "Payment{" + "id=" + id + ", medicalRecordId=" + medicalRecordId + ", totalAmount=" + totalAmount + ", paymentMethod=" + paymentMethod + ", status=" + status + ", paidAt=" + paidAt + '}';
+        return "Payment{" + "id=" + id + ", medicalRecordId=" + medicalRecordId + ", totalAmount=" + totalAmount + ", paymentMethod=" + paymentMethod + ", status=" + status + ", paidAt=" + paidAt + ", isActive=" + isActive + '}';
     }
+
     
 }

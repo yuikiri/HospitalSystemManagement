@@ -4,50 +4,75 @@
  */
 package dao;
 
+import java.util.Date;
+
 /**
  *
  * @author Yuikiri
  */
 public class PatientDTO {
-    private final int patientId;
-    private final Integer userId;
-    private final String name;
-    private final String dobStr; // Định dạng thành chuỗi (VD: 12/05/2000)
-    private final String genderStr; // Chuyển từ int sang "Nam"/"Nữ"
-    private final String phone;
-    private final String address;
-    private final String email; // Kéo từ bảng Users (Có thể null nếu khách vãng lai)
+    private int id;
+    private Integer userId; 
+    
+    // Vay mượn từ Users (Sẽ bị NULL nếu bệnh nhân không có tài khoản)
+    private String email;
+    private String avatarUrl;
+    private Integer isActive; 
+    
+    // Gốc của Patient
+    private String name;
+    private Date dob;
+    private int gender;
+    private String phone;
+    private String address;
     //constructor
 
-    public PatientDTO(int patientId, Integer userId, String name, String dobStr, String genderStr, String phone, String address, String email) {
-        this.patientId = patientId;
-        this.userId = userId;
-        this.name = name;
-        this.dobStr = dobStr;
-        this.genderStr = genderStr;
-        this.phone = phone;
-        this.address = address;
-        this.email = email;
+    public PatientDTO() {
     }
 
-    public int getPatientId() {
-        return patientId;
+    public PatientDTO(int id, Integer userId, String email, String avatarUrl, Integer isActive, String name, Date dob, int gender, String phone, String address) {
+        this.id = id;
+        this.userId = userId;
+        this.email = email;
+        this.avatarUrl = avatarUrl;
+        this.isActive = isActive;
+        this.name = name;
+        this.dob = dob;
+        this.gender = gender;
+        this.phone = phone;
+        this.address = address;
+    }
+
+    public int getId() {
+        return id;
     }
 
     public Integer getUserId() {
         return userId;
     }
 
+    public String getEmail() {
+        return email;
+    }
+
+    public String getAvatarUrl() {
+        return avatarUrl;
+    }
+
+    public Integer getIsActive() {
+        return isActive;
+    }
+
     public String getName() {
         return name;
     }
 
-    public String getDobStr() {
-        return dobStr;
+    public Date getDob() {
+        return dob;
     }
 
-    public String getGenderStr() {
-        return genderStr;
+    public int getGender() {
+        return gender;
     }
 
     public String getPhone() {
@@ -58,13 +83,10 @@ public class PatientDTO {
         return address;
     }
 
-    public String getEmail() {
-        return email;
-    }
-
     @Override
     public String toString() {
-        return "PatientDTO{" + "patientId=" + patientId + ", userId=" + userId + ", name=" + name + ", dobStr=" + dobStr + ", genderStr=" + genderStr + ", phone=" + phone + ", address=" + address + ", email=" + email + '}';
+        return "PatientDTO{" + "id=" + id + ", userId=" + userId + ", email=" + email + ", avatarUrl=" + avatarUrl + ", isActive=" + isActive + ", name=" + name + ", dob=" + dob + ", gender=" + gender + ", phone=" + phone + ", address=" + address + '}';
     }
+
     
 }

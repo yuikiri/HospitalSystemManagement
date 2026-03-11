@@ -17,49 +17,54 @@ import java.util.List;
 import util.DbUtils;
 
 public class PrescriptionItemDAO {
-    // Thêm 1 loại thuốc vào đơn
-    public boolean insertItem(PrescriptionItem item) {
-        String sql = "INSERT INTO PrescriptionItems (prescriptionId, medicineId, quantity, dosage, frequency, duration) VALUES (?, ?, ?, ?, ?, ?)";
-        try (Connection conn = new DbUtils().getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            
-            ps.setInt(1, item.getPrescriptionId());
-            ps.setInt(2, item.getMedicineId());
-            ps.setInt(3, item.getQuantity());
-            ps.setString(4, item.getDosage());
-            ps.setString(5, item.getFrequency());
-            ps.setString(6, item.getDuration());
-            
-            return ps.executeUpdate() > 0;
-        } catch (Exception e) { e.printStackTrace(); }
-        return false;
-    }
-
-    // Lấy danh sách thuốc của 1 Đơn để hiển thị DTO
+    // Lấy toàn bộ thuốc của MỘT ĐƠN THUỐC CỤ THỂ
     public List<PrescriptionItemDTO> getItemsByPrescriptionId(int prescriptionId) {
         List<PrescriptionItemDTO> list = new ArrayList<>();
-        String sql = "SELECT pi.id, m.name AS medName, m.unit, pi.quantity, pi.dosage, pi.frequency, pi.duration " +
+        String sql = "SELECT pi.*, m.name AS medicineName, m.unit, m.price " +
                      "FROM PrescriptionItems pi " +
                      "JOIN Medicines m ON pi.medicineId = m.id " +
                      "WHERE pi.prescriptionId = ?";
-                     
         try (Connection conn = new DbUtils().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, prescriptionId);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     list.add(new PrescriptionItemDTO(
-                        rs.getInt("id"),
-                        rs.getString("medName"),
-                        rs.getString("unit"),
-                        rs.getInt("quantity"),
-                        rs.getString("dosage"),
-                        rs.getString("frequency"),
-                        rs.getString("duration")
+                        rs.getInt("id"), rs.getInt("prescriptionId"), rs.getInt("medicineId"),
+                        rs.getString("medicineName"), rs.getString("unit"), rs.getDouble("price"),
+                        rs.getInt("quantity"), rs.getString("dosage"), 
+                        rs.getString("frequency"), rs.getString("duration")
                     ));
                 }
             }
         } catch (Exception e) { e.printStackTrace(); }
         return list;
+    }
+
+    // THÊM 1 MÓN THUỐC VÀO ĐƠN
+    public boolean insertItem(int prescriptionId, int medicineId, int quantity, String dosage, String frequency, String duration) {
+        String sql = "INSERT INTO PrescriptionItems (prescriptionId, medicineId, quantity, dosage, frequency, duration) VALUES (?, ?, ?, ?, ?, ?)";
+        try (Connection conn = new DbUtils().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, prescriptionId);
+            ps.setInt(2, medicineId);
+            ps.setInt(3, quantity);
+            ps.setString(4, dosage);
+            ps.setString(5, frequency);
+            ps.setString(6, duration);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) { e.printStackTrace(); }
+        return false;
+    }
+
+    // GỠ 1 MÓN THUỐC RA KHỎI ĐƠN (Xóa cứng luôn vì nó chỉ là chi tiết)
+    public boolean deleteItem(int itemId) {
+        String sql = "DELETE FROM PrescriptionItems WHERE id = ?";
+        try (Connection conn = new DbUtils().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, itemId);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) { e.printStackTrace(); }
+        return false;
     }
 }

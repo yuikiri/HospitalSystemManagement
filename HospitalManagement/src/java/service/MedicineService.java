@@ -5,6 +5,7 @@
 package service;
 
 import dao.MedicineDAO;
+import dao.MedicineDTO;
 import java.util.List;
 import util.ErrorMessages;
 import entity.Medicine;
@@ -13,35 +14,64 @@ import entity.Medicine;
  * @author Yuikiri
  */
 public class MedicineService {
-    private final MedicineDAO medicineDAO = new MedicineDAO();
+    private MedicineDAO medicineDAO;
 
-    // Lấy toàn bộ danh sách thuốc
-    public List<Medicine> getAllMedicines() throws ErrorMessages.AppException {
-        try {
-            return medicineDAO.getAllMedicines();
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new ErrorMessages.AppException(ErrorMessages.SYSTEM_ERROR);
-        }
+    public MedicineService() {
+        this.medicineDAO = new MedicineDAO();
     }
 
-    // Lấy chi tiết 1 loại thuốc (Kiểm tra 404)
-    public Medicine getMedicineById(int id) throws ErrorMessages.AppException {
-        try {
-            Medicine medicine = medicineDAO.getMedicineById(id);
-            
-            if (medicine == null) {
-                // Ném lỗi 404 nếu ID thuốc không hợp lệ
-                throw new ErrorMessages.AppException(ErrorMessages.MEDICINE_NOT_FOUND);
-            }
-            
-            return medicine;
-            
-        } catch (ErrorMessages.AppException e) {
-            throw e; // Ném tiếp lỗi 404
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new ErrorMessages.AppException(ErrorMessages.SYSTEM_ERROR);
+    public List<MedicineDTO> getActiveList() {
+        return medicineDAO.getAllActiveMedicines();
+    }
+
+    public List<MedicineDTO> getListForAdmin() {
+        return medicineDAO.getAllMedicinesForAdmin();
+    }
+
+    public MedicineDTO getById(int id) {
+        return medicineDAO.getMedicineById(id);
+    }
+
+    // THÊM THUỐC MỚI
+    public boolean createNewMedicine(String name, String unit, double price, int stockQuantity, String description) {
+        if (price < 0 || stockQuantity < 0) {
+            return false; // Giá và Tồn kho không được âm!
         }
+        return medicineDAO.insertMedicine(name, unit, price, stockQuantity, description);
+    }
+
+    // SỬA THÔNG TIN THUỐC
+    public boolean updateMedicineInfo(int id, String name, String unit, double price, String description) {
+        if (price < 0) return false;
+        return medicineDAO.updateMedicine(id, name, unit, price, description);
+    }
+
+    // NGHIỆP VỤ NHẬP HÀNG (+ Tồn kho)
+    public boolean importStock(int id, int quantityToAdded) {
+        if (quantityToAdded <= 0) return false;
+        return medicineDAO.updateStock(id, quantityToAdded);
+    }
+
+    // NGHIỆP VỤ XUẤT THUỐC DỰA TRÊN ĐƠN (- Tồn kho)
+    public boolean dispenseMedicine(int id, int quantityToDeduct) {
+        MedicineDTO medicine = medicineDAO.getMedicineById(id);
+        if (medicine == null || quantityToDeduct <= 0) return false;
+
+        // KHO KHÔNG ĐỦ THUỐC ĐỂ PHÁT
+        if (medicine.getStockQuantity() < quantityToDeduct) {
+            return false; 
+        }
+
+        // Truyền số Âm để trừ tồn kho trong DB
+        return medicineDAO.updateStock(id, -quantityToDeduct);
+    }
+
+    // ĐÌNH CHỈ / LƯU HÀNH LẠI
+    public boolean deactivateMedicine(int id) {
+        return medicineDAO.toggleMedicineStatus(id, 0); 
+    }
+
+    public boolean activateMedicine(int id) {
+        return medicineDAO.toggleMedicineStatus(id, 1); 
     }
 }

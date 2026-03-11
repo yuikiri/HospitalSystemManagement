@@ -8,6 +8,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
 
 public class UserDAO {
     private Connection conn = null;
@@ -32,6 +34,7 @@ public class UserDAO {
                         rs.getInt("id"),
                         rs.getString("userName"),
                         rs.getString("email"),
+                            "",
                         rs.getString("passwordHash"),
                         rs.getString("role").trim(), // LƯU Ý: Thêm .trim() để sửa lỗi nhảy nhầm role
                         rs.getInt("isActive"),

@@ -4,6 +4,7 @@
  */
 package dao;
 
+import java.sql.Timestamp;
 import java.util.logging.Logger;
 
 /**
@@ -11,28 +12,34 @@ import java.util.logging.Logger;
  * @author Yuikiri
  */
 public class MedicalRecordDTO {
-    private final int recordId;
-    private final int appointmentId;
-    private final String patientName;
-    private final String doctorName;
-    private final String diagnosis;
-    private final String notes;
-    private final String createdAtStr; // Thời gian lập bệnh án
+    private int id;
+    private int appointmentId;
+    
+    private String patientName; // MỚI: Tên bệnh nhân (Lấy qua JOIN)
+    private String doctorName;  // MỚI: Tên bác sĩ (Lấy qua JOIN)
+    
+    private String diagnosis;
+    private String notes;
+    private Timestamp createdAt;
+    private int isActive;
     //constructor
-    private static final Logger LOG = Logger.getLogger(MedicalRecordDTO.class.getName());
 
-    public MedicalRecordDTO(int recordId, int appointmentId, String patientName, String doctorName, String diagnosis, String notes, String createdAtStr) {
-        this.recordId = recordId;
+    public MedicalRecordDTO() {
+    }
+
+    public MedicalRecordDTO(int id, int appointmentId, String patientName, String doctorName, String diagnosis, String notes, Timestamp createdAt, int isActive) {
+        this.id = id;
         this.appointmentId = appointmentId;
         this.patientName = patientName;
         this.doctorName = doctorName;
         this.diagnosis = diagnosis;
         this.notes = notes;
-        this.createdAtStr = createdAtStr;
+        this.createdAt = createdAt;
+        this.isActive = isActive;
     }
 
-    public int getRecordId() {
-        return recordId;
+    public int getId() {
+        return id;
     }
 
     public int getAppointmentId() {
@@ -55,17 +62,18 @@ public class MedicalRecordDTO {
         return notes;
     }
 
-    public String getCreatedAtStr() {
-        return createdAtStr;
+    public Timestamp getCreatedAt() {
+        return createdAt;
     }
 
-    public static Logger getLOG() {
-        return LOG;
+    public int getIsActive() {
+        return isActive;
     }
 
     @Override
     public String toString() {
-        return "MedicalRecordTO{" + "recordId=" + recordId + ", appointmentId=" + appointmentId + ", patientName=" + patientName + ", doctorName=" + doctorName + ", diagnosis=" + diagnosis + ", notes=" + notes + ", createdAtStr=" + createdAtStr + '}';
+        return "MedicalRecordDTO{" + "id=" + id + ", appointmentId=" + appointmentId + ", patientName=" + patientName + ", doctorName=" + doctorName + ", diagnosis=" + diagnosis + ", notes=" + notes + ", createdAt=" + createdAt + ", isActive=" + isActive + '}';
     }
+    
     
 }

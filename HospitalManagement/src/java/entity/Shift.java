@@ -15,16 +15,22 @@ public class Shift {
     private int roomId;
     private Timestamp startTime;
     private Timestamp endTime;
+    private String status; // 'scheduled', 'completed', 'cancelled'
+    private int isActive;
+    private String note;
     //constructor
 
     public Shift() {
     }
 
-    public Shift(int id, int roomId, Timestamp startTime, Timestamp endTime) {
+    public Shift(int id, int roomId, Timestamp startTime, Timestamp endTime, String status, int isActive, String note) {
         this.id = id;
         this.roomId = roomId;
         this.startTime = startTime;
         this.endTime = endTime;
+        this.status = status;
+        this.isActive = isActive;
+        this.note = note;
     }
 
     public int getId() {
@@ -43,9 +49,22 @@ public class Shift {
         return endTime;
     }
 
+    public String getStatus() {
+        return status;
+    }
+
+    public int getIsActive() {
+        return isActive;
+    }
+
+    public String getNote() {
+        return note;
+    }
+
     @Override
     public String toString() {
-        return "Shift{" + "id=" + id + ", roomId=" + roomId + ", startTime=" + startTime + ", endTime=" + endTime + '}';
+        return "Shift{" + "id=" + id + ", roomId=" + roomId + ", startTime=" + startTime + ", endTime=" + endTime + ", status=" + status + ", isActive=" + isActive + ", note=" + note + '}';
     }
+
     
 }
