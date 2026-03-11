@@ -139,7 +139,7 @@ CREATE TABLE Shifts (
 CREATE TABLE DoctorShifts (
     doctorId INT NOT NULL,
     shiftId INT NOT NULL,
-    role VARCHAR(20) CHECK (role IN ('main','support','on_call')),
+    role VARCHAR(20),
     CONSTRAINT FK_DS_Doctors FOREIGN KEY (doctorId) REFERENCES Doctors(id),
     CONSTRAINT FK_DS_Shifts FOREIGN KEY (shiftId) REFERENCES Shifts(id),
     CONSTRAINT UQ_Doctor_Shift UNIQUE (doctorId, shiftId)
@@ -149,7 +149,6 @@ CREATE TABLE DoctorShifts (
    STAFF SHIFTS
 ================================ */
 CREATE TABLE StaffShifts (
-    id INT IDENTITY PRIMARY KEY,
     staffId INT NOT NULL,
     shiftId INT NOT NULL,
     role NVARCHAR(50),

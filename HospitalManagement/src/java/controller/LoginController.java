@@ -4,12 +4,16 @@
  */
 package controller;
 
+import dao.UserDAO;
+import entity.User;
 import java.io.IOException;
 import java.io.PrintWriter;
+import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
 /**
  *
@@ -30,16 +34,59 @@ public class LoginController extends HttpServlet {
             throws ServletException, IOException {
         response.setContentType("text/html;charset=UTF-8");
         try ( PrintWriter out = response.getWriter()) {
-            /* TODO output your page here. You may use following sample code. */
-            out.println("<!DOCTYPE html>");
-            out.println("<html>");
-            out.println("<head>");
-            out.println("<title>Servlet LoginController</title>");            
-            out.println("</head>");
-            out.println("<body>");
-            out.println("<h1>Servlet LoginController at " + request.getContextPath() + "</h1>");
-            out.println("</body>");
-            out.println("</html>");
+            response.setContentType("text/html;charset=UTF-8");
+            request.setCharacterEncoding("UTF-8");
+            response.setCharacterEncoding("UTF-8");
+
+            String url = "index.jsp"; // LƯU Ý: Mặc định nếu lỗi thì quay về trang chủ
+            HttpSession session = request.getSession();
+
+            // LƯU Ý: Khớp với code của bạn, dùng session name là "user"
+            if (session.getAttribute("user") == null) {
+
+                // LƯU Ý: Đổi tên biến cho khớp form mới (txtUsername, txtPassword)
+                String txtEmail = request.getParameter("txtEmail");
+                String txtPassword = request.getParameter("txtPassword");
+
+                UserDAO udao = new UserDAO();
+                User user = udao.checkLogin(txtEmail, txtPassword); 
+
+                if (user != null) {
+                    if (user.getIsActive() == 1) {
+                        session.setAttribute("user", user);
+
+                        // LƯU Ý: Biến role đã được .trim() bên DAO nên giờ sẽ chạy chuẩn 100%
+                        String role = user.getRole().toLowerCase();
+                        if(role.equals("admin")) url = "component/admin/adminDashboard.jsp";
+                        else if(role.equals("doctor")) url = "component/doctor/doctorDashboard.jsp";
+                        else if(role.equals("staff")) url = "component/staff/staffDashboard.jsp";
+                        else url = "component/patient/patientDashboard.jsp";
+
+                    } else {
+                        request.setAttribute("message", "Tài khoản của bạn đã bị khóa!"); 
+                        request.setAttribute("tempEmail", txtEmail); // Giữ lại email
+                        url = "index.jsp";
+                    }
+                } else {
+                    request.setAttribute("message", "Email hoặc mật khẩu không chính xác!");
+                    request.setAttribute("tempEmail", txtEmail); // Giữ lại email
+                    url = "index.jsp";
+                }
+
+            } else {
+                // LƯU Ý: Nếu đã có session thì chuyển thẳng vào dashboard tương ứng
+                User user = (User) session.getAttribute("user");
+                String role = user.getRole().toLowerCase();
+                if(role.equals("admin")) url = "component/admin/adminDashboard.jsp";
+                else if(role.equals("doctor")) url = "component/doctor/doctorDashboard.jsp";
+                else if(role.equals("staff")) url = "component/staff/staffDashboard.jsp";
+                else url = "component/patient/patientDashboard.jsp";
+            }
+        
+            // Chuyen trang
+            RequestDispatcher rd = request.getRequestDispatcher(url);
+            rd.forward(request, response);
+            
         }
     }
 

@@ -6,17 +6,17 @@ package controller;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
 /**
  *
  * @author Yuikiri
  */
-public class MainController extends HttpServlet {
+public class LogoutController extends HttpServlet {
 
     /**
      * Processes requests for both HTTP <code>GET</code> and <code>POST</code>
@@ -31,33 +31,20 @@ public class MainController extends HttpServlet {
             throws ServletException, IOException {
         response.setContentType("text/html;charset=UTF-8");
         try ( PrintWriter out = response.getWriter()) {
-            request.setCharacterEncoding("UTF-8");
-            response.setCharacterEncoding("UTF-8");
+            /* TODO output your page here. You may use following sample code. */
+            response.setContentType("text/html;charset=UTF-8");
+        
+            // 1. Lấy session hiện tại
+            HttpSession session = request.getSession(false);
 
-            String action = request.getParameter("action");
-
-            // SỬA QUAN TRỌNG 1: Mặc định phải là trang chủ index.jsp thay vì welcome.jsp
-            String url = "index.jsp"; 
-
-            if (action == null) {
-                action = ""; 
+            if (session != null) {
+                // 2. Xóa bỏ toàn bộ dữ liệu trong session (User, Role, v.v.)
+                session.invalidate(); 
             }
 
-            // CHIA NHÁNH (ROUTER)
-            if(action.equals("login")){
-                url = "LoginController";
-            }else if(action.equals("logout")){
-                url = "LogoutController";
-            }else if(action.equals("register")){ 
-                // SỬA QUAN TRỌNG 2: Thêm luồng cho form Đăng ký
-                url = "RegisterController";
-            }else if(action.equals("search")){
-                url = "SearchController";
-            }
-
-            // Chuyển trang
-            RequestDispatcher rd = request.getRequestDispatcher(url);
-            rd.forward(request, response);
+            // 3. Đẩy về trang chủ index.jsp
+            // LƯU Ý: Dùng sendRedirect để trình duyệt thay đổi URL sạch sẽ về trang chủ
+            response.sendRedirect("index.jsp");
         }
     }
 
