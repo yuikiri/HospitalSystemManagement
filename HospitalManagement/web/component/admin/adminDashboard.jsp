@@ -3,7 +3,11 @@
     Created on : Mar 5, 2026, 5:19:55 PM
     Author     : Dang Khoa
 --%>
-
+các ô sidebar:
+- patient: xóa(status = 0), sua thong tin, tim kiem, total(status=1??, status=0??)
+- doctor: them bac si, xóa(status = 0), sua thong tin, tim kiem, total(status=1??, status=0??)
+- staff: them nhan vien, xóa(status = 0), sua thong tin, tim kiem, total(status=1??, status=0??)
+-
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
 <!DOCTYPE html>
 <html>
