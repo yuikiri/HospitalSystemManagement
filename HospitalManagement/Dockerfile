@@ -1,5 +1,5 @@
-# Bước 1: Sử dụng hình ảnh Tomcat 9 chính thức làm nền
-FROM tomcat:9.0-jdk11-openjdk
+# Sử dụng đúng Tomcat 9 và Java 8 khớp 100% với máy sếp
+FROM tomcat:9.0-jdk8
 
 # Bước 2: Xóa các app mặc định của Tomcat để nhẹ máy
 RUN rm -rf /usr/local/tomcat/webapps/*
