@@ -37,3 +37,11 @@ Chốt câu: DB thì lưu rời rạc thành nhiều bảng cho nhẹ, nhưng kh
   - medicine: sửa thuốc, thêm thuốc mới, ẩn thuốc, tìm kiếm theo tên thuốc(filter). trước hết phải hiển thị toàn bộ thuốc, có thể dùng lazy loading để xử lý quá tải dữ liệu.(nó hiển thị tên thuốc, công dụng, giá,....)
 - cac tab quản lý toàn cục:
   - tổng tiền của từng tháng trong năm, có thể chọn tháng và năm., khi ấn vào có tiền hóa đơn chi tiết của từng lịch khám trong lịch sử khám. trong lịch sử khám là có tiền khám bệnh và cả tiền thuốc().
+
+# Database
+
+SQL Server version: MS SQL 2019 Express
+SQL Server address: DB_Hospital_PRJ_Management.mssql.somee.com
+Login name: yuikiri_SQLLogin_2
+Login password: tibqur9648
+Connection string: workstation id=DB_Hospital_PRJ_Management.mssql.somee.com;packet size=4096;user id=yuikiri_SQLLogin_2;pwd=tibqur9648;data source=DB_Hospital_PRJ_Management.mssql.somee.com;persist security info=False;initial catalog=DB_Hospital_PRJ_Management;TrustServerCertificate=True
