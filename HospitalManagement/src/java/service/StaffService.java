@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package service;
 
 import dao.StaffDAO;
@@ -10,53 +6,87 @@ import dao.UserDAO;
 import java.util.List;
 import util.ErrorMessages;
 
-/**
- *
- * @author Yuikiri
- */
 public class StaffService {
+
     private StaffDAO staffDAO = new StaffDAO();
+    private UserDAO userDAO = new UserDAO();
 
     // =========================================================
-    // 1. LẤY THÔNG TIN HỒ SƠ
+    // 1. LẤY THÔNG TIN HỒ SƠ STAFF
     // =========================================================
     public StaffDTO getProfileByUserId(int userId) throws ErrorMessages.AppException {
+
         StaffDTO staff = staffDAO.getStaffByUserId(userId);
+
         if (staff == null) {
             throw new ErrorMessages.AppException(ErrorMessages.STAFF_NOT_FOUND);
         }
+
         return staff;
     }
 
     // =========================================================
-    // 2. CẬP NHẬT HỒ SƠ (XỬ LÝ NÚT CẬP NHẬT TRÊN APP)
+    // 2. STAFF TỰ UPDATE PROFILE
     // =========================================================
-    public void updateProfile(int staffId, String name, int gender, String position, String phone) throws ErrorMessages.AppException {
-        // A. Validate dữ liệu cơ bản
-        if (name == null || name.trim().isEmpty() || position == null || phone == null) {
+    public void updateProfile(int staffId,
+                              int userId,
+                              String email,
+                              String name,
+                              int gender,
+                              String position,
+                              String phone)
+            throws ErrorMessages.AppException {
+
+        // Validate dữ liệu
+        if (name == null || name.trim().isEmpty()
+                || email == null || email.trim().isEmpty()
+                || phone == null || phone.trim().isEmpty()) {
+
             throw new ErrorMessages.AppException(ErrorMessages.INVALID_PARAMETER);
         }
 
-        // B. Kiểm tra trùng số điện thoại
+        // Check email trùng
+        if (userDAO.checkEmailExistForUpdate(email, userId)) {
+            throw new ErrorMessages.AppException(ErrorMessages.EMAIL_EXISTED);
+        }
+
+        // Check phone trùng
         if (staffDAO.checkPhoneExist(phone, staffId)) {
             throw new ErrorMessages.AppException(ErrorMessages.PHONE_EXISTED);
         }
 
-        // C. Thực thi cập nhật dữ liệu
+        // Update email Users
+        if (!userDAO.updateEmail(userId, email)) {
+            throw new ErrorMessages.AppException(ErrorMessages.SYSTEM_ERROR);
+        }
+
+        // Update bảng Staff
         if (!staffDAO.updateStaffProfile(staffId, name, gender, position, phone)) {
             throw new ErrorMessages.AppException(ErrorMessages.SYSTEM_ERROR);
         }
     }
 
     // =========================================================
-    // 3. QUYỀN ADMIN: SỬA TRỰC TIẾP
+    // 3. ADMIN UPDATE STAFF
     // =========================================================
-    public void adminUpdateStaff(int staffId, String name, int gender, String position, String phone) throws ErrorMessages.AppException {
-        // Admin có thể chỉnh sửa mọi thứ, logic check trùng vẫn giữ để đảm bảo Data Integrity
-        updateProfile(staffId, name, gender, position, phone);
+    public void adminUpdateStaff(int staffId,
+                                 int userId,
+                                 String email,
+                                 String name,
+                                 int gender,
+                                 String position,
+                                 String phone)
+            throws ErrorMessages.AppException {
+
+        updateProfile(staffId, userId, email, name, gender, position, phone);
     }
 
+    // =========================================================
+    // 4. ADMIN LẤY DANH SÁCH STAFF
+    // =========================================================
     public List<StaffDTO> getListForAdmin() {
+
         return staffDAO.getAllActiveStaffs();
     }
+
 }

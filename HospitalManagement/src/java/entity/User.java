@@ -1,16 +1,9 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package entity;
 
 import java.sql.Timestamp;
 
-/**
- *
- * @author Yuikiri
- */
 public class User {
+
     private int id;
     private String userName;
     private String email;
@@ -19,13 +12,13 @@ public class User {
     private String role;
     private int isActive;
     private Timestamp createdAt;
-    
-    //constructor
 
+    // Constructor
     public User() {
     }
 
-    public User(int id, String userName, String email, String avatarUrl, String passwordHash, String role, int isActive, Timestamp createdAt) {
+    public User(int id, String userName, String email, String avatarUrl,
+            String passwordHash, String role, int isActive, Timestamp createdAt) {
         this.id = id;
         this.userName = userName;
         this.email = email;
@@ -36,6 +29,7 @@ public class User {
         this.createdAt = createdAt;
     }
 
+    // Getter
     public int getId() {
         return id;
     }
@@ -68,11 +62,50 @@ public class User {
         return createdAt;
     }
 
-    @Override
-    public String toString() {
-        return "User{" + "id=" + id + ", userName=" + userName + ", email=" + email + ", avatarUrl=" + avatarUrl + ", passwordHash=" + passwordHash + ", role=" + role + ", isActive=" + isActive + ", createdAt=" + createdAt + '}';
+    // Setter
+    public void setId(int id) {
+        this.id = id;
     }
 
-    
-    
+    public void setUserName(String userName) {
+        this.userName = userName;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public void setAvatarUrl(String avatarUrl) {
+        this.avatarUrl = avatarUrl;
+    }
+
+    public void setPasswordHash(String passwordHash) {
+        this.passwordHash = passwordHash;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
+    }
+
+    public void setIsActive(int isActive) {
+        this.isActive = isActive;
+    }
+
+    public void setCreatedAt(Timestamp createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    @Override
+    public String toString() {
+        return "User{" +
+                "id=" + id +
+                ", userName=" + userName +
+                ", email=" + email +
+                ", avatarUrl=" + avatarUrl +
+                ", passwordHash=" + passwordHash +
+                ", role=" + role +
+                ", isActive=" + isActive +
+                ", createdAt=" + createdAt +
+                '}';
+    }
 }

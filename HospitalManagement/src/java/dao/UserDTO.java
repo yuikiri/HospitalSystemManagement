@@ -1,25 +1,16 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package dao;
 
 import java.sql.Timestamp;
 
-/**
- *
- * @author Yuikiri
- */
 public class UserDTO {
+
     private int id;
     private String userName;
     private String email;
     private String avatarUrl;
     private String role;
-    private int isActive; // Rất quan trọng để JSP biết đường vẽ nút Khóa/Mở Khóa
+    private int isActive;
     private Timestamp createdAt;
-
-    //constructor
 
     public UserDTO() {
     }
@@ -35,7 +26,10 @@ public class UserDTO {
     }
 
     public UserDTO(int id, String userName, String email, String role) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+        this.id = id;
+        this.userName = userName;
+        this.email = email;
+        this.role = role;
     }
 
     public int getId() {
@@ -68,9 +62,14 @@ public class UserDTO {
 
     @Override
     public String toString() {
-        return "UserDTO{" + "id=" + id + ", userName=" + userName + ", email=" + email + ", avatarUrl=" + avatarUrl + ", role=" + role + ", isActive=" + isActive + ", createdAt=" + createdAt + '}';
+        return "UserDTO{" +
+                "id=" + id +
+                ", userName=" + userName +
+                ", email=" + email +
+                ", avatarUrl=" + avatarUrl +
+                ", role=" + role +
+                ", isActive=" + isActive +
+                ", createdAt=" + createdAt +
+                '}';
     }
-
-    
-    
 }

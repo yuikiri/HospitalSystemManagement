@@ -1,33 +1,28 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package dao;
 
-/**
- *
- * @author Yuikiri
- */
 public class StaffDTO {
+
     private int id;
     private int userId;
-    
-    // Vay mượn từ Users
+
+    // từ bảng Users
     private String email;
     private String avatarUrl;
     private int isActive;
-    
-    // Gốc của Staff
+    private String createdAt;
+
+    // từ bảng Staffs
     private String name;
     private int gender;
     private String position;
     private String phone;
-    //constructor
 
     public StaffDTO() {
     }
 
-    public StaffDTO(int id, int userId, String email, String avatarUrl, int isActive, String name, int gender, String position, String phone) {
+    public StaffDTO(int id, int userId, String email, String avatarUrl, int isActive,
+                    String name, int gender, String position, String phone, String createdAt) {
+
         this.id = id;
         this.userId = userId;
         this.email = email;
@@ -37,10 +32,7 @@ public class StaffDTO {
         this.gender = gender;
         this.position = position;
         this.phone = phone;
-    }
-
-    StaffDTO(int aInt, int aInt0, String string, int aInt1, String string0, String string1) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+        this.createdAt = createdAt;
     }
 
     public int getId() {
@@ -63,6 +55,10 @@ public class StaffDTO {
         return isActive;
     }
 
+    public String getCreatedAt() {
+        return createdAt;
+    }
+
     public String getName() {
         return name;
     }
@@ -81,7 +77,17 @@ public class StaffDTO {
 
     @Override
     public String toString() {
-        return "StaffDTO{" + "id=" + id + ", userId=" + userId + ", email=" + email + ", avatarUrl=" + avatarUrl + ", isActive=" + isActive + ", name=" + name + ", gender=" + gender + ", position=" + position + ", phone=" + phone + '}';
+        return "StaffDTO{" +
+                "id=" + id +
+                ", userId=" + userId +
+                ", email=" + email +
+                ", avatarUrl=" + avatarUrl +
+                ", isActive=" + isActive +
+                ", createdAt=" + createdAt +
+                ", name=" + name +
+                ", gender=" + gender +
+                ", position=" + position +
+                ", phone=" + phone +
+                '}';
     }
-
 }
