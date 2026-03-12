@@ -7,6 +7,14 @@ Requirements
 - Add lib
   sqljdbc42.jar
 
+# Database
+
+SQL Server version: MS SQL 2019 Express
+SQL Server address: DB_Hospital_PRJ_Management.mssql.somee.com
+Login name: yuikiri_SQLLogin_2
+Login password: tibqur9648
+Connection string: workstation id=DB_Hospital_PRJ_Management.mssql.somee.com;packet size=4096;user id=yuikiri_SQLLogin_2;pwd=tibqur9648;data source=DB_Hospital_PRJ_Management.mssql.somee.com;persist security info=False;initial catalog=DB_Hospital_PRJ_Management;TrustServerCertificate=True
+
 # PrescriptionDetailDTO là gì?
 
 Nó sinh ra để phục vụ cho Giao diện (Màn hình Web / Máy in).
@@ -34,14 +42,7 @@ Chốt câu: DB thì lưu rời rạc thành nhiều bảng cho nhẹ, nhưng kh
   - appointment: sửa lịch hẹn, thêm lịch hẹn, ẩn lịch hẹn, tìm kiếm theo ngày(filter), tìm kiếm theo bác sĩ(filter), tìm kiếm theo phòng(filter), phải chọn ngày trước.
   - room: sửa phòng, thêm phòng mới, ẩn phòng, tìm kiếm theo tên phòng(filter). trước hết phải hiển thị toàn bộ phòng, có thể dùng lazy loading để xử lý quá tải dữ liệu.(nó hiển thị tên phòng, loại phòng, giá,....)
   - shift: (ca trực 1 - 8, mỗi ca trực 2 tiếng). trước hết phải hiển thị 2 nút để tìm kiếm theo email của bác sĩ và nhân viên(chia trên dưới) khi ấn vào thì sẽ chỉnh sửa ca trực của bác sĩ, nv đó, hiện ra ca trực hiện tại (tuần này) của bác sĩ và nhân viên(doctor ở trên 1 bảng thời khóa biểu 2-cn, 6h-22h, staff ở dưới 1 bảng thời khóa biểu 2-cn, 6h-22h), và có thể chọn từ hôm nay tới 4 tuần để thêm mới cho từng người.
+  - Prescription: (lưu ý medicine là các loại thuốc, Prescription là đơn thuốc có các chuẩn đoán,.., PrescriptionItem là toa thuốc có nhưng thuốc j trong cái đơn đó): sem đc tổng hợp 3 cái, thông tin chuẩn đoán, thông có những thuốc j trong đơn đó, và thuốc đó bao nhiêu tiền, có tổng tiền trong đó. có thể thay đổi ẩn, và thêm thuốc mới vào đơn đó, nếu đổi hoặc thêm thì tổng tiền cũng cần đc cập nhập theo.
   - medicine: sửa thuốc, thêm thuốc mới, ẩn thuốc, tìm kiếm theo tên thuốc(filter). trước hết phải hiển thị toàn bộ thuốc, có thể dùng lazy loading để xử lý quá tải dữ liệu.(nó hiển thị tên thuốc, công dụng, giá,....)
 - cac tab quản lý toàn cục:
   - tổng tiền của từng tháng trong năm, có thể chọn tháng và năm., khi ấn vào có tiền hóa đơn chi tiết của từng lịch khám trong lịch sử khám. trong lịch sử khám là có tiền khám bệnh và cả tiền thuốc().
-
-# Database
-
-SQL Server version: MS SQL 2019 Express
-SQL Server address: DB_Hospital_PRJ_Management.mssql.somee.com
-Login name: yuikiri_SQLLogin_2
-Login password: tibqur9648
-Connection string: workstation id=DB_Hospital_PRJ_Management.mssql.somee.com;packet size=4096;user id=yuikiri_SQLLogin_2;pwd=tibqur9648;data source=DB_Hospital_PRJ_Management.mssql.somee.com;persist security info=False;initial catalog=DB_Hospital_PRJ_Management;TrustServerCertificate=True
