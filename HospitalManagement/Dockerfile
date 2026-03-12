@@ -6,7 +6,7 @@ RUN rm -rf /usr/local/tomcat/webapps/*
 
 # Bước 3: Copy file .war của sếp vào thư mục webapps của Tomcat
 # Lưu ý: Thay 'ROOT.war' bằng tên file war của sếp hoặc để ROOT.war để nó chạy ở trang chủ
-COPY target/*.war /usr/local/tomcat/webapps/ROOT.war
+COPY target/*.war /usr/local/tomcat/webapps/HospitalManagement
 
 # Bước 4: Mở cổng 8080
 EXPOSE 8080
