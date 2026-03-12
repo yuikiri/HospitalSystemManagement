@@ -37,55 +37,66 @@ public class LoginController extends HttpServlet {
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         response.setContentType("text/html;charset=UTF-8");
-        response.setContentType("text/html;charset=UTF-8");
         request.setCharacterEncoding("UTF-8");
-        
-        String url = "index.jsp";
+        response.setCharacterEncoding("UTF-8");
+
+        String url = "index.jsp"; // Mặc định nếu lỗi thì quay về trang chủ
         HttpSession session = request.getSession();
 
-        // 1. Nếu đã có Session, đẩy thẳng vào Dashboard
-        if (session.getAttribute("user") != null) {
-            UserDTO user = (UserDTO) session.getAttribute("user");
-            url = getDashboardUrl(user.getRole());
-        } 
-        // 2. Nếu chưa, xử lý Đăng nhập
-        else {
-            String email = request.getParameter("txtEmail");
-            String password = request.getParameter("txtPassword");
+        // 1. NẾU CHƯA ĐĂNG NHẬP
+        if (session.getAttribute("user") == null) {
 
-            if (email != null && password != null) {
-                try {
-                    // Gọi Service (Trả về DTO - Chuẩn hệ thống)
-                    UserDTO user = userService.authenticate(email, password);
-                    
-                    // Lưu DTO vào session để dùng ở các trang JSP
+            // Lấy dữ liệu từ form (Khớp với name trong index.jsp của sếp)
+            String txtEmail = request.getParameter("txtEmail");
+            String txtPassword = request.getParameter("txtPassword");
+
+            UserDAO udao = new UserDAO();
+            User user = udao.checkLogin(txtEmail, txtPassword); 
+
+            if (user != null) {
+                if (user.getIsActive() == 1) {
+                    // LƯU SESSION
                     session.setAttribute("user", user);
-                    url = getDashboardUrl(user.getRole());
-                    
-                    // Dùng sendRedirect để URL sạch đẹp (Tránh lỗi F5 lặp form)
-                    response.sendRedirect(url);
-                    return; 
 
-                } catch (ErrorMessages.AppException e) {
-                    // Bắt lỗi từ ErrorMessages (Sai pass, Bị khóa...)
-                    request.setAttribute("message", e.getMessage());
-                    request.setAttribute("tempEmail", email);
+                    String role = user.getRole().toLowerCase().trim();
+                    if(role.equals("admin")) url = "component/admin/adminDashboard.jsp";
+                    else if(role.equals("doctor")) url = "component/doctor/doctorDashboard.jsp";
+                    else if(role.equals("staff")) url = "component/staff/staffDashboard.jsp";
+                    else url = "component/patient/patientDashboard.jsp";
+
+                    // ĐĂNG NHẬP THÀNH CÔNG: DÙNG REDIRECT ĐỂ ÉP NHẢY TRANG
+                    response.sendRedirect(url);
+                    return; // Chốt hạ tại đây, không chạy xuống dưới nữa
+
+                } else {
+                    request.setAttribute("message", "Tài khoản của bạn đã bị khóa!"); 
+                    request.setAttribute("tempEmail", txtEmail); 
                     url = "index.jsp";
                 }
+            } else {
+                request.setAttribute("message", "Email hoặc mật khẩu không chính xác!");
+                request.setAttribute("tempEmail", txtEmail); 
+                url = "index.jsp";
             }
-        }
 
-        request.getRequestDispatcher(url).forward(request, response);
-    }
+        } else {
+            // 2. NẾU ĐÃ ĐĂNG NHẬP TỪ TRƯỚC
+            User user = (User) session.getAttribute("user");
+            String role = user.getRole().toLowerCase().trim();
+            
+            if(role.equals("admin")) url = "component/admin/adminDashboard.jsp";
+            else if(role.equals("doctor")) url = "component/doctor/doctorDashboard.jsp";
+            else if(role.equals("staff")) url = "component/staff/staffDashboard.jsp";
+            else url = "component/patient/patientDashboard.jsp";
 
-    private String getDashboardUrl(String role) {
-        if (role == null) return "index.jsp";
-        switch (role.toLowerCase().trim()) {
-            case "admin": return "component/admin/adminDashboard.jsp";
-            case "doctor": return "component/doctor/doctorDashboard.jsp";
-            case "staff": return "component/staff/staffDashboard.jsp";
-            default: return "component/patient/patientDashboard.jsp";
+            // ĐÃ CÓ SESSION: DÙNG REDIRECT ĐỂ NHẢY TRANG
+            response.sendRedirect(url);
+            return; // Chốt hạ tại đây
         }
+        
+        // ĐOẠN NÀY CHỈ CHẠY KHI ĐĂNG NHẬP THẤT BẠI (Để đẩy biến message về index.jsp)
+        RequestDispatcher rd = request.getRequestDispatcher(url);
+        rd.forward(request, response);
     }
 
     // <editor-fold defaultstate="collapsed" desc="HttpServlet methods. Click on the + sign on the left to edit the code.">

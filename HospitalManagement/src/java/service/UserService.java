@@ -19,99 +19,89 @@ import util.ErrorMessages;
  * @author Yuikiri
  */
 public class UserService {
-//    private UserDAO userDAO = new UserDAO();
-//
-//    // =========================================================
-//    // 1. ĐĂNG NHẬP
-//    // =========================================================
-//    public UserDTO login(String email, String password) throws ErrorMessages.AppException {
-//        if (email == null || password == null) throw new ErrorMessages.AppException(ErrorMessages.INVALID_PARAMETER);
-//        
-//        UserDTO user = userDAO.loginUser(email.trim(), password);
-//        if (user == null) throw new ErrorMessages.AppException(ErrorMessages.INVALID_CREDENTIALS);
-//        if (user.getIsActive() == 0) throw new ErrorMessages.AppException(ErrorMessages.ACCOUNT_BANNED);
-//        
-//        return user;
-//    }
-//
-//    // =========================================================
-//    // 1. YÊU CẦU ĐĂNG KÝ 
-//    // =========================================================
-//    public void registerPatient(String name, String email, String pass) throws ErrorMessages.AppException {
-//        // 1. Validate dữ liệu thô
-//        if (name == null || name.trim().isEmpty() || email == null || pass == null) {
-//            throw new ErrorMessages.AppException(ErrorMessages.INVALID_PARAMETER);
-//        }
-//
-//        // 2. Chống trùng Email
-//        if (userDAO.checkEmailExist(email, -1)) {
-//            throw new ErrorMessages.AppException(ErrorMessages.EMAIL_EXISTED);
-//        }
-//
-//        // 3. Thực thi Transaction qua DAO
-//        boolean isSuccess = userDAO.registerPatientTransaction(name, email, pass);
-//        
-//        if (!isSuccess) {
-//            throw new ErrorMessages.AppException(ErrorMessages.SYSTEM_ERROR);
-//        }
-//    }
-//
-//    // =========================================================
-//    // 4. YÊU CẦU ĐỔI EMAIL/PASS (GỬI MAIL XÁC NHẬN)
-//    // =========================================================
-//    public void requestChangeSecurity(int userId, String newEmail, String newPassword) throws ErrorMessages.AppException {
-//        if (newEmail != null && userDAO.checkEmailExist(newEmail, userId)) {
-//            throw new ErrorMessages.AppException(ErrorMessages.EMAIL_EXISTED);
-//        }
-//        // Gửi link xác nhận đến mail hiện tại. Khi click Link mới gọi hàm thực thi bên dưới.
-//        System.out.println("Hệ thống: Đã gửi link xác thực thay đổi bảo mật.");
-//    }
-//
-//    public void confirmChangeSecurity(int userId, String newEmail, String newPassword) throws ErrorMessages.AppException {
-//        if (!userDAO.updateSecurityInfo(userId, newEmail, newPassword)) {
-//            throw new ErrorMessages.AppException(ErrorMessages.SYSTEM_ERROR);
-//        }
-//    }
-//
-//    // =========================================================
-//    // 5. ĐẶC QUYỀN ADMIN (SỬA TRỰC TIẾP KHÔNG QUA MAIL)
-//    // =========================================================
-//    public void adminModifyUser(int userId, String userName, String email, String password) throws ErrorMessages.AppException {
-//        if (userDAO.checkEmailExist(email, userId)) throw new ErrorMessages.AppException(ErrorMessages.EMAIL_EXISTED);
-//
-//        if (!userDAO.adminUpdateUserDirectly(userId, userName, email, password)) {
-//            throw new ErrorMessages.AppException(ErrorMessages.USER_NOT_FOUND);
-//        }
-//    }
-//
-//    // =========================================================
-//    // 6. KHÓA TÀI KHOẢN (ADMIN)
-//    // =========================================================
-//    public void toggleUser(int userId, int isActive) throws ErrorMessages.AppException {
-//        if (!userDAO.toggleUserStatus(userId, isActive)) {
-//            throw new ErrorMessages.AppException(ErrorMessages.USER_NOT_FOUND);
-//        }
-//    }
-//
-//    public boolean isEmailAvailable(String email) {
-//        return !userDAO.checkEmailExist(email, -1);
-//    }
-    private final UserDAO userDAO = new UserDAO();
+private final UserDAO userDAO = new UserDAO();
 
-    // Ném ra AppException thay vì Exception chung chung
+    // =========================================================
+    // 1. LUỒNG ĐĂNG NHẬP (Khách & Hệ thống)
+    // =========================================================
+    
     public UserDTO authenticate(String email, String password) throws ErrorMessages.AppException {
         User user = userDAO.checkLogin(email, password);
 
         if (user == null) {
-            // Ném lỗi 401
+            // Ném lỗi 401: Sai tài khoản / mật khẩu
             throw new ErrorMessages.AppException(ErrorMessages.INVALID_CREDENTIALS);
         }
 
         if (user.getIsActive() == 0) {
-            // Ném lỗi 403 (Forbidden / Banned)
+            // Ném lỗi 403: Tài khoản đã bị Admin khóa (Soft Delete)
             throw new ErrorMessages.AppException(ErrorMessages.ACCOUNT_BANNED);
         }
 
+        // Trả về DTO để Controller lưu vào Session
         return new UserDTO(user.getId(), user.getUserName(), user.getEmail(), user.getRole());
+    }
+
+    // =========================================================
+    // 2. LUỒNG ĐĂNG KÝ BỆNH NHÂN (Từ index.jsp)
+    // =========================================================
+    
+    public void registerNewPatient(String name, String email, String password, String phone, String address) throws ErrorMessages.AppException {
+        // Kiểm tra email tồn tại
+        if (userDAO.checkEmailExist(email)) {
+            throw new ErrorMessages.AppException(ErrorMessages.EMAIL_EXISTED);
+        }
+
+        // Thực thi Transaction DAO
+        boolean isSuccess = userDAO.registerPatient(name, email, password, phone, address);
+        
+        if (!isSuccess) {
+            throw new ErrorMessages.AppException(ErrorMessages.SYSTEM_ERROR);
+        }
+    }
+
+    // =========================================================
+    // 3. QUYỀN ADMIN: LẤY DANH SÁCH & QUẢN LÝ
+    // =========================================================
+
+    public List<User> getAllUsersForAdmin() {
+        return userDAO.getAllUsers();
+    }
+
+    // Admin tạo tài khoản mới
+    public void addUserByAdmin(String name, String email, String password, String role) throws ErrorMessages.AppException {
+        if (name == null || email == null || password == null || role == null) {
+            throw new ErrorMessages.AppException(ErrorMessages.INVALID_PARAMETER);
+        }
+        
+        if (userDAO.checkEmailExist(email)) {
+            throw new ErrorMessages.AppException(ErrorMessages.EMAIL_EXISTED);
+        }
+
+        boolean isSuccess = userDAO.addUserByAdminTransaction(name, email, password, role);
+        if (!isSuccess) {
+            throw new ErrorMessages.AppException(ErrorMessages.SYSTEM_ERROR);
+        }
+    }
+
+    // Admin cập nhật tài khoản
+    public void updateUserByAdmin(int userId, String name, String email, String role) throws ErrorMessages.AppException {
+        // Kiểm tra trùng email nhưng bỏ qua chính User đang được cập nhật
+        if (userDAO.checkEmailExistForUpdate(email, userId)) {
+            throw new ErrorMessages.AppException(ErrorMessages.EMAIL_EXISTED);
+        }
+
+        boolean isSuccess = userDAO.updateUserByAdmin(userId, name, email, role);
+        if (!isSuccess) {
+            throw new ErrorMessages.AppException(ErrorMessages.SYSTEM_ERROR);
+        }
+    }
+
+    // Admin Khóa / Mở khóa tài khoản (Xóa mềm)
+    public void toggleUserStatus(int userId, int newStatus) throws ErrorMessages.AppException {
+        // Status: 0 = Khóa, 1 = Hoạt động
+        if (!userDAO.toggleUserStatus(userId, newStatus)) {
+            throw new ErrorMessages.AppException(ErrorMessages.USER_NOT_FOUND);
+        }
     }
 }

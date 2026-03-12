@@ -5,6 +5,8 @@
 package controller;
 
 import dao.UserDAO;
+import dao.UserDTO;
+import entity.User;
 import java.io.IOException;
 import java.io.PrintWriter;
 import javax.servlet.RequestDispatcher;
@@ -12,6 +14,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 import service.UserService;
 import util.ErrorMessages;
 
@@ -34,52 +37,64 @@ public class RegisterController extends HttpServlet {
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         response.setContentType("text/html;charset=UTF-8");
-        try ( PrintWriter out = response.getWriter()) {
-            response.setContentType("text/html;charset=UTF-8");
-            request.setCharacterEncoding("UTF-8");
-            response.setCharacterEncoding("UTF-8");
+        request.setCharacterEncoding("UTF-8");
+        response.setCharacterEncoding("UTF-8");
 
-            String url = "index.jsp"; // LƯU Ý: Đăng ký xong (hoặc lỗi) đều quay về trang chủ để hiện Modal
+        String url = "index.jsp";
+        HttpSession session = request.getSession();
 
-            // 1. Lấy dữ liệu từ Form gửi lên
-            String name = request.getParameter("username");
-            String email = request.getParameter("email");
-            String pass = request.getParameter("password");
-            // Tôi lấy thêm phone và address theo đúng Form gốc ban đầu của bạn
-            String phone = request.getParameter("phone");
-            String address = request.getParameter("address");
+        // 1. LẤY DỮ LIỆU TỪ FORM (Khớp 100% với name trong index.jsp của sếp)
+        String name = request.getParameter("username");
+        String email = request.getParameter("email");
+        String password = request.getParameter("password");
+        String phone = request.getParameter("phone");
 
-            UserDAO userDAO = new UserDAO();
+        UserDAO udao = new UserDAO();
 
-            // 2. KIỂM TRA TRÙNG EMAIL
-            if (userDAO.checkEmailExist(email)) {
-                // LƯU Ý: Trả về lỗi nếu Email đã tồn tại trong DB
-                request.setAttribute("regError", "Email này đã được sử dụng. Vui lòng chọn Email khác!");
+        // 2. KIỂM TRA TRÙNG EMAIL
+        if (udao.checkEmailExist(email)) {
+            // Lỗi: Bắn thông báo về form
+            request.setAttribute("regError", "Email này đã được sử dụng! Vui lòng chọn email khác.");
+            request.setAttribute("tempName", name);
+            request.setAttribute("tempEmail", email);
+            request.setAttribute("tempPhone", phone);
+            url = "index.jsp";
+        } else {
+            // 3. THỰC HIỆN ĐĂNG KÝ (Truyền chuỗi rỗng "" cho address vì form index không có)
+            boolean isSuccess = udao.registerPatient(name, email, password, phone, "");
 
-                // Giữ lại các thông tin người dùng đã nhập để họ không phải gõ lại từ đầu
+            if (isSuccess) {
+                // ==========================================
+                // 4. AUTO-LOGIN: VỪA ĐĂNG KÝ XONG LÀ ĐĂNG NHẬP LUÔN
+                // ==========================================
+                User user = udao.checkLogin(email, password);
+                
+                if (user != null && user.getIsActive() == 1) {
+                    session.setAttribute("user", user);
+                    url = "component/patient/patientDashboard.jsp";
+
+                    // ĐĂNG NHẬP THÀNH CÔNG: ÉP NHẢY TRANG BẰNG REDIRECT
+                    response.sendRedirect(url);
+                    return; // Chốt hạ tại đây, không chạy xuống dưới nữa
+                } else {
+                    // Phòng hờ trường hợp hy hữu
+                    request.setAttribute("regSuccess", "Đăng ký thành công! Vui lòng đăng nhập.");
+                    url = "index.jsp";
+                }
+            } else {
+                request.setAttribute("regError", "Lỗi hệ thống! Không thể đăng ký lúc này.");
                 request.setAttribute("tempName", name);
                 request.setAttribute("tempEmail", email);
                 request.setAttribute("tempPhone", phone);
-                request.setAttribute("tempAddress", address);
-            } else {
-                // 3. TIẾN HÀNH ĐĂNG KÝ
-                boolean isSuccess = userDAO.registerPatient(name, email, pass, phone, address);
-
-                if (isSuccess) {
-                    // LƯU Ý: Đăng ký thành công thì báo xanh
-                    request.setAttribute("regSuccess", "Đăng ký thành công! Vui lòng đăng nhập.");
-                } else {
-                    // LƯU Ý: Lỗi hệ thống (VD: rớt mạng DB)
-                    request.setAttribute("regError", "Hệ thống đang bận, không thể đăng ký lúc này!");
-                    request.setAttribute("tempName", name);
-                    request.setAttribute("tempEmail", email);
-                }
+                url = "index.jsp";
             }
-
-            // Chuyển trang (Giữ nguyên request để truyền thông báo lỗi/thành công sang JSP)
-            RequestDispatcher rd = request.getRequestDispatcher(url);
-            rd.forward(request, response);
         }
+
+        // ==========================================
+        // CHỈ DÙNG FORWARD KHI BỊ LỖI (Để đẩy biến regError về index.jsp)
+        // ==========================================
+        RequestDispatcher rd = request.getRequestDispatcher(url);
+        rd.forward(request, response);
     }
 
     // <editor-fold defaultstate="collapsed" desc="HttpServlet methods. Click on the + sign on the left to edit the code.">

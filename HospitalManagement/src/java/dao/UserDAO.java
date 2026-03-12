@@ -12,18 +12,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class UserDAO {
-    private Connection conn = null;
-    private PreparedStatement ps = null;
-    private ResultSet rs = null;
+    // =========================================================
+    // 1. LUỒNG ĐĂNG NHẬP & KIỂM TRA
+    // =========================================================
 
-    /**
-     * Hàm kiểm tra đăng nhập
-     * Sử dụng PreparedStatement để chống SQL Injection
-     */
-    // 1. CHỈ ĐĂNG NHẬP BẰNG EMAIL & BẮT BUỘC ĐÚNG MẬT KHẨU
     public User checkLogin(String email, String password) {
-        // Dùng AND để bắt buộc cả email và pass phải khớp
-        String sql = "SELECT * FROM Users WHERE email = ? AND passwordHash = ? AND isActive = 1";
+        // LƯU Ý: Không check isActive ở đây nữa để Service bắt lỗi 403 (Banned)
+        String sql = "SELECT * FROM Users WHERE email = ? AND passwordHash = ?";
         try (Connection conn = new DbUtils().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, email);
@@ -34,32 +29,34 @@ public class UserDAO {
                         rs.getInt("id"),
                         rs.getString("userName"),
                         rs.getString("email"),
-                            "",
+                        "", // avatarUrl
                         rs.getString("passwordHash"),
-                        rs.getString("role").trim(), // LƯU Ý: Thêm .trim() để sửa lỗi nhảy nhầm role
+                        rs.getString("role").trim(),
                         rs.getInt("isActive"),
                         rs.getTimestamp("createdAt")
                     );
                 }
             }
         } catch (Exception e) { e.printStackTrace(); }
-        return null; // Sai pass hoặc sai email sẽ trả về null
+        return null; 
     }
 
-    // 2. HÀM CHỐNG TRÙNG EMAIL (Dùng cho đăng ký)
     public boolean checkEmailExist(String email) {
         String sql = "SELECT id FROM Users WHERE email = ?";
         try (Connection conn = new DbUtils().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, email);
             try (ResultSet rs = ps.executeQuery()) {
-                return rs.next(); // Nếu có data -> true (đã trùng)
+                return rs.next();
             }
         } catch (Exception e) { e.printStackTrace(); }
         return true; 
     }
-    
-    // LƯU Ý: Thêm hàm này vào UserDAO.java
+
+    // =========================================================
+    // 2. ĐĂNG KÝ BỆNH NHÂN (TỪ INDEX.JSP) - DÙNG TRANSACTION
+    // =========================================================
+
     public boolean registerPatient(String name, String email, String password, String phone, String address) {
         Connection conn = null;
         PreparedStatement psUser = null;
@@ -68,85 +65,162 @@ public class UserDAO {
 
         try {
             conn = new DbUtils().getConnection();
-            
-            // KỸ THUẬT QUAN TRỌNG: Tắt auto commit để quản lý Transaction
             conn.setAutoCommit(false); 
 
-            // ==========================================
-            // BƯỚC 1: THÊM VÀO BẢNG USERS (Mặc định role = 'patient')
-            // ==========================================
+            // BƯỚC 1: THÊM VÀO BẢNG USERS
             String sqlUser = "INSERT INTO Users (userName, email, passwordHash, role, isActive, createdAt) VALUES (?, ?, ?, 'patient', 1, GETDATE())";
-            // Cờ Statement.RETURN_GENERATED_KEYS dùng để lấy lại cái ID mà SQL Server vừa tạo ra
-            psUser = conn.prepareStatement(sqlUser, java.sql.Statement.RETURN_GENERATED_KEYS);
+            psUser = conn.prepareStatement(sqlUser, Statement.RETURN_GENERATED_KEYS);
             psUser.setString(1, name);
             psUser.setString(2, email);
-            psUser.setString(3, password); // Thực tế sau này có thể hash pass ở đây
+            psUser.setString(3, password); 
             
-            int affectedRows = psUser.executeUpdate();
-            if (affectedRows == 0) {
-                conn.rollback(); // Bị lỗi thì hủy bỏ toàn bộ
-                return false;
+            if (psUser.executeUpdate() == 0) {
+                conn.rollback(); return false;
             }
 
-            // Hứng lấy cái userId vừa được sinh ra
+            // Lấy userId vừa sinh ra
             int newUserId = -1;
             rs = psUser.getGeneratedKeys();
-            if (rs.next()) {
-                newUserId = rs.getInt(1);
-            } else {
-                conn.rollback();
-                return false;
-            }
+            if (rs.next()) newUserId = rs.getInt(1);
+            else { conn.rollback(); return false; }
 
-            // ==========================================
             // BƯỚC 2: THÊM VÀO BẢNG PATIENTS
-            // ==========================================
             String sqlPatient = "INSERT INTO Patients (userId, name, phone, address) VALUES (?, ?, ?, ?)";
             psPatient = conn.prepareStatement(sqlPatient);
-            psPatient.setInt(1, newUserId); // Gắn ID của bảng Users sang làm khóa ngoại
+            psPatient.setInt(1, newUserId);
             psPatient.setString(2, name);
             psPatient.setString(3, phone);
             psPatient.setString(4, address);
-            
             psPatient.executeUpdate();
 
-            // Nếu code chạy trót lọt tới đây mà không bị văng lỗi -> CHỐT DỮ LIỆU
             conn.commit();
             return true;
 
         } catch (Exception e) {
-            // Nếu có bất kỳ lỗi gì (VD: mất mạng giữa chừng, lỗi CSDL) -> UNDO TOÀN BỘ
-            try {
-                if (conn != null) {
-                    conn.rollback(); 
-                }
-            } catch (java.sql.SQLException ex) {
-                ex.printStackTrace();
-            }
+            try { if (conn != null) conn.rollback(); } catch (SQLException ex) { ex.printStackTrace(); }
             e.printStackTrace();
+            return false;
         } finally {
-            // Dọn dẹp bộ nhớ
             try { if (rs != null) rs.close(); } catch (Exception e) {}
             try { if (psPatient != null) psPatient.close(); } catch (Exception e) {}
             try { if (psUser != null) psUser.close(); } catch (Exception e) {}
-            try { 
-                if (conn != null) { 
-                    conn.setAutoCommit(true); // Bật lại trạng thái mặc định cho Connection Pool
-                    conn.close(); 
-                } 
-            } catch (Exception e) {}
+            try { if (conn != null) { conn.setAutoCommit(true); conn.close(); } } catch (Exception e) {}
         }
+    }
+
+    // =========================================================
+    // 3. QUYỀN ADMIN (QUẢN LÝ TÀI KHOẢN, STATUS, UPDATE)
+    // =========================================================
+
+    // Check trùng email khi Admin Cập nhật (Bỏ qua ID hiện tại)
+    public boolean checkEmailExistForUpdate(String email, int excludeUserId) {
+        String sql = "SELECT id FROM Users WHERE email = ? AND id != ?";
+        try (Connection conn = new DbUtils().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, email);
+            ps.setInt(2, excludeUserId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next(); 
+            }
+        } catch (Exception e) { e.printStackTrace(); }
+        return true; 
+    }
+
+    // Lấy toàn bộ danh sách User cho Admin
+    public List<User> getAllUsers() {
+        List<User> list = new ArrayList<>();
+        String sql = "SELECT * FROM Users ORDER BY id DESC";
+        try (Connection conn = new DbUtils().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                list.add(new User(
+                    rs.getInt("id"), rs.getString("userName"), rs.getString("email"), "", "",
+                    rs.getString("role").trim(), rs.getInt("isActive"), rs.getTimestamp("createdAt")
+                ));
+            }
+        } catch (Exception e) { e.printStackTrace(); }
+        return list;
+    }
+
+    // Admin Cập nhật thông tin User
+    public boolean updateUserByAdmin(int userId, String userName, String email, String role) {
+        String sql = "UPDATE Users SET userName = ?, email = ?, role = ? WHERE id = ?";
+        try (Connection conn = new DbUtils().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, userName);
+            ps.setString(2, email);
+            ps.setString(3, role);
+            ps.setInt(4, userId);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) { e.printStackTrace(); }
         return false;
     }
 
+    // Khóa / Mở khóa tài khoản (Xóa mềm - Status = 1 / 0)
+    public boolean toggleUserStatus(int userId, int newStatus) {
+        String sql = "UPDATE Users SET isActive = ? WHERE id = ?";
+        try (Connection conn = new DbUtils().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, newStatus);
+            ps.setInt(2, userId);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) { e.printStackTrace(); }
+        return false;
+    }
 
-    private void closeResources() {
+    // Admin thêm User mới (Kèm tạo Profile trống bên Doctor/Staff/Patient)
+    public boolean addUserByAdminTransaction(String userName, String email, String password, String role) {
+        Connection conn = null;
+        PreparedStatement psUser = null, psProfile = null;
+        ResultSet rs = null;
+
         try {
-            if (rs != null) rs.close();
-            if (ps != null) ps.close();
-            if (conn != null) conn.close();
-        } catch (SQLException e) {
+            conn = new DbUtils().getConnection();
+            conn.setAutoCommit(false); 
+
+            // 1. Tạo User
+            String sqlUser = "INSERT INTO Users (userName, email, passwordHash, role, isActive, createdAt) VALUES (?, ?, ?, ?, 1, GETDATE())";
+            psUser = conn.prepareStatement(sqlUser, Statement.RETURN_GENERATED_KEYS);
+            psUser.setString(1, userName);
+            psUser.setString(2, email);
+            psUser.setString(3, password);
+            psUser.setString(4, role);
+            psUser.executeUpdate();
+
+            rs = psUser.getGeneratedKeys();
+            int newUserId = -1;
+            if (rs.next()) newUserId = rs.getInt(1);
+            else { conn.rollback(); return false; }
+
+            // 2. Tạo Profile
+            String sqlProfile = "";
+            if (role.equalsIgnoreCase("doctor")) {
+                sqlProfile = "INSERT INTO Doctors (userId, name, position, licenseNumber) VALUES (?, ?, 'Chưa cập nhật', 'Chưa cập nhật')";
+            } else if (role.equalsIgnoreCase("staff")) {
+                sqlProfile = "INSERT INTO Staffs (userId, name, position) VALUES (?, ?, 'Chưa cập nhật')";
+            } else if (role.equalsIgnoreCase("patient")) {
+                sqlProfile = "INSERT INTO Patients (userId, name) VALUES (?, ?)";
+            }
+
+            if (!sqlProfile.isEmpty()) {
+                psProfile = conn.prepareStatement(sqlProfile);
+                psProfile.setInt(1, newUserId);
+                psProfile.setString(2, userName);
+                psProfile.executeUpdate();
+            }
+
+            conn.commit();
+            return true;
+        } catch (Exception e) {
+            try { if (conn != null) conn.rollback(); } catch (SQLException ex) { ex.printStackTrace(); }
             e.printStackTrace();
+            return false;
+        } finally {
+            try { if (rs != null) rs.close(); } catch (Exception e) {}
+            try { if (psProfile != null) psProfile.close(); } catch (Exception e) {}
+            try { if (psUser != null) psUser.close(); } catch (Exception e) {}
+            try { if (conn != null) { conn.setAutoCommit(true); conn.close(); } } catch (Exception e) {}
         }
     }
 }
