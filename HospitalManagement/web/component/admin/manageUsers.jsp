@@ -7,6 +7,7 @@ List<User> userList = (List<User>) request.getAttribute("userList");
 %>
 
 <!DOCTYPE html>
+
 <html>
 
 <head>
@@ -58,15 +59,35 @@ background:#dc3545;
 User Management
 </h3>
 
+
+<a href="AdminController" class="btn btn-secondary">
+
+<i class="fa fa-home"></i>
+Admin Dashboard
+
+</a>
+
+</div>
+
+<div class="mb-3 text-end">
+
+<a href="AdminController?action=trashUsers" class="btn btn-dark">
+<i class="fa fa-trash"></i> Trash
+</a>
+
+</div>
+
 <form action="AdminController" method="get" class="row g-3 mb-4">
 
 <input type="hidden" name="action" value="users">
 
 <div class="col-md-5">
+
 <input type="text"
 name="email"
 class="form-control"
 placeholder="Search email...">
+
 </div>
 
 <div class="col-md-3">
@@ -118,7 +139,7 @@ Reset
 <th>Email</th>
 <th>Role</th>
 <th>Status</th>
-<th width="180">Action</th>
+<th width="200">Action</th>
 
 </tr>
 
@@ -154,7 +175,7 @@ for(User u : userList){
 
 <%
 
-if(u.getIsActive()==1){
+if(u.getIsActive() == 1){
 
 %>
 
@@ -164,7 +185,7 @@ Active
 
 <%
 
-}else{
+}else if(u.getIsActive() == 0){
 
 %>
 
@@ -182,6 +203,13 @@ Inactive
 
 <td>
 
+<a href="AdminController?action=toggleUser&id=<%=u.getId()%>"
+class="btn btn-secondary btn-sm">
+
+<i class="fa fa-toggle-on"></i>
+
+</a>
+
 <a href="AdminController?action=editUser&id=<%=u.getId()%>"
 class="btn btn-warning btn-sm">
 
@@ -190,7 +218,8 @@ class="btn btn-warning btn-sm">
 </a>
 
 <a href="AdminController?action=deleteUser&id=<%=u.getId()%>"
-class="btn btn-danger btn-sm">
+class="btn btn-danger btn-sm"
+onclick="return confirm('Are you sure to delete this user?')">
 
 <i class="fa fa-trash"></i>
 
@@ -201,8 +230,11 @@ class="btn btn-danger btn-sm">
 </tr>
 
 <%
+
 }
+
 }
+
 %>
 
 </tbody>

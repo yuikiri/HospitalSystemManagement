@@ -155,6 +155,15 @@
             <a href="<%=request.getContextPath()%>/AdminController?action=medicine">
                 <i class="fa fa-briefcase-medical"></i> <span>Kho dược</span>
             </a>
+                <li class="nav-item mt-4">
+
+<a href="<%=request.getContextPath()%>/LogoutController">
+<i class="fa fa-sign-out-alt"></i> 
+<span>Đăng xuất</span>
+</a>
+
+</li>
+
         </div>
     </div>
 

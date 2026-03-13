@@ -77,7 +77,9 @@ public List<User> getAllUsers(){
 
     List<User> list = new ArrayList<>();
 
-    String sql = "SELECT * FROM Users";
+    String sql = "SELECT * FROM Users\n" +
+"WHERE isActive != -1\n" +
+"ORDER BY id DESC";
 
     try{
 
@@ -232,25 +234,17 @@ list.add(u);
     // LOCK USER
     // ==============================
 
-    public boolean toggleUserStatus(int userId, int newStatus) {
+   public void toggleUserStatus(int id) throws Exception {
 
-        String sql = "UPDATE Users SET isActive=? WHERE id=?";
+    String sql = "UPDATE Users SET isActive = CASE WHEN isActive = 1 THEN 0 ELSE 1 END WHERE id = ? AND isActive != -1";
 
-        try (Connection conn = new DbUtils().getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+    Connection conn = DbUtils.getConnection();
+    PreparedStatement ps = conn.prepareStatement(sql);
 
-            ps.setInt(1, newStatus);
-            ps.setInt(2, userId);
+    ps.setInt(1, id);
 
-            return ps.executeUpdate() > 0;
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        return false;
-    }
-
+    ps.executeUpdate();
+}
     // ==============================
     // ADD USER BY ADMIN
     // ==============================
@@ -415,4 +409,52 @@ public boolean updateEmail(int userId, String email){
 
     return false;
 }
+public List<User> getDeletedUsers() throws Exception {
+
+    List<User> list = new ArrayList<>();
+
+    String sql = "SELECT * FROM Users WHERE isActive = -1";
+
+    Connection conn = DbUtils.getConnection();
+    PreparedStatement ps = conn.prepareStatement(sql);
+    ResultSet rs = ps.executeQuery();
+
+    while(rs.next()){
+
+        User u = new User();
+
+        u.setId(rs.getInt("id"));
+        u.setUserName(rs.getString("userName"));
+        u.setEmail(rs.getString("email"));
+        u.setRole(rs.getString("role"));
+        u.setIsActive(rs.getInt("isActive"));
+
+        list.add(u);
+    }
+
+    return list;
+}
+public void restoreUser(int id) throws Exception {
+
+    String sql = "UPDATE Users SET isActive = 1 WHERE id = ?";
+
+    Connection conn = DbUtils.getConnection();
+    PreparedStatement ps = conn.prepareStatement(sql);
+
+    ps.setInt(1, id);
+
+    ps.executeUpdate();
+}
+public void deleteUser(int id) throws Exception {
+
+    String sql = "UPDATE Users SET isActive = -1 WHERE id = ?";
+
+    Connection conn = DbUtils.getConnection();
+    PreparedStatement ps = conn.prepareStatement(sql);
+
+    ps.setInt(1, id);
+
+    ps.executeUpdate();
+}
+
 }

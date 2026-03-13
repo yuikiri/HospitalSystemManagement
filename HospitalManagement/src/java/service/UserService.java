@@ -105,18 +105,27 @@ public class UserService {
     // =========================================================
     // 6. ADMIN LOCK / UNLOCK USER
     // =========================================================
-    public void toggleUserStatus(int userId, int newStatus)
-            throws ErrorMessages.AppException {
+   public void toggleUserStatus(int id) throws Exception {
 
-        if (!userDAO.toggleUserStatus(userId, newStatus)) {
-            throw new ErrorMessages.AppException(ErrorMessages.USER_NOT_FOUND);
-        }
-    }
-    public List<User> searchUsers(String email, String isActive){
+    userDAO.toggleUserStatus(id);
 
-    UserDAO dao = new UserDAO();
+}
+   public List<User> searchUsers(String email, String isActive) throws Exception {
 
-    return dao.searchUsers(email, isActive);
+    return userDAO.searchUsers(email, isActive);
+
+}
+   public void deleteUser(int id) throws Exception{
+    userDAO.deleteUser(id);
+}
+   public List<User> getDeletedUsers() throws Exception {
+
+    return userDAO.getDeletedUsers();
+
+}
+   public void restoreUser(int id) throws Exception {
+
+    userDAO.restoreUser(id);
 
 }
 }
