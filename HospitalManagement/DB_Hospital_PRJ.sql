@@ -167,7 +167,7 @@ CREATE TABLE StaffShifts (
 CREATE TABLE Appointments (
     id INT IDENTITY PRIMARY KEY,
     patientId INT NOT NULL,
-    doctorId INT NOT NULL,
+    doctorId INT NULL,
     roomId INT NOT NULL,
     startTime DATETIME2 NOT NULL,
 	endTime DATETIME2,
