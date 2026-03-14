@@ -332,7 +332,9 @@ INSERT INTO RoomType (name, price, createdAt, isActive) VALUES
 (N'Phòng Nội Soi Dạ Dày', 800000.00, GETDATE(), 1),
 (N'Phòng Xét Nghiệm Máu', 100000.00, GETDATE(), 1),
 (N'Phòng Tiêm Chủng', 50000.00, GETDATE(), 1),
-(N'Phòng Tập Vật Lý Trị Liệu', 300000.00, GETDATE(), 1);
+(N'Phòng Tập Vật Lý Trị Liệu', 300000.00, GETDATE(), 1),
+
+(N'Khám Mặc Định (Miễn phí)', 0.00, GETDATE(), 1);
 
 -- 4. DOCTORS (20 Bác sĩ - UserID từ 2 đến 21)
 INSERT INTO Doctors (userId, name, gender, position, phone, licenseNumber) VALUES
@@ -435,8 +437,18 @@ INSERT INTO Rooms (departmentId, roomType, roomNumber, status, isActive) VALUES
 (7, 2, 303, 'available', 1), (7, 6, 304, 'available', 1),  -- Khoa Chấn Thương
 (8, 1, 401, 'available', 1), (8, 17, 402, 'available', 1), -- Khoa Tai Mũi Họng
 (9, 1, 403, 'available', 1), (9, 3, 404, 'available', 1),  -- Khoa RHM
-(10, 1, 501, 'available', 1), (10, 6, 502, 'available', 1);-- Khoa Mắt
+(10, 1, 501, 'available', 1), (10, 6, 502, 'available', 1),-- Khoa Mắt
 
+(1, 21, 901, 'available', 1), -- Cho Khoa Tim Mạch
+(2, 21, 902, 'available', 1), -- Cho Khoa Nhi
+(3, 21, 903, 'available', 1), -- Cho Khoa Nội
+(4, 21, 904, 'available', 1), -- Cho Khoa Ngoại Thần Kinh
+(5, 21, 905, 'available', 1), -- Cho Khoa Sản
+(6, 21, 906, 'available', 1), -- Cho Khoa Cấp Cứu
+(7, 21, 907, 'available', 1), -- Cho Khoa Chấn Thương
+(8, 21, 908, 'available', 1), -- Cho Khoa Tai Mũi Họng
+(9, 21, 909, 'available', 1), -- Cho Khoa RHM
+(10, 21, 910, 'available', 1); -- Cho Khoa Mắt
 -- 10. SHIFTS (Tạo 20 Ca trực tại các phòng)
 INSERT INTO Shifts (roomId, startTime, endTime, status, isActive, note) VALUES
 (1, '2026-03-12 07:00:00', '2026-03-12 11:00:00', 'scheduled', 1, N'Ca Sáng T.Mạch'),
