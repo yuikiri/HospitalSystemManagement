@@ -457,4 +457,23 @@ public void deleteUser(int id) throws Exception {
     ps.executeUpdate();
 }
 
+    //=====================================================
+    //////////////////////////////////////Hoàng
+    //=====================================================
+    // UPDATE AVATAR
+    public boolean updateAvatar(int userId, String avatarUrl) {
+        String sql = "UPDATE Users SET avatarUrl = ? WHERE id = ?";
+        try (Connection conn = new DbUtils().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, avatarUrl);
+            ps.setInt(2, userId);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+    //=====================================================
+    //=====================================================
+
 }

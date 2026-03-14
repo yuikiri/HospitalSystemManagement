@@ -64,9 +64,24 @@ public class LoginController extends HttpServlet {
 
                         url = "component/staff/staffDashboard.jsp";
                     } 
+                    // ==============================
+                    /////////////////////Hoàng
+                    // ==============================
                     else {
+                        service.PatientService patientService = new service.PatientService();
+                        try {
+                            // Gọi hàm lấy Patient dựa vào User ID
+                            dao.PatientDTO patient = patientService.getPatientByUserId(user.getId());
+                            // Lưu đối tượng patient lên session để JSP lấy ra dùng
+                            session.setAttribute("patient", patient);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+
                         url = "component/patient/patientDashboard.jsp";
                     }
+                    // ==============================
+                    // ==============================
 
                     response.sendRedirect(url);
                     return;
