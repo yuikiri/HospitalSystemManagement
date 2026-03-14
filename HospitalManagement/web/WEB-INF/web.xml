@@ -30,6 +30,22 @@
         <servlet-name>AdminUserController</servlet-name>
         <servlet-class>controller.AdminUserController</servlet-class>
     </servlet>
+    <servlet>
+        <servlet-name>RequestChangeEmailController</servlet-name>
+        <servlet-class>controller.RequestChangeEmailController</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>RequestChangePasswordController</servlet-name>
+        <servlet-class>controller.RequestChangePasswordController</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>VerifyEmailController</servlet-name>
+        <servlet-class>controller.VerifyEmailController</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>VerifyPasswordController</servlet-name>
+        <servlet-class>controller.VerifyPasswordController</servlet-class>
+    </servlet>
     <servlet-mapping>
         <servlet-name>MainController</servlet-name>
         <url-pattern>/MainController</url-pattern>
@@ -54,6 +70,22 @@
     <servlet-mapping>
         <servlet-name>AdminUserController</servlet-name>
         <url-pattern>/AdminUserController</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>RequestChangeEmailController</servlet-name>
+        <url-pattern>/RequestChangeEmailController</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>RequestChangePasswordController</servlet-name>
+        <url-pattern>/RequestChangePasswordController</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>VerifyEmailController</servlet-name>
+        <url-pattern>/VerifyEmailController</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>VerifyPasswordController</servlet-name>
+        <url-pattern>/VerifyPasswordController</url-pattern>
     </servlet-mapping>
     <session-config>
         <session-timeout>30</session-timeout>

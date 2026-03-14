@@ -473,6 +473,33 @@ public void deleteUser(int id) throws Exception {
         }
         return false;
     }
+    // 1. Kiểm tra Email đã tồn tại chưa (Dùng khi đổi Email)
+    
+
+    // 3. Kiểm tra Mật khẩu hiện tại (Dùng bảo mật)
+    public boolean checkCurrentPassword(int userId, String currentPassword) {
+        String sql = "SELECT id FROM Users WHERE id = ? AND passwordHash = ?";
+        try (Connection conn = new util.DbUtils().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, userId);
+            ps.setString(2, currentPassword);
+            ResultSet rs = ps.executeQuery();
+            return rs.next();
+        } catch (Exception e) { e.printStackTrace(); }
+        return false;
+    }
+
+    // 4. Cập nhật Mật khẩu mới
+    public boolean updatePassword(int userId, String newPassword) {
+        String sql = "UPDATE Users SET passwordHash = ? WHERE id = ?";
+        try (Connection conn = new util.DbUtils().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, newPassword);
+            ps.setInt(2, userId);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) { e.printStackTrace(); }
+        return false;
+    }
     //=====================================================
     //=====================================================
 
