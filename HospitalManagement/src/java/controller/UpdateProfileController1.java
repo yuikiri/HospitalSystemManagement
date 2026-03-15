@@ -1,5 +1,6 @@
 package controller;
 
+import dao.DoctorDTO;
 import dao.PatientDTO;
 import dao.StaffDAO;
 import dao.StaffDTO;
@@ -97,51 +98,37 @@ public class UpdateProfileController1 extends HttpServlet {
         // RẼ NHÁNH 3: LUỒNG CỦA DOCTOR 
         // ==========================================
         else if (role.equals("doctor")) {
-            // Dashboard gộp nên chuyển hướng về chính nó
-            String redirectUrl = "doctordashboard.jsp";
+            String redirectUrl = "doctordDashboard.jsp"; // Lưu ý: kiểm tra lại tên file jsp (có dư chữ 'd' không)
 
             try {
-                // 1. Lấy dữ liệu từ Request (Khớp với các name trong thẻ input của Dashboard)
-                // Lưu ý: DoctorDTO của bạn dùng doctorId, ta lấy từ đối tượng DoctorDTO đang lưu trong session
-                dao.DoctorDTO currentDoctor = (dao.DoctorDTO) session.getAttribute("user");
-                int doctorId = currentDoctor.getId();
-
+                int doctorId = Integer.parseInt(request.getParameter("doctorId"));
+                int userId = currentUser.getId(); // Lấy từ session để fetch lại data
+                
+                // Lấy các trường chuẩn của Doctor
                 String name = request.getParameter("name");
-                String phone = request.getParameter("phone");
+                int gender = Integer.parseInt(request.getParameter("gender"));
                 String position = request.getParameter("position");
+                String phone = request.getParameter("phone");
                 String licenseNumber = request.getParameter("licenseNumber");
 
-                // Xử lý gender (mặc định 1 nếu form không gửi hoặc lỗi)
-                int gender = 1;
-                try {
-                    gender = Integer.parseInt(request.getParameter("gender"));
-                } catch (Exception e) {
-                    /* giữ mặc định */ }
+                // Gọi Service xử lý
+                DoctorService doctorService = new DoctorService();
+                doctorService.updateDoctor1(doctorId, name, gender, position, phone, licenseNumber);
 
-                // 2. Gọi Service xử lý (Đúng theo cấu trúc DoctorService của bạn)
-                service.DoctorService doctorService = new service.DoctorService();
-                doctorService.updateProfile(doctorId, name, gender, position, phone, licenseNumber);
+                // Cập nhật lại session mới nhất cho Doctor (dùng hàm getProfileByUserId đã có)
+                DoctorDTO updatedDoctor = doctorService.getProfileByUserId(userId);
+                session.setAttribute("doctor", updatedDoctor);
 
-                // 3. Cập nhật lại session mới nhất sau khi lưu thành công
-                dao.DoctorDTO updatedDoctor = doctorService.getProfileByUserId(currentDoctor.getUserId());
-                session.setAttribute("user", updatedDoctor);
-
-                // Thông báo thành công (tùy chọn)
-                session.setAttribute("successMessage", "Cập nhật hồ sơ thành công!");
                 response.sendRedirect(redirectUrl);
 
-            } catch (util.ErrorMessages.AppException e) {
-                // Bắt lỗi nghiệp vụ (trùng SĐT, trống dữ liệu...) từ DoctorService
-                e.printStackTrace();
-                session.setAttribute("errorMessage", e.getMessage());
-                response.sendRedirect(redirectUrl);
             } catch (Exception e) {
                 e.printStackTrace();
-                session.setAttribute("errorMessage", "Hệ thống gặp sự cố: " + e.getMessage());
+                // Bắt lỗi và báo lên UI
+                session.setAttribute("errorMessage", e.getMessage());
                 response.sendRedirect(redirectUrl);
             }
-            return;
-        }
+            return; 
+        } // ==========================================
 
         // Nếu không thuộc Role nào thì đá về trang chủ
         response.sendRedirect("index.jsp");
