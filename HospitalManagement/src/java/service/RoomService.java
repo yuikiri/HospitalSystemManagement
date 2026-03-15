@@ -22,7 +22,7 @@ public class RoomService {
 
     // 1. Lấy danh sách
     public List<RoomDTO> getActiveList() {
-        return roomDAO.getAllActiveRooms();
+        return roomDAO.getAllActiveRoomsAvailable();
     }
 
     public List<RoomDTO> getListForAdmin() {
@@ -63,4 +63,8 @@ public class RoomService {
     public boolean activateRoom(int id) {
         return roomDAO.toggleRoomStatus(id, 1); 
     }
+    
+    public int getDefaultRoomByDepartment(int departmentId){
+    return roomDAO.getDefaultRoomByDepartment(departmentId);
+}
 }

@@ -35,6 +35,20 @@ public class RequestChangePasswordController extends HttpServlet {
         HttpSession session = request.getSession();
         User currentUser = (User) session.getAttribute("user");
         
+        
+        
+        
+        User user = (User) session.getAttribute("user");
+        if (user == null || !user.getRole().equals("patient")) {
+            response.sendRedirect(request.getContextPath() + "/login.jsp");
+            return;
+        }
+        
+        
+        
+        
+        
+        
         String currentPass = request.getParameter("currentPassword");
         String newPass = request.getParameter("newPassword");
         String confirmPass = request.getParameter("confirmPassword");

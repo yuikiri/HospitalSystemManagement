@@ -32,21 +32,7 @@
     .change-avt-btn:hover { transform: scale(1.1); background: #2b3674; }
 </style>
 
-<c:if test="${not empty sessionScope.errorMessage}">
-    <div class="alert alert-danger alert-dismissible fade show mb-4 shadow-sm rounded-3" role="alert">
-        <i class="fas fa-exclamation-triangle me-2"></i> ${sessionScope.errorMessage}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-    <c:remove var="errorMessage" scope="session" />
-</c:if>
-
-<c:if test="${not empty sessionScope.successMessage}">
-    <div class="alert alert-success alert-dismissible fade show mb-4 shadow-sm rounded-3" role="alert">
-        <i class="fas fa-check-circle me-2"></i> ${sessionScope.successMessage}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-    <c:remove var="successMessage" scope="session" />
-</c:if>
+<%-- ĐÃ XÓA SẠCH CODE THÔNG BÁO CŨ Ở ĐÂY ĐỂ TRÁNH TRÙNG LẶP --%>
 
 <c:set var="defaultAvatar" value="https://ui-avatars.com/api/?name=${sessionScope.user.userName}&background=4361ee&color=fff&size=150" />
 

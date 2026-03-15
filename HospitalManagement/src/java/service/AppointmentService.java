@@ -9,7 +9,10 @@ import dao.AppointmentDTO;
 import java.util.List;
 import util.ErrorMessages;
 import entity.Appointment;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.Timestamp;
+import util.DbUtils;
 
 /**
  *
@@ -66,4 +69,11 @@ public class AppointmentService {
     public boolean activateAppointment(int id) {
         return appointmentDAO.toggleAppointmentActive(id, 1); // Khôi phục từ thùng rác
     }
+    
+    //=========================================================
+    ////////////////////////Hoàng
+    //=========================================================
+  
+    //=====================================
+    //=====================================
 }
