@@ -9,13 +9,15 @@ import java.sql.Date;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.*;
+import service.DoctorService;
 import service.PatientService;
+
 @WebServlet("/UpdateProfileController1")
 public class UpdateProfileController1 extends HttpServlet {
 
-@Override
-protected void doPost(HttpServletRequest request, HttpServletResponse response)
-        throws ServletException, IOException {
+    @Override
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
 
         request.setCharacterEncoding("UTF-8");
         HttpSession session = request.getSession();
@@ -52,7 +54,7 @@ protected void doPost(HttpServletRequest request, HttpServletResponse response)
             if (check) {
                 StaffDTO staff = dao.getStaffByUserId(userId);
                 session.setAttribute("staff", staff);
-                
+
                 currentUser.setEmail(email);
                 session.setAttribute("user", currentUser);
 
@@ -61,9 +63,7 @@ protected void doPost(HttpServletRequest request, HttpServletResponse response)
                 response.sendRedirect("updateProfile.jsp");
             }
             return; // Dừng luôn luồng Staff tại đây
-        }
-
-        // ==========================================
+        } // ==========================================
         // ///////////////////Hoàng patient
         // ==========================================
         else if (role.equals("patient")) {
@@ -94,20 +94,58 @@ protected void doPost(HttpServletRequest request, HttpServletResponse response)
                 response.sendRedirect(redirectUrl);
             }
             return; // Dừng luồng Patient tại đây
-        }
-
-        // ==========================================
+        } // ==========================================
         // RẼ NHÁNH 3: LUỒNG CỦA DOCTOR 
         // ==========================================
         else if (role.equals("doctor")) {
-            // Nhường đất cho bạn code phần Doctor
-            // response.sendRedirect("component/doctor/doctorDashboard.jsp");
+            // Dashboard gộp nên chuyển hướng về chính nó
+            String redirectUrl = "doctordashboard.jsp";
+
+            try {
+                // 1. Lấy dữ liệu từ Request (Khớp với các name trong thẻ input của Dashboard)
+                // Lưu ý: DoctorDTO của bạn dùng doctorId, ta lấy từ đối tượng DoctorDTO đang lưu trong session
+                dao.DoctorDTO currentDoctor = (dao.DoctorDTO) session.getAttribute("user");
+                int doctorId = currentDoctor.getId();
+
+                String name = request.getParameter("name");
+                String phone = request.getParameter("phone");
+                String position = request.getParameter("position");
+                String licenseNumber = request.getParameter("licenseNumber");
+
+                // Xử lý gender (mặc định 1 nếu form không gửi hoặc lỗi)
+                int gender = 1;
+                try {
+                    gender = Integer.parseInt(request.getParameter("gender"));
+                } catch (Exception e) {
+                    /* giữ mặc định */ }
+
+                // 2. Gọi Service xử lý (Đúng theo cấu trúc DoctorService của bạn)
+                service.DoctorService doctorService = new service.DoctorService();
+                doctorService.updateProfile(doctorId, name, gender, position, phone, licenseNumber);
+
+                // 3. Cập nhật lại session mới nhất sau khi lưu thành công
+                dao.DoctorDTO updatedDoctor = doctorService.getProfileByUserId(currentDoctor.getUserId());
+                session.setAttribute("user", updatedDoctor);
+
+                // Thông báo thành công (tùy chọn)
+                session.setAttribute("successMessage", "Cập nhật hồ sơ thành công!");
+                response.sendRedirect(redirectUrl);
+
+            } catch (util.ErrorMessages.AppException e) {
+                // Bắt lỗi nghiệp vụ (trùng SĐT, trống dữ liệu...) từ DoctorService
+                e.printStackTrace();
+                session.setAttribute("errorMessage", e.getMessage());
+                response.sendRedirect(redirectUrl);
+            } catch (Exception e) {
+                e.printStackTrace();
+                session.setAttribute("errorMessage", "Hệ thống gặp sự cố: " + e.getMessage());
+                response.sendRedirect(redirectUrl);
+            }
             return;
         }
-        
+
         // Nếu không thuộc Role nào thì đá về trang chủ
         response.sendRedirect("index.jsp");
     }
-
 
 }
