@@ -824,3 +824,163 @@ VALUES (@NewMRId, N'', GETDATE(), 'cancelled', 0);
 
 PRINT N'--- ĐÃ TẠO THÀNH CÔNG DỮ LIỆU ĐỒNG BỘ CHO CÁC TRẠNG THÁI ---'
 GO
+
+
+PRINT N'--- BẮT ĐẦU TẠO COMBO 5 LỊCH SỬ KHÁM CHO TỪNG BỆNH NHÂN (1 ĐẾN 20) ---';
+
+DECLARE @PatientId INT = 1;
+DECLARE @DocId INT;
+DECLARE @RoomId INT;
+DECLARE @AppId INT, @MRId INT, @PresId INT;
+
+WHILE @PatientId <= 20
+BEGIN
+    -- ===================================================================
+    -- 1. TRẠNG THÁI: PENDING (Chờ xác nhận - Tab 1)
+    -- Lấy ngẫu nhiên phòng 0đ (roomNumber 1001-1010)
+    -- ===================================================================
+    SELECT TOP 1 @RoomId = id FROM Rooms WHERE roomNumber = 1000 + ((@PatientId % 10) + 1);
+    
+    INSERT INTO Appointments (patientId, doctorId, roomId, startTime, endTime, status, createdAt, isActive)
+    VALUES (@PatientId, NULL, @RoomId, DATEADD(day, 2, GETDATE()), DATEADD(hour, 2, DATEADD(day, 2, GETDATE())), 'pending', GETDATE(), 1);
+    SET @AppId = SCOPE_IDENTITY();
+
+    INSERT INTO MedicalRecords (appointmentId, diagnosis, notes, createdAt, isActive)
+    VALUES (@AppId, N'Chờ khám', N'', GETDATE(), 1);
+    SET @MRId = SCOPE_IDENTITY();
+
+    INSERT INTO Prescriptions (medicalRecordId, notes, createdAt, status, isActive)
+    VALUES (@MRId, N'', GETDATE(), 'pending', 1);
+
+    -- ===================================================================
+    -- 2. TRẠNG THÁI: ACCEPTED (Đã tiếp nhận - Tab 1)
+    -- Có Bác sĩ, có Phòng khám thật
+    -- ===================================================================
+    SET @DocId = (@PatientId % 20) + 1; -- Random Bác sĩ từ 1-20
+    -- Tìm phòng tương ứng với khoa của Bác sĩ này
+    SELECT TOP 1 @RoomId = r.id FROM Rooms r JOIN DoctorDepartments dd ON r.departmentId = dd.departmentId WHERE dd.doctorId = @DocId;
+
+    INSERT INTO Appointments (patientId, doctorId, roomId, startTime, endTime, status, createdAt, isActive)
+    VALUES (@PatientId, @DocId, @RoomId, DATEADD(day, 1, GETDATE()), DATEADD(hour, 1, DATEADD(day, 1, GETDATE())), 'accepted', GETDATE(), 1);
+    SET @AppId = SCOPE_IDENTITY();
+
+    INSERT INTO MedicalRecords (appointmentId, diagnosis, notes, createdAt, isActive)
+    VALUES (@AppId, N'Đang chờ khám', N'Bệnh nhân đã đến quầy, điều dưỡng đang đo huyết áp.', GETDATE(), 1);
+    SET @MRId = SCOPE_IDENTITY();
+
+    INSERT INTO Prescriptions (medicalRecordId, notes, createdAt, status, isActive)
+    VALUES (@MRId, N'', GETDATE(), 'pending', 1);
+
+    -- ===================================================================
+    -- 3. TRẠNG THÁI: COMPLETED - ĐÃ THANH TOÁN (Tab 2)
+    -- ===================================================================
+    SET @DocId = ((@PatientId + 2) % 20) + 1;
+    SELECT TOP 1 @RoomId = r.id FROM Rooms r JOIN DoctorDepartments dd ON r.departmentId = dd.departmentId WHERE dd.doctorId = @DocId;
+
+    INSERT INTO Appointments (patientId, doctorId, roomId, startTime, endTime, status, createdAt, isActive)
+    VALUES (@PatientId, @DocId, @RoomId, DATEADD(day, -5, GETDATE()), DATEADD(hour, 1, DATEADD(day, -5, GETDATE())), 'completed', DATEADD(day, -6, GETDATE()), 1);
+    SET @AppId = SCOPE_IDENTITY();
+
+    INSERT INTO MedicalRecords (appointmentId, diagnosis, notes, createdAt, isActive)
+    VALUES (@AppId, N'Viêm họng hạt cấp tính', N'Nghỉ ngơi nhiều, súc miệng nước muối thường xuyên, tránh uống nước đá.', DATEADD(day, -5, GETDATE()), 1);
+    SET @MRId = SCOPE_IDENTITY();
+
+    INSERT INTO Prescriptions (medicalRecordId, notes, createdAt, status, isActive)
+    VALUES (@MRId, N'Uống thuốc sau bữa ăn no 30 phút.', DATEADD(day, -5, GETDATE()), 'active', 1);
+    SET @PresId = SCOPE_IDENTITY();
+
+    -- Kê 2 loại thuốc
+    INSERT INTO PrescriptionItems (prescriptionId, medicineId, quantity, dosage, frequency, duration)
+    VALUES
+    (@PresId, 2, 10, N'1 viên', N'Sáng, Tối', N'5 ngày'), -- Amoxicillin
+    (@PresId, 4, 10, N'1 viên', N'Trưa', N'10 ngày');      -- Vitamin C
+
+    -- Hóa đơn ĐÃ THANH TOÁN
+    INSERT INTO Payments (medicalRecordId, totalAmount, paymentMethod, status, paidAt, isActive)
+    VALUES (@MRId, 240000.00, 'banking', 'paid', DATEADD(day, -5, GETDATE()), 1);
+
+    -- ===================================================================
+    -- 4. TRẠNG THÁI: COMPLETED - CHƯA THANH TOÁN (Tab 2)
+    -- Để sếp test nút hiện mã QR Code
+    -- ===================================================================
+    SET @DocId = ((@PatientId + 5) % 20) + 1;
+    SELECT TOP 1 @RoomId = r.id FROM Rooms r JOIN DoctorDepartments dd ON r.departmentId = dd.departmentId WHERE dd.doctorId = @DocId;
+
+    INSERT INTO Appointments (patientId, doctorId, roomId, startTime, endTime, status, createdAt, isActive)
+    VALUES (@PatientId, @DocId, @RoomId, DATEADD(day, -2, GETDATE()), DATEADD(hour, 1, DATEADD(day, -2, GETDATE())), 'completed', DATEADD(day, -3, GETDATE()), 1);
+    SET @AppId = SCOPE_IDENTITY();
+
+    INSERT INTO MedicalRecords (appointmentId, diagnosis, notes, createdAt, isActive)
+    VALUES (@AppId, N'Rối loạn tiêu hóa / Đau dạ dày', N'Hạn chế đồ chua cay, thức khuya.', DATEADD(day, -2, GETDATE()), 1);
+    SET @MRId = SCOPE_IDENTITY();
+
+    INSERT INTO Prescriptions (medicalRecordId, notes, createdAt, status, isActive)
+    VALUES (@MRId, N'Uống trước khi ăn 30 phút.', DATEADD(day, -2, GETDATE()), 'active', 1);
+    SET @PresId = SCOPE_IDENTITY();
+
+    INSERT INTO PrescriptionItems (prescriptionId, medicineId, quantity, dosage, frequency, duration)
+    VALUES (@PresId, 3, 14, N'1 viên', N'Sáng, Tối', N'7 ngày'); -- Omeprazole
+
+    -- Hóa đơn CHƯA THANH TOÁN
+    INSERT INTO Payments (medicalRecordId, totalAmount, paymentMethod, status, paidAt, isActive)
+    VALUES (@MRId, 262000.00, 'cash', 'unpaid', NULL, 1);
+
+    -- ===================================================================
+    -- 5. TRẠNG THÁI: CANCELLED (Đã hủy - Nằm trong Tab 2)
+    -- Lưu ý: Phải để isActive = 1 thì nó mới hiện lên Web, còn isActive = 0 là Xóa vĩnh viễn (ẩn)
+    -- ===================================================================
+    SELECT TOP 1 @RoomId = id FROM Rooms WHERE roomNumber = 1000 + ((@PatientId % 10) + 1);
+    
+    INSERT INTO Appointments (patientId, doctorId, roomId, startTime, endTime, status, createdAt, isActive)
+    VALUES (@PatientId, NULL, @RoomId, DATEADD(day, -10, GETDATE()), DATEADD(hour, 1, DATEADD(day, -10, GETDATE())), 'cancelled', DATEADD(day, -12, GETDATE()), 1);
+    SET @AppId = SCOPE_IDENTITY();
+
+    INSERT INTO MedicalRecords (appointmentId, diagnosis, notes, createdAt, isActive)
+    VALUES (@AppId, N'Chờ khám', N'Bệnh nhân đã chủ động hủy lịch qua hệ thống', DATEADD(day, -10, GETDATE()), 1);
+    SET @MRId = SCOPE_IDENTITY();
+
+    INSERT INTO Prescriptions (medicalRecordId, notes, createdAt, status, isActive)
+    VALUES (@MRId, N'', DATEADD(day, -10, GETDATE()), 'cancelled', 1);
+
+    -- Chuyển sang Bệnh nhân tiếp theo
+    SET @PatientId = @PatientId + 1;
+END
+
+PRINT N'--- HOÀN THÀNH! ĐÃ BƠM ĐỦ DỮ LIỆU ĐẸP CHO TOÀN BỘ 20 BỆNH NHÂN ---';
+GO
+
+PRINT N'--- ĐANG CẬP NHẬT: NHỒI NHIỀU LOẠI THUỐC VÀO CÙNG MỘT ĐƠN THUỐC ---';
+
+-- 1. Xóa các chi tiết thuốc cũ để làm sạch dữ liệu test
+DELETE FROM PrescriptionItems;
+
+-- 2. Dùng Cursor để duyệt qua tất cả các Đơn thuốc 'active' (đã hoàn thành)
+DECLARE @CurrentPresId01 INT;
+DECLARE pres_cursor CURSOR FOR 
+    SELECT id FROM Prescriptions WHERE status = 'active';
+
+OPEN pres_cursor;
+FETCH NEXT FROM pres_cursor INTO @CurrentPresId01;
+
+WHILE @@FETCH_STATUS = 0
+BEGIN
+    -- MÓN 1: Thuốc đặc trị (Ví dụ: Amoxicillin - ID 2)
+    INSERT INTO PrescriptionItems (prescriptionId, medicineId, quantity, dosage, frequency, duration)
+    VALUES (@CurrentPresId01, 2, 14, N'1 viên', N'Sáng 1 - Tối 1', N'7 ngày');
+
+    -- MÓN 2: Thuốc hỗ trợ triệu chứng (Ví dụ: Paracetamol - ID 1)
+    INSERT INTO PrescriptionItems (prescriptionId, medicineId, quantity, dosage, frequency, duration)
+    VALUES (@CurrentPresId01, 1, 10, N'1 viên', N'Uống khi sốt trên 38.5 độ', N'3 ngày');
+
+    -- MÓN 3: Vitamin bổ trợ (Ví dụ: Vitamin C - ID 4)
+    INSERT INTO PrescriptionItems (prescriptionId, medicineId, quantity, dosage, frequency, duration)
+    VALUES (@CurrentPresId01, 4, 10, N'1 viên sủi', N'Sáng sau ăn', N'10 ngày');
+
+    FETCH NEXT FROM pres_cursor INTO @CurrentPresId01;
+END;
+
+CLOSE pres_cursor;
+DEALLOCATE pres_cursor;
+
+PRINT N'--- THÀNH CÔNG! MỖI ĐƠN THUỐC BÂY GIỜ ĐỀU CÓ 3 MÓN THUỐC CHI TIẾT ---';
+GO
