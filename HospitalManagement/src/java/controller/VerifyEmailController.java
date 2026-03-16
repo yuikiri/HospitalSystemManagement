@@ -40,17 +40,27 @@ public class VerifyEmailController extends HttpServlet {
         User currentUser = (User) session.getAttribute("user");
         
         if (savedOtp != null && savedOtp.equals(inputOtp)) {
-            new UserDAO().updateEmail(currentUser.getId(), pendingEmail);
-            currentUser.setEmail(pendingEmail);
-            session.setAttribute("user", currentUser);
-            
-            session.removeAttribute("savedEmailOtp");
-            session.removeAttribute("pendingEmail");
-            
-            session.setAttribute("successMessage", "Thay đổi Email thành công!");
-            response.sendRedirect(request.getContextPath() + "/component/patient/patientDashboard.jsp");
+            // ... logic update db ... 
+
+            session.removeAttribute("savedEmailOtp"); // Hoặc savedPwdOtp
+            session.removeAttribute("pendingEmail"); // Hoặc pendingNewPassword
+            session.setAttribute("successMessage", "Thao tác thành công!");
+
+            // Kiểm tra role để đá về đúng trang
+            String role = currentUser.getRole().toLowerCase();
+            if (role.equals("patient")) {
+                response.sendRedirect(request.getContextPath() + "/component/patient/patientDashboard.jsp");
+            } else if (role.equals("doctor")) {
+                // Đá về trang dashboard của doctor (đảm bảo đúng tên file của bạn)
+                response.sendRedirect(request.getContextPath() + "/component/doctor/doctorDashboard.jsp?page=profile");
+            } else if (role.equals("staff")) {
+                response.sendRedirect(request.getContextPath() + "/component/staff/staffDashboard.jsp");
+            } else {
+                response.sendRedirect(request.getContextPath() + "/index.jsp");
+            }
         } else {
             request.setAttribute("errorMessage", "Mã OTP không chính xác!");
+            // Nhớ check tên file verify JSP ở dòng này cho đúng
             request.getRequestDispatcher("verifyEmailOTP.jsp").forward(request, response);
         }
     }

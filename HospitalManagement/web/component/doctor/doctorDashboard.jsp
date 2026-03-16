@@ -9,7 +9,7 @@
         return;
     }
 
-    DoctorDTO doctor = (DoctorDTO) session.getAttribute("doctorInfo"); // Sửa thành doctor cho giống backend nếu cần
+    DoctorDTO doctor = (DoctorDTO) session.getAttribute("doctor"); // Sửa thành doctor cho giống backend nếu cần
     if (doctor == null) {
         doctor = new DoctorDTO();
     }

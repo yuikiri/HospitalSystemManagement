@@ -99,36 +99,38 @@ public class UpdateProfileController1 extends HttpServlet {
         // RẼ NHÁNH 3: LUỒNG CỦA DOCTOR 
         // ==========================================
         else if (role.equals("doctor")) {
-            String redirectUrl = "doctordDashboard.jsp"; // Lưu ý: kiểm tra lại tên file jsp (có dư chữ 'd' không)
+            // 1. SỬA LẠI ĐƯỜNG DẪN CHO CHÍNH XÁC
+            String redirectUrl = "doctorDashboard.jsp?page=profile";
 
             try {
                 int doctorId = Integer.parseInt(request.getParameter("doctorId"));
                 int userId = currentUser.getId(); // Lấy từ session để fetch lại data
-                
-                // Lấy các trường chuẩn của Doctor
+
                 String name = request.getParameter("name");
                 int gender = Integer.parseInt(request.getParameter("gender"));
                 String position = request.getParameter("position");
                 String phone = request.getParameter("phone");
                 String licenseNumber = request.getParameter("licenseNumber");
 
-                // Gọi Service xử lý
+                // Gọi Service xử lý Update
                 DoctorService doctorService = new DoctorService();
-                doctorService.updateDoctor1(doctorId, name, gender, position, phone, licenseNumber);
+                doctorService.updateDoctor(doctorId, name, gender, position, phone, licenseNumber);
 
-                // Cập nhật lại session mới nhất cho Doctor (dùng hàm getProfileByUserId đã có)
+                // Cập nhật lại session mới nhất cho Doctor sau khi lưu DB thành công
                 DoctorDTO updatedDoctor = doctorService.getProfileByUserId(userId);
                 session.setAttribute("doctor", updatedDoctor);
+
+                // Set thông báo thành công
+                session.setAttribute("successMessage", "Cập nhật hồ sơ thành công!");
 
                 response.sendRedirect(redirectUrl);
 
             } catch (Exception e) {
                 e.printStackTrace();
-                // Bắt lỗi và báo lên UI
+                // Bắt lỗi (ví dụ: trùng số điện thoại) và báo lên UI
                 session.setAttribute("errorMessage", e.getMessage());
                 response.sendRedirect(redirectUrl);
             }
-            return; 
         } // ==========================================
 
         // Nếu không thuộc Role nào thì đá về trang chủ
