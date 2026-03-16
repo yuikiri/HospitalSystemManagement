@@ -73,7 +73,7 @@
     </a>
 
     <div class="mt-5 mx-4 border-top pt-4">
-        <a href="index" class="nav-item-custom text-danger" style="margin-right: 0;">
+        <a href="${pageContext.request.contextPath}/LogoutController" class="nav-item-custom text-danger" style="margin-right: 0;">
             <i class="fas fa-sign-out-alt nav-icon"></i> Đăng xuất
         </a>
     </div>

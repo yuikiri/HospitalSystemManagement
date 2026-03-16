@@ -39,19 +39,29 @@ public class VerifyEmailController extends HttpServlet {
         String pendingEmail = (String) session.getAttribute("pendingEmail");
         User currentUser = (User) session.getAttribute("user");
         
+        // Chốt chặn an toàn: Bắt buộc phải có user đăng nhập
+        if (currentUser == null) {
+            response.sendRedirect(request.getContextPath() + "/index.jsp");
+            return;
+        }
+        
         if (savedOtp != null && savedOtp.equals(inputOtp)) {
-            // ... logic update db ... 
+            // 1. CHUẨN TỪ CODE 1: Cập nhật xuống Database và cập nhật Session hiện tại
+            new UserDAO().updateEmail(currentUser.getId(), pendingEmail);
+            currentUser.setEmail(pendingEmail);
+            session.setAttribute("user", currentUser); // Ghi đè lại user với email mới
+            
+            // 2. Dọn dẹp rác Session
+            session.removeAttribute("savedEmailOtp");
+            session.removeAttribute("pendingEmail");
+            
+            session.setAttribute("successMessage", "Thay đổi Email thành công!");
 
-            session.removeAttribute("savedEmailOtp"); // Hoặc savedPwdOtp
-            session.removeAttribute("pendingEmail"); // Hoặc pendingNewPassword
-            session.setAttribute("successMessage", "Thao tác thành công!");
-
-            // Kiểm tra role để đá về đúng trang
-            String role = currentUser.getRole().toLowerCase();
+            // 3. CHUẨN TỪ CODE 2: Kiểm tra Role để đá về đúng trang Dashboard
+            String role = currentUser.getRole().toLowerCase().trim();
             if (role.equals("patient")) {
                 response.sendRedirect(request.getContextPath() + "/component/patient/patientDashboard.jsp");
             } else if (role.equals("doctor")) {
-                // Đá về trang dashboard của doctor (đảm bảo đúng tên file của bạn)
                 response.sendRedirect(request.getContextPath() + "/component/doctor/doctorDashboard.jsp?page=profile");
             } else if (role.equals("staff")) {
                 response.sendRedirect(request.getContextPath() + "/component/staff/staffDashboard.jsp");
@@ -59,8 +69,8 @@ public class VerifyEmailController extends HttpServlet {
                 response.sendRedirect(request.getContextPath() + "/index.jsp");
             }
         } else {
+            // Nhập sai thì ở lại trang nhập OTP và báo lỗi
             request.setAttribute("errorMessage", "Mã OTP không chính xác!");
-            // Nhớ check tên file verify JSP ở dòng này cho đúng
             request.getRequestDispatcher("verifyEmailOTP.jsp").forward(request, response);
         }
     }
