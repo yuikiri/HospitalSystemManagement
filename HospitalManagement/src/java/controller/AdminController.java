@@ -50,31 +50,17 @@ protected void doGet(HttpServletRequest request,
         }
 
         switch (action) {
+case "users":
+    String email = request.getParameter("email");
+    String isActive = request.getParameter("isActive");
 
-            case "users":
+    // Không dùng getAllUsers() nữa, dùng searchUsers cho mọi trường hợp
+    // Để hàm này tự xử lý logic 0, 1, -1
+    List<User> list = userService.searchUsers(email, isActive);
 
-                String email = request.getParameter("email");
-                String isActive = request.getParameter("isActive");
-
-                List<User> list;
-
-                if ((email == null || email.isEmpty()) &&
-                    (isActive == null || isActive.isEmpty())) {
-
-                    list = userService.getAllUsers();
-
-                } else {
-
-                    list = userService.searchUsers(email, isActive);
-
-                }
-
-                request.setAttribute("userList", list);
-
-                request.getRequestDispatcher("component/admin/manageUsers.jsp")
-                        .forward(request, response);
-
-                break;
+    request.setAttribute("userList", list);
+    request.getRequestDispatcher("component/admin/manageUsers.jsp").forward(request, response);
+    break;
 
 
             case "toggleUser":
@@ -120,7 +106,18 @@ protected void doGet(HttpServletRequest request,
                 response.sendRedirect("AdminController?action=trashUsers");
 
                 break;
+case "editUser":
 
+     id = Integer.parseInt(request.getParameter("id"));
+
+    User u = userService.getUserById(id);
+
+    request.setAttribute("user", u);
+
+    request.getRequestDispatcher("component/admin/editUser.jsp")
+            .forward(request, response);
+
+break;
 
             default:
 
@@ -129,11 +126,40 @@ protected void doGet(HttpServletRequest request,
 
         }
         
+        
 
     } catch (Exception e) {
         e.printStackTrace();
     }
 }
 
+@Override
+protected void doPost(HttpServletRequest request,
+                      HttpServletResponse response)
+        throws ServletException, IOException {
 
+    String action = request.getParameter("action");
+
+    UserService userService = new UserService();
+
+    try{
+
+        if("updateUser".equals(action)){
+
+            int id = Integer.parseInt(request.getParameter("id"));
+
+            String name = request.getParameter("userName");
+            String email = request.getParameter("email");
+            String role = request.getParameter("role");
+
+            userService.updateUserByAdmin(id, name, email, role);
+
+            response.sendRedirect("AdminController?action=users");
+
+        }
+
+    }catch(Exception e){
+        e.printStackTrace();
+    }
+}
 }

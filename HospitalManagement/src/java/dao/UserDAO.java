@@ -96,7 +96,7 @@ public List<User> getAllUsers(){
 u.setId(rs.getInt("id"));
 u.setUserName(rs.getString("userName"));
 u.setEmail(rs.getString("email"));
-u.setRole(rs.getString("role"));
+u.setRole(rs.getString("role").toUpperCase());
 u.setIsActive(rs.getInt("isActive"));
 
 list.add(u);
@@ -273,94 +273,51 @@ list.add(u);
 // SEARCH USER BY EMAIL
 // ==============================
 
-public List<User> searchUsers(String email, String isActive){
-
+public List<User> searchUsers(String email, String isActive) {
     List<User> list = new ArrayList<>();
+    // 1. Dùng WHERE 1=1 để dễ dàng cộng thêm điều kiện AND
+    StringBuilder sql = new StringBuilder("SELECT * FROM Users WHERE 1=1 ");
 
-    String sql = "SELECT * FROM Users WHERE 1=1";
+    // 2. Luôn luôn loại bỏ user đã xóa (-1) khỏi danh sách quản lý
+    sql.append(" AND isActive != -1 ");
 
-    if(email != null && !email.isEmpty()){
-        sql += " AND email LIKE ?";
+    // 3. Lọc theo Email nếu có nhập
+    if (email != null && !email.trim().isEmpty()) {
+        sql.append(" AND email LIKE ? ");
     }
 
-    if(isActive != null && !isActive.isEmpty()){
-        sql += " AND isActive = ?";
+    // 4. Lọc theo Status (0 hoặc 1)
+    if (isActive != null && !isActive.trim().isEmpty()) {
+        sql.append(" AND isActive = ? ");
     }
 
-    try{
+    sql.append(" ORDER BY id DESC ");
 
-        Connection conn = DbUtils.getConnection();
-
-        PreparedStatement ps = conn.prepareStatement(sql);
+    try (Connection conn = DbUtils.getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql.toString())) {
 
         int index = 1;
-
-        if(email != null && !email.isEmpty()){
-            ps.setString(index++, "%" + email + "%");
+        if (email != null && !email.trim().isEmpty()) {
+            ps.setString(index++, "%" + email.trim() + "%");
         }
 
-        if(isActive != null && !isActive.isEmpty()){
-            ps.setInt(index++, Integer.parseInt(isActive));
+        if (isActive != null && !isActive.trim().isEmpty()) {
+            ps.setInt(index++, Integer.parseInt(isActive.trim()));
         }
 
         ResultSet rs = ps.executeQuery();
-
-        while(rs.next()){
-
+        while (rs.next()) {
             User u = new User();
-
             u.setId(rs.getInt("id"));
             u.setUserName(rs.getString("userName"));
             u.setEmail(rs.getString("email"));
-            u.setRole(rs.getString("role"));
+            u.setRole(rs.getString("role").trim());
             u.setIsActive(rs.getInt("isActive"));
-
             list.add(u);
         }
-
-    }catch(Exception e){
+    } catch (Exception e) {
         e.printStackTrace();
     }
-
-    return list;
-}
-
-// ==============================
-// FILTER USER STATUS
-// ==============================
-
-public List<User> filterUserStatus(String role, int status){
-
-    List<User> list = new ArrayList<>();
-
-    String sql = "SELECT * FROM Users WHERE role=? AND isActive=?";
-
-    try(Connection conn = new DbUtils().getConnection();
-        PreparedStatement ps = conn.prepareStatement(sql)){
-
-        ps.setString(1, role);
-        ps.setInt(2, status);
-
-        ResultSet rs = ps.executeQuery();
-
-        while(rs.next()){
-
-            list.add(new User(
-                    rs.getInt("id"),
-                    rs.getString("userName"),
-                    rs.getString("email"),
-                    "",
-                    "",
-                    rs.getString("role").trim(),
-                    rs.getInt("isActive"),
-                    rs.getTimestamp("createdAt")
-            ));
-        }
-
-    }catch(Exception e){
-        e.printStackTrace();
-    }
-
     return list;
 }
 // ==============================
@@ -456,5 +413,30 @@ public void deleteUser(int id) throws Exception {
 
     ps.executeUpdate();
 }
+public User getUserById(int id) throws Exception{
 
+    String sql = "SELECT * FROM Users WHERE id = ?";
+
+    Connection conn = DbUtils.getConnection();
+    PreparedStatement ps = conn.prepareStatement(sql);
+
+    ps.setInt(1, id);
+
+    ResultSet rs = ps.executeQuery();
+
+    if(rs.next()){
+
+        User u = new User();
+
+        u.setId(rs.getInt("id"));
+        u.setUserName(rs.getString("userName"));
+        u.setEmail(rs.getString("email"));
+        u.setRole(rs.getString("role"));
+        u.setIsActive(rs.getInt("isActive"));
+
+        return u;
+    }
+
+    return null;
+}
 }

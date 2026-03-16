@@ -128,4 +128,7 @@ public class UserService {
     userDAO.restoreUser(id);
 
 }
+   public User getUserById(int id) throws Exception{
+    return userDAO.getUserById(id);
+}
 }
