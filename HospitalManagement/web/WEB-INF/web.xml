@@ -66,6 +66,14 @@
         <servlet-name>test01</servlet-name>
         <servlet-class>controller.test01</servlet-class>
     </servlet>
+    <servlet>
+        <servlet-name>LoadMedicalHistoryController</servlet-name>
+        <servlet-class>controller.LoadMedicalHistoryController</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>CancelAppointmentController</servlet-name>
+        <servlet-class>controller.CancelAppointmentController</servlet-class>
+    </servlet>
     <servlet-mapping>
         <servlet-name>MainController</servlet-name>
         <url-pattern>/MainController</url-pattern>
@@ -126,6 +134,14 @@
     <servlet-mapping>
         <servlet-name>test01</servlet-name>
         <url-pattern>/test01</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>LoadMedicalHistoryController</servlet-name>
+        <url-pattern>/LoadMedicalHistoryController</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>CancelAppointmentController</servlet-name>
+        <url-pattern>/CancelAppointmentController</url-pattern>
     </servlet-mapping>
     <session-config>
         <session-timeout>30</session-timeout>

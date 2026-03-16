@@ -44,7 +44,7 @@
                     <div class="col-md-5 text-center mt-4 mt-md-0">
                         <div class="bg-light p-4 rounded-4 border border-2 border-primary border-opacity-25 shadow-sm">
                             <h5 class="fw-bold text-primary mb-3">Quỹ "Nhịp Đập Hy Vọng"</h5>
-                            <img src="https://api.vietqr.io/image/970436-123456789-ZkK5m2B.jpg?amount=50000&addInfo=TaiTroQuy_NhipDapHyVong" class="img-fluid rounded-3 mb-3 w-75 border" alt="QR Donation">
+                            <img src="https://img.vietqr.io/image/MB-0963518963-print.png?addInfo=TaiTroQuy_NhipDapHyVong" class="img-fluid rounded-3 mb-3 w-75 border" alt="QR Donation">
                             <p class="text-dark fw-bold mb-1">Ngân hàng MB Bank</p>
                             <p class="text-muted small mb-0">STK: <b>0963518963</b></p>
                             <p class="text-muted small">Tên: <b>PHAM QUOC HOANG</b></p>

@@ -5,9 +5,11 @@ import entity.User;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.util.List;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.*;
+import service.AppointmentService;
 import util.DbUtils;
 import util.ErrorMessages;
 
@@ -76,6 +78,21 @@ public class CompleteExaminationController extends HttpServlet {
                     ps.setDouble(2, totalAmount);
                     ps.executeUpdate();
                 }
+            }
+            
+            int roomId = Integer.parseInt(request.getParameter("roomId"));
+
+            // HỨNG TIỀN CÔNG BÁC SĨ NHẬP
+            double doctorFee = Double.parseDouble(request.getParameter("doctorFee"));
+
+            // Hứng list thuốc (Logic mảng getParameterValues...)
+             List<PrescriptionItemDTO> meds = null;///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+                AppointmentService service = new AppointmentService();
+            boolean success = service.completeExaminationWithFee(appointmentId, roomId, diagnosis, notes, doctorFee, meds);
+
+            if(success) {
+                // Chuyển hướng báo thành công
             }
 
             // 6. Cập nhật trạng thái lịch hẹn

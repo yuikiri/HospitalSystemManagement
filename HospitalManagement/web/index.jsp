@@ -118,6 +118,12 @@ Logout </a>
 
 </div>
 </div>
+<div class="collapse navbar-collapse" id="mainNav">
+                    <ul class="navbar-nav mx-auto text-uppercase">
+                        <li class="nav-item"><a class="nav-link active px-3" href="index.jsp">Home</a></li>
+                        <li class="nav-item"><a class="nav-link px-3" href="#" data-bs-toggle="modal" data-bs-target="#aboutModal">About Us</a></li>
+                    </ul>
+                </div>
 </nav>
 
 <section class="hero-section text-center">

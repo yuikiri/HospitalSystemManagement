@@ -60,7 +60,7 @@
         <i class="fas fa-calendar-plus nav-icon"></i> Đặt lịch hẹn
     </a>
     
-    <a id="menu-history" onclick="loadContent('contents/medicalHistory.jsp', this)" class="nav-item-custom">
+    <a id="menu-history" onclick="loadContent('${pageContext.request.contextPath}/LoadMedicalHistoryController', this)" class="nav-item-custom">
         <i class="fas fa-file-medical-alt nav-icon"></i> Lịch sử khám
     </a>
     

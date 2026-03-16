@@ -210,5 +210,117 @@ public class AppointmentDAO {
     }
     
     // ==========================================================
+    // 1. LẤY LỊCH SỬ KHÁM (CHIA LÀM 2 TAB)
+    // ==========================================================
+    public List<MedicalHistoryDTO> getHistoryByPatient(int patientId, String tabType) {
+        List<MedicalHistoryDTO> list = new ArrayList<>();
+        String statusCondition = tabType.equals("waiting") ? "a.status IN ('pending', 'accepted')" : "a.status IN ('completed', 'cancelled')";
+
+        String sql = "SELECT a.id, a.startTime, d.name AS deptName, " +
+                     "a.doctorId, doc.name AS docName, r.roomNumber, a.status, " +
+                     "pay.totalAmount, pay.status AS paymentStatus " +
+                     "FROM Appointments a " +
+                     "JOIN Rooms r ON a.roomId = r.id " +
+                     "JOIN Departments d ON r.departmentId = d.id " +
+                     "LEFT JOIN Doctors doc ON a.doctorId = doc.id " +
+                     "LEFT JOIN MedicalRecords mr ON a.id = mr.appointmentId " +
+                     "LEFT JOIN Payments pay ON mr.id = pay.medicalRecordId " +
+                     "WHERE a.patientId = ? AND a.isActive = 1 AND " + statusCondition + " " +
+                     "ORDER BY a.startTime DESC";
+
+        try (Connection conn = new util.DbUtils().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, patientId);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                MedicalHistoryDTO dto = new MedicalHistoryDTO();
+                dto.setAppointmentId(rs.getInt("id"));
+                dto.setStartTime(rs.getTimestamp("startTime"));
+                dto.setDepartmentName(rs.getString("deptName"));
+                
+                int docId = rs.getInt("doctorId");
+                if (!rs.wasNull()) {
+                    dto.setDoctorId(docId);
+                    dto.setDoctorName(rs.getString("docName"));
+                }
+                dto.setRoomNumber(rs.getInt("roomNumber"));
+                dto.setStatus(rs.getString("status"));
+                dto.setTotalAmount(rs.getDouble("totalAmount"));
+                dto.setPaymentStatus(rs.getString("paymentStatus"));
+                list.add(dto);
+            }
+        } catch (Exception e) { e.printStackTrace(); }
+        return list;
+    }
+
+    // ==========================================================
+    // 2. LẤY CHI TIẾT BỆNH ÁN
+    // ==========================================================
+    public String[] getMedicalRecordDetail(int appointmentId) {
+        String[] details = new String[2];
+        String sql = "SELECT diagnosis, notes FROM MedicalRecords WHERE appointmentId = ?";
+        try (Connection conn = new util.DbUtils().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, appointmentId);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                details[0] = rs.getString("diagnosis");
+                details[1] = rs.getString("notes");
+            }
+        } catch (Exception e) { e.printStackTrace(); }
+        return details;
+    }
+
+    // ==========================================================
+    // 3. LẤY DANH SÁCH THUỐC (Dùng Constructor có tham số)
+    // ==========================================================
+    public List<PrescriptionItemDTO> getPrescriptionItemsByAppId(int appointmentId) {
+        List<PrescriptionItemDTO> list = new ArrayList<>();
+        String sql = "SELECT pi.id, pi.prescriptionId, pi.medicineId, m.name AS medName, m.unit, m.price, " +
+                     "pi.quantity, pi.dosage, pi.frequency, pi.duration " +
+                     "FROM PrescriptionItems pi " +
+                     "JOIN Medicines m ON pi.medicineId = m.id " +
+                     "JOIN Prescriptions p ON pi.prescriptionId = p.id " +
+                     "JOIN MedicalRecords mr ON p.medicalRecordId = mr.id " +
+                     "WHERE mr.appointmentId = ? AND pi.isActive = 1";
+                     
+        try (Connection conn = new util.DbUtils().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, appointmentId);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                // Đưa thẳng dữ liệu vào Constructor (Đúng thứ tự sếp đã thiết kế)
+                PrescriptionItemDTO item = new PrescriptionItemDTO(
+                    rs.getInt("id"),
+                    rs.getInt("prescriptionId"),
+                    rs.getInt("medicineId"),
+                    rs.getString("medName"),
+                    rs.getString("unit"),
+                    rs.getDouble("price"),
+                    rs.getInt("quantity"),
+                    rs.getString("dosage"),
+                    rs.getString("frequency"),
+                    rs.getString("duration")
+                );
+                list.add(item);
+            }
+        } catch (Exception e) { e.printStackTrace(); }
+        return list;
+    }
+    
+    // ==========================================================
+    // 4. HỦY LỊCH HẸN (Chỉ cho phép hủy khi đang Pending)
+    // ==========================================================
+    public boolean cancelPendingAppointment(int appointmentId, int patientId) {
+        String sql = "UPDATE Appointments SET status = 'cancelled' WHERE id = ? AND patientId = ? AND status = 'pending'";
+        try (Connection conn = new util.DbUtils().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, appointmentId);
+            ps.setInt(2, patientId);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) { e.printStackTrace(); }
+        return false;
+    }
+    // ==========================================================
     // ==========================================================
 }
