@@ -66,8 +66,8 @@ Female
 Update Profile
 </button>
 
-<a href="component/staff/staffDashboard.jsp" class="btn btn-secondary">
-Cancel
+<a href="${pageContext.request.contextPath}/component/staff/staffDashboard.jsp" class="btn btn-secondary">
+    Cancel
 </a>
 
 </form>

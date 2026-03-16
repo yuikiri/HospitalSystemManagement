@@ -102,4 +102,14 @@ public class PatientService {
 //            throw new Exception("Không thể thay đổi trạng thái tài khoản lúc này!");
 //        }
     }
+    
+    //=====================================================
+    //////////////////////////////////////Hoàng
+    //=====================================================
+    // Lấy thông tin bệnh nhân qua ID của User đang đăng nhập
+    public PatientDTO getPatientByUserId(int userId) {
+        return patientDAO.getPatientByUserId(userId);
+    }
+    //=====================================================
+    //=====================================================
 }

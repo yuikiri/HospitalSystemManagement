@@ -29,36 +29,39 @@ public class MainController extends HttpServlet {
      */
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+        // Đảm bảo tiếng Việt không bị lỗi font
+        request.setCharacterEncoding("UTF-8");
+        response.setCharacterEncoding("UTF-8");
         response.setContentType("text/html;charset=UTF-8");
-        try ( PrintWriter out = response.getWriter()) {
-            request.setCharacterEncoding("UTF-8");
-            response.setCharacterEncoding("UTF-8");
 
-            String action = request.getParameter("action");
+        String action = request.getParameter("action");
+        String url = "index.jsp"; // Mặc định trả về trang chủ
 
-            // SỬA QUAN TRỌNG 1: Mặc định phải là trang chủ index.jsp thay vì welcome.jsp
-            String url = "index.jsp"; 
-
-            if (action == null) {
-                action = ""; 
-            }
-
-            // CHIA NHÁNH (ROUTER)
-            if(action.equals("login")){
-                url = "LoginController";
-            }else if(action.equals("logout")){
-                url = "LogoutController";
-            }else if(action.equals("register")){ 
-                // SỬA QUAN TRỌNG 2: Thêm luồng cho form Đăng ký
-                url = "RegisterController";
-            }else if(action.equals("search")){
-                url = "SearchController";
-            }
-
-            // Chuyển trang
-            RequestDispatcher rd = request.getRequestDispatcher(url);
-            rd.forward(request, response);
+        if (action == null) {
+            action = ""; 
         }
+
+        // CHIA NHÁNH (ROUTER) BẰNG SWITCH-CASE ĐỂ CODE CHẠY NHANH VÀ DỄ ĐỌC HƠN
+        switch (action) {
+            case "login":
+                url = "LoginController";
+                break;
+            case "logout":
+                url = "LogoutController";
+                break;
+            case "register":
+                url = "RegisterController";
+                break;
+            case "search":
+                url = "SearchController";
+                break;
+            default:
+                // Nếu action trống hoặc gõ bậy bạ, url vẫn là "index.jsp"
+                break;
+        }
+
+        // Chuyển hướng Request đến đúng Controller hoặc Trang đích
+        request.getRequestDispatcher(url).forward(request, response);
     }
 
     // <editor-fold defaultstate="collapsed" desc="HttpServlet methods. Click on the + sign on the left to edit the code.">

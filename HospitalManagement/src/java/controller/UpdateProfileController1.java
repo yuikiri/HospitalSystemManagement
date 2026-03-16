@@ -1,53 +1,140 @@
 package controller;
 
+import dao.DoctorDTO;
+import dao.PatientDTO;
 import dao.StaffDAO;
 import dao.StaffDTO;
+import entity.User;
 import java.io.IOException;
+import java.sql.Date;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.*;
+import service.DoctorService;
+import service.PatientService;
+
 @WebServlet("/UpdateProfileController1")
 public class UpdateProfileController1 extends HttpServlet {
 
-@Override
-protected void doPost(HttpServletRequest request, HttpServletResponse response)
-        throws ServletException, IOException {
+    @Override
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
 
-    request.setCharacterEncoding("UTF-8");
+        request.setCharacterEncoding("UTF-8");
+        HttpSession session = request.getSession();
 
-    String userIdRaw = request.getParameter("userId");
+        User currentUser = (User) session.getAttribute("user");
+        if (currentUser == null) {
+            response.sendRedirect("index.jsp");
+            return;
+        }
 
-if(userIdRaw == null){
-    response.sendRedirect("index.jsp");
-    return;
-}
+        String role = currentUser.getRole().toLowerCase().trim();
 
-int userId = Integer.parseInt(userIdRaw);
-    String email = request.getParameter("email");
-    String name = request.getParameter("name");
-    String phone = request.getParameter("phone");
-    String position = request.getParameter("position");
-    int gender = Integer.parseInt(request.getParameter("gender"));
+        // ==========================================
+        // RẼ NHÁNH 1: LUỒNG CỦA STAFF (Giữ nguyên 100% code gốc của người làm Staff)
+        // ==========================================
+        if (role.equals("staff")) {
+            String userIdRaw = request.getParameter("userId");
 
-    StaffDAO dao = new StaffDAO();
+            if (userIdRaw == null) {
+                response.sendRedirect("index.jsp");
+                return;
+            }
 
-    boolean check = dao.updateProfile(userId, email, name, phone, position, gender);
+            int userId = Integer.parseInt(userIdRaw);
+            String email = request.getParameter("email");
+            String name = request.getParameter("name");
+            String phone = request.getParameter("phone");
+            String position = request.getParameter("position");
+            int gender = Integer.parseInt(request.getParameter("gender"));
 
-    HttpSession session = request.getSession();
+            StaffDAO dao = new StaffDAO();
+            boolean check = dao.updateProfile(userId, email, name, phone, position, gender);
 
-    if (check) {
+            if (check) {
+                StaffDTO staff = dao.getStaffByUserId(userId);
+                session.setAttribute("staff", staff);
 
-        StaffDTO staff = dao.getStaffByUserId(userId);
-        session.setAttribute("staff", staff);
+                currentUser.setEmail(email);
+                session.setAttribute("user", currentUser);
 
-        response.sendRedirect("component/staff/staffDashboard.jsp");
+                response.sendRedirect("component/staff/staffDashboard.jsp");
+            } else {
+                response.sendRedirect("updateProfile.jsp");
+            }
+            return; // Dừng luôn luồng Staff tại đây
+        } // ==========================================
+        // ///////////////////Hoàng patient
+        // ==========================================
+        else if (role.equals("patient")) {
+            String redirectUrl = "component/patient/patientDashboard.jsp";
+            try {
+                int patientId = Integer.parseInt(request.getParameter("patientId"));
+                String name = request.getParameter("name");
+                String phone = request.getParameter("phone");
+                Date dob = Date.valueOf(request.getParameter("dob"));
+                int gender = Integer.parseInt(request.getParameter("gender"));
+                String address = request.getParameter("address");
 
-    } else {
+                // Gọi Service xử lý
+                PatientService patientService = new PatientService();
+                patientService.updatePatient(patientId, name, dob, gender, phone, address);
 
-        response.sendRedirect("updateProfile.jsp");
+                // Cập nhật lại session mới nhất cho Patient
+                PatientDTO updatedPatient = patientService.getPatientById(patientId);
+                session.setAttribute("patient", updatedPatient);
 
+                session.setAttribute("successMessage", "Cập nhật hồ sơ cá nhân thành công!");
+                response.sendRedirect(redirectUrl);
+
+            } catch (Exception e) {
+                e.printStackTrace();
+                // Bắt lỗi trùng số điện thoại và báo lên UI
+                session.setAttribute("errorMessage", e.getMessage());
+                response.sendRedirect(redirectUrl);
+            }
+            return; // Dừng luồng Patient tại đây
+        } // ==========================================
+        // RẼ NHÁNH 3: LUỒNG CỦA DOCTOR 
+        // ==========================================
+        else if (role.equals("doctor")) {
+            // 1. SỬA LẠI ĐƯỜNG DẪN CHO CHÍNH XÁC
+            String redirectUrl = "doctorDashboard.jsp?page=profile";
+
+            try {
+                int doctorId = Integer.parseInt(request.getParameter("doctorId"));
+                int userId = currentUser.getId(); // Lấy từ session để fetch lại data
+
+                String name = request.getParameter("name");
+                int gender = Integer.parseInt(request.getParameter("gender"));
+                String position = request.getParameter("position");
+                String phone = request.getParameter("phone");
+                String licenseNumber = request.getParameter("licenseNumber");
+
+                // Gọi Service xử lý Update
+                DoctorService doctorService = new DoctorService();
+                doctorService.updateDoctor(doctorId, name, gender, position, phone, licenseNumber);
+
+                // Cập nhật lại session mới nhất cho Doctor sau khi lưu DB thành công
+                DoctorDTO updatedDoctor = doctorService.getProfileByUserId(userId);
+                session.setAttribute("doctor", updatedDoctor);
+
+                // Set thông báo thành công
+                session.setAttribute("successMessage", "Cập nhật hồ sơ thành công!");
+
+                response.sendRedirect(redirectUrl);
+
+            } catch (Exception e) {
+                e.printStackTrace();
+                // Bắt lỗi (ví dụ: trùng số điện thoại) và báo lên UI
+                session.setAttribute("errorMessage", e.getMessage());
+                response.sendRedirect(redirectUrl);
+            }
+        } // ==========================================
+
+        // Nếu không thuộc Role nào thì đá về trang chủ
+        response.sendRedirect("index.jsp");
     }
-}
-
 
 }

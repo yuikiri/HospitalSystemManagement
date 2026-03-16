@@ -98,4 +98,24 @@ public class PatientDAO {
         } catch (Exception e) { e.printStackTrace(); }
         return false;
     }
+    
+        //=====================================================
+    //////////////////////////////Hoàng
+    //=====================================================
+    // THÊM MỚI: LẤY BỆNH NHÂN THEO USER_ID (DÙNG KHI ĐĂNG NHẬP)
+    public PatientDTO getPatientByUserId(int userId) {
+        String sql = SELECT_JOIN_SQL + "WHERE p.userId = ?";
+        try (Connection conn = new DbUtils().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, userId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return extractDTO(rs);
+            }
+        } catch (Exception e) { 
+            e.printStackTrace(); 
+        }
+        return null;
+    }
+    //=====================================================
+    //=====================================================
 }

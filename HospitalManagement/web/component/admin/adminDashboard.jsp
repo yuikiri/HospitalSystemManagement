@@ -81,6 +81,7 @@
             background: #fff;
             overflow: hidden;
             text-decoration: none !important;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
         }
 
         .dashboard-card:hover {
@@ -123,7 +124,6 @@
             margin-bottom: 2.5rem;
         }
 
-        /* Responsive */
         @media (max-width: 768px) {
             .sidebar { width: 70px; }
             .sidebar-brand span, .sidebar a span { display: none; }
@@ -140,30 +140,27 @@
         </div>
         
         <div class="nav-links">
-            <a href="<%=request.getContextPath()%>/AdminController" class="active">
+            <a href="AdminController" class="active">
                 <i class="fa fa-th-large"></i> <span>Tổng quan</span>
             </a>
-            <a href="<%=request.getContextPath()%>/AdminController?action=users">
-                <i class="fa fa-user-md"></i> <span>Người dùng</span>
+            <a href="AdminController?action=users">
+                <i class="fa fa-users-cog"></i> <span>Người dùng</span>
             </a>
-            <a href="<%=request.getContextPath()%>/AdminController?action=department">
+            <a href="AdminController?action=department">
                 <i class="fa fa-layer-group"></i> <span>Khoa điều trị</span>
             </a>
-            <a href="<%=request.getContextPath()%>/AdminController?action=room">
+            <a href="AdminController?action=room">
                 <i class="fa fa-door-open"></i> <span>Phòng bệnh</span>
             </a>
-            <a href="<%=request.getContextPath()%>/AdminController?action=medicine">
+            <a href="AdminController?action=medicine">
                 <i class="fa fa-briefcase-medical"></i> <span>Kho dược</span>
             </a>
-                <li class="nav-item mt-4">
 
-<a href="<%=request.getContextPath()%>/LogoutController">
-<i class="fa fa-sign-out-alt"></i> 
-<span>Đăng xuất</span>
-</a>
-
-</li>
-
+            <div style="margin-top: 50px;">
+                <a href="LogoutController" style="color: #ffcccc;">
+                    <i class="fa fa-sign-out-alt"></i> <span>Đăng xuất</span>
+                </a>
+            </div>
         </div>
     </div>
 
@@ -173,7 +170,7 @@
                 <h2 class="fw-bold mb-1">Bảng điều khiển</h2>
                 <p class="text-muted">Chào mừng trở lại, Quản trị viên!</p>
             </div>
-            <div class="user-profile bg-white p-2 rounded-pill shadow-sm d-flex align-items-center">
+            <div class="user-profile bg-white p-2 rounded-pill shadow-sm d-flex align-items-center border">
                 <img src="https://ui-avatars.com/api/?name=Admin&background=0D6EFD&color=fff" class="rounded-circle me-2" width="35" alt="avatar">
                 <span class="fw-semibold me-3">Admin</span>
             </div>
@@ -181,7 +178,7 @@
 
         <div class="row g-4">
             <div class="col-xl-3 col-md-6">
-                <a href="<%=request.getContextPath()%>/AdminController?action=users" class="card dashboard-card p-4 text-center h-100">
+                <a href="AdminController?action=users" class="card dashboard-card p-4 text-center h-100">
                     <div class="icon-shape text-primary">
                         <i class="fa fa-users fa-2x"></i>
                     </div>
@@ -191,7 +188,7 @@
             </div>
 
             <div class="col-xl-3 col-md-6">
-                <a href="<%=request.getContextPath()%>/AdminController?action=department" class="card dashboard-card p-4 text-center h-100">
+                <a href="AdminController?action=department" class="card dashboard-card p-4 text-center h-100">
                     <div class="icon-shape text-success">
                         <i class="fa fa-hospital-alt fa-2x"></i>
                     </div>
@@ -201,7 +198,7 @@
             </div>
 
             <div class="col-xl-3 col-md-6">
-                <a href="<%=request.getContextPath()%>/AdminController?action=room" class="card dashboard-card p-4 text-center h-100">
+                <a href="AdminController?action=room" class="card dashboard-card p-4 text-center h-100">
                     <div class="icon-shape text-warning">
                         <i class="fa fa-bed-pulse fa-2x"></i>
                     </div>
@@ -211,7 +208,7 @@
             </div>
 
             <div class="col-xl-3 col-md-6">
-                <a href="<%=request.getContextPath()%>/AdminController?action=medicine" class="card dashboard-card p-4 text-center h-100">
+                <a href="AdminController?action=medicine" class="card dashboard-card p-4 text-center h-100">
                     <div class="icon-shape text-danger">
                         <i class="fa fa-pills fa-2x"></i>
                     </div>
@@ -220,7 +217,9 @@
                 </a>
             </div>
         </div>
-    </div>
+        
+        </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

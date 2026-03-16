@@ -2,7 +2,6 @@ package controller;
 
 import entity.User;
 import service.UserService;
-
 import java.io.IOException;
 import java.util.List;
 import javax.servlet.ServletException;
@@ -12,154 +11,148 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
-@WebServlet(name="AdminController", urlPatterns={"/AdminController"})
+@WebServlet(name = "AdminController", urlPatterns = {"/AdminController"})
 public class AdminController extends HttpServlet {
 
-protected void processRequest(HttpServletRequest request, HttpServletResponse response)
-        throws ServletException, IOException {
+    @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
 
-    HttpSession session = request.getSession(false);
+        // Để tránh lỗi 404 khi redirect, ta lấy ContextPath (ví dụ: /HospitalManagement)
+        String cp = request.getContextPath();
 
-    if(session == null || session.getAttribute("LOGIN_USER") == null){
-        response.sendRedirect("index.jsp");
-        return;
-    }
-
-    String action = request.getParameter("action");
-
-    if(action == null){
-        request.getRequestDispatcher("component/admin/adminDashboard.jsp")
-               .forward(request, response);
-        return;
-    }
-}
-protected void doGet(HttpServletRequest request,
-                     HttpServletResponse response)
-        throws ServletException, IOException {
-
-    String action = request.getParameter("action");
-
-    UserService userService = new UserService();
-
-    try {
-
-        if (action == null) {
-            request.getRequestDispatcher("component/admin/adminDashboard.jsp")
-                    .forward(request, response);
+        HttpSession session = request.getSession(false);
+        if (session == null || session.getAttribute("LOGIN_USER") == null) {
+            response.sendRedirect(cp + "/index.jsp");
             return;
         }
 
-        switch (action) {
-case "users":
-    String email = request.getParameter("email");
-    String isActive = request.getParameter("isActive");
+        String action = request.getParameter("action");
+        UserService userService = new UserService();
 
-    // Không dùng getAllUsers() nữa, dùng searchUsers cho mọi trường hợp
-    // Để hàm này tự xử lý logic 0, 1, -1
-    List<User> list = userService.searchUsers(email, isActive);
+        // Nếu không có action, mặc định vào Dashboard
+        if (action == null || action.isEmpty()) {
+            request.getRequestDispatcher("/component/admin/adminDashboard.jsp").forward(request, response);
+            return;
+        }
+
+        try {
+            switch (action) {
+   case "users": {
+    String query = request.getParameter("searchQuery");
+    String role = request.getParameter("role");
+    String statusParam = request.getParameter("statusFilter");
+    
+    if (role == null || role.isEmpty()) role = "doctor";
+    
+    // Mặc định là 1 (Hoạt động), nếu chọn "Tất cả" thì truyền -99
+    int statusFilter = (statusParam == null || statusParam.isEmpty()) ? 1 : Integer.parseInt(statusParam);
+
+    List<User> list = userService.searchUsers(query, statusFilter, role);
 
     request.setAttribute("userList", list);
-    request.getRequestDispatcher("component/admin/manageUsers.jsp").forward(request, response);
+    request.setAttribute("activeTab", role.toLowerCase());
+    request.setAttribute("currentStatus", statusFilter); // Gửi lại để UI giữ giá trị select
+    request.getRequestDispatcher("/component/admin/manageUsers.jsp").forward(request, response);
     break;
 
+}
+  case "updateStatus": {
+    int userId = Integer.parseInt(request.getParameter("id"));
+    int newStatus = Integer.parseInt(request.getParameter("newStatus"));
+    String currentRole = request.getParameter("role");
+    
+    // Lấy thêm cái này để giữ đúng filter hiện tại
+    String statusFilter = request.getParameter("statusFilter"); 
+    if (statusFilter == null) statusFilter = "1"; 
 
-            case "toggleUser":
+    // Thực hiện cập nhật trong DB
+    userService.updateUserStatus(userId, newStatus);
+    
+    // TRƯỚC ĐÂY: Bạn redirect thiếu statusFilter nên nó nhảy về mặc định (Hoạt động)
+    // BÂY GIỜ: Redirect kèm theo statusFilter để nó ở lại đúng trang đó
+    response.sendRedirect("AdminController?action=users&role=" + currentRole + "&statusFilter=" + statusFilter);
+    break;
 
+}
+                case "deleteUser":
+                    int idDel = Integer.parseInt(request.getParameter("id"));
+                    String rDel = request.getParameter("role");
+                    userService.deleteUser(idDel);
+                    // Dùng CP để tránh 404 sau khi redirect
+                    response.sendRedirect(cp + "/AdminController?action=users&role=" + rDel);
+                    break;
+
+                    case "trash": {
+
+    List<User> list = userService.getDeletedUsers();
+
+    request.setAttribute("userList", list);
+    request.setAttribute("activeTab", "trash");
+
+    request.getRequestDispatcher("/component/admin/manageUsers.jsp").forward(request, response);
+
+    break;
+}
+
+case "restoreUser": {
+
+    int id = Integer.parseInt(request.getParameter("id"));
+
+    userService.restoreUser(id);
+
+    response.sendRedirect("AdminController?action=trash");
+
+    break;
+}
+                case "editUser":
+                    int idEdit = Integer.parseInt(request.getParameter("id"));
+                    User u = userService.getUserById(idEdit); 
+                    request.setAttribute("user", u);
+                    request.getRequestDispatcher("/component/admin/editUser.jsp").forward(request, response);
+                    break;
+
+                default:
+                    response.sendRedirect(cp + "/AdminController");
+                    break;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            response.sendRedirect(cp + "/error.jsp");
+        }
+    }
+
+    @Override
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        
+        request.setCharacterEncoding("UTF-8");
+        String cp = request.getContextPath();
+        String action = request.getParameter("action");
+        UserService userService = new UserService();
+
+        try {
+            if ("addUser".equals(action)) {
+                String name = request.getParameter("userName");
+                String email = request.getParameter("email");
+                String pass = request.getParameter("password");
+                String role = request.getParameter("role");
+
+                userService.addUserByAdmin(name, email, pass, role);
+                response.sendRedirect(cp + "/AdminController?action=users&role=" + role);
+
+            } else if ("updateUser".equals(action)) {
                 int id = Integer.parseInt(request.getParameter("id"));
+                String name = request.getParameter("userName");
+                String email = request.getParameter("email");
+                String role = request.getParameter("role"); 
 
-                userService.toggleUserStatus(id);
-
-                response.sendRedirect("AdminController?action=users");
-
-                break;
-
-
-            case "deleteUser":
-
-                id = Integer.parseInt(request.getParameter("id"));
-
-                userService.deleteUser(id);
-
-                response.sendRedirect("AdminController?action=users");
-
-                break;
-
-
-            case "trashUsers":
-
-                List<User> trashList = userService.getDeletedUsers();
-
-                request.setAttribute("userList", trashList);
-
-                request.getRequestDispatcher("component/admin/trashUsers.jsp")
-                        .forward(request, response);
-
-                break;
-
-
-            case "restoreUser":
-
-                id = Integer.parseInt(request.getParameter("id"));
-
-                userService.restoreUser(id);
-
-                response.sendRedirect("AdminController?action=trashUsers");
-
-                break;
-case "editUser":
-
-     id = Integer.parseInt(request.getParameter("id"));
-
-    User u = userService.getUserById(id);
-
-    request.setAttribute("user", u);
-
-    request.getRequestDispatcher("component/admin/editUser.jsp")
-            .forward(request, response);
-
-break;
-
-            default:
-
-                request.getRequestDispatcher("component/admin/adminDashboard.jsp")
-                        .forward(request, response);
-
+                userService.updateUserByAdmin(id, name, email, role);
+                response.sendRedirect(cp + "/AdminController?action=users&role=" + role);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            response.sendRedirect(cp + "/AdminController?action=users");
         }
-        
-        
-
-    } catch (Exception e) {
-        e.printStackTrace();
     }
-}
-
-@Override
-protected void doPost(HttpServletRequest request,
-                      HttpServletResponse response)
-        throws ServletException, IOException {
-
-    String action = request.getParameter("action");
-
-    UserService userService = new UserService();
-
-    try{
-
-        if("updateUser".equals(action)){
-
-            int id = Integer.parseInt(request.getParameter("id"));
-
-            String name = request.getParameter("userName");
-            String email = request.getParameter("email");
-            String role = request.getParameter("role");
-
-            userService.updateUserByAdmin(id, name, email, role);
-
-            response.sendRedirect("AdminController?action=users");
-
-        }
-
-    }catch(Exception e){
-        e.printStackTrace();
-    }
-}
 }

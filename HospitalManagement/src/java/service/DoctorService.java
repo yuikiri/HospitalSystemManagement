@@ -36,7 +36,7 @@ public class DoctorService {
     // =========================================================
     // 2. LOGIC CẬP NHẬT HỒ SƠ (Nút "Cập nhật thông tin")
     // =========================================================
-    public void updateProfile(int doctorId, String name, int gender, String position, String phone, String licenseNumber) throws ErrorMessages.AppException {
+    public void updateDoctor(int doctorId, String name, int gender, String position, String phone, String licenseNumber) throws ErrorMessages.AppException {
         // A. Kiểm tra dữ liệu trống
         if (name == null || name.trim().isEmpty() || phone == null || licenseNumber == null) {
             throw new ErrorMessages.AppException(ErrorMessages.INVALID_PARAMETER);
@@ -58,12 +58,34 @@ public class DoctorService {
             throw new ErrorMessages.AppException(ErrorMessages.SYSTEM_ERROR);
         }
     }
+    public void updateDoctor1(int doctorId, String name, int gender, String position, String phone, String licenseNumber) throws Exception {
+        
+        if (name == null || name.trim().isEmpty()) {
+            throw new Exception("Tên bác sĩ không được để trống!");
+        }
+
+        // Validate trùng số điện thoại
+        if (doctorDAO.checkUniqueField("phone", phone, doctorId)) {
+            throw new Exception("Số điện thoại '" + phone + "' đã bị trùng với bác sĩ khác!");
+        }
+
+        // Validate trùng số giấy phép hành nghề
+        if (doctorDAO.checkUniqueField("licenseNumber", licenseNumber, doctorId)) {
+            throw new Exception("Số giấy phép hành nghề '" + licenseNumber + "' đã tồn tại!");
+        }
+
+        // Thực thi Update (Hàm updateDoctorProfile đã có sẵn trong DoctorDAO)
+        boolean isSuccess = doctorDAO.updateDoctorProfile(doctorId, name, gender, position, phone, licenseNumber);
+        if (!isSuccess) {
+            throw new Exception("Cập nhật thất bại do lỗi kết nối cơ sở dữ liệu!");
+        }
+    }
 
     // =========================================================
     // 3. ADMIN SỬA TRỰC TIẾP
     // =========================================================
     public void adminUpdateDoctor(int doctorId, String name, int gender, String position, String phone, String licenseNumber) throws ErrorMessages.AppException {
         // Admin sửa thì không cần quá nhiều bước check mail, nhưng vẫn phải check trùng SĐT/Giấy phép
-        updateProfile(doctorId, name, gender, position, phone, licenseNumber);
+        updateDoctor(doctorId, name, gender, position, phone, licenseNumber);
     }
 }
