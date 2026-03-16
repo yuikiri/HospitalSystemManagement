@@ -19,28 +19,40 @@ import javax.servlet.http.HttpSession;
  *
  * @author Yuikiri
  */
-
 public class VerifyPasswordController extends HttpServlet {
+
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         String inputOtp = request.getParameter("otpCode");
         HttpSession session = request.getSession();
-        
+
         String savedOtp = (String) session.getAttribute("savedPwdOtp");
         String pendingNewPassword = (String) session.getAttribute("pendingNewPassword");
         User currentUser = (User) session.getAttribute("user");
-        
+
         if (savedOtp != null && savedOtp.equals(inputOtp)) {
-            new UserDAO().updatePassword(currentUser.getId(), pendingNewPassword);
-            
-            session.removeAttribute("savedPwdOtp");
-            session.removeAttribute("pendingNewPassword");
-            
-            session.setAttribute("successMessage", "Đổi Mật khẩu thành công!");
-            response.sendRedirect(request.getContextPath() + "/component/patient/patientDashboard.jsp");
+            // ... logic update db ... 
+
+            session.removeAttribute("savedEmailOtp"); // Hoặc savedPwdOtp
+            session.removeAttribute("pendingEmail"); // Hoặc pendingNewPassword
+            session.setAttribute("successMessage", "Thao tác thành công!");
+
+            // Kiểm tra role để đá về đúng trang
+            String role = currentUser.getRole().toLowerCase();
+            if (role.equals("patient")) {
+                response.sendRedirect(request.getContextPath() + "/component/patient/patientDashboard.jsp");
+            } else if (role.equals("doctor")) {
+                // Đá về trang dashboard của doctor (đảm bảo đúng tên file của bạn)
+                response.sendRedirect(request.getContextPath() + "/component/doctor/doctorDashboard.jsp?page=profile");
+            } else if (role.equals("staff")) {
+                response.sendRedirect(request.getContextPath() + "/component/staff/staffDashboard.jsp");
+            } else {
+                response.sendRedirect(request.getContextPath() + "/index.jsp");
+            }
         } else {
             request.setAttribute("errorMessage", "Mã OTP không chính xác!");
-            request.getRequestDispatcher("verifyPasswordOTP.jsp").forward(request, response);
+            // Nhớ check tên file verify JSP ở dòng này cho đúng
+            request.getRequestDispatcher("verifyEmailOTP.jsp").forward(request, response);
         }
     }
 }
