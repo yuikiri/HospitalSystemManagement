@@ -31,9 +31,22 @@ public class RequestChangeEmailController extends HttpServlet {
      * @throws IOException if an I/O error occurs
      */
     @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        HttpSession session = request.getSession();
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {HttpSession session = request.getSession();
         User currentUser = (User) session.getAttribute("user");
+        
+        
+        
+        
+        
+        User user = (User) session.getAttribute("user");
+        if (user == null || !user.getRole().equals("patient")) {
+            response.sendRedirect(request.getContextPath() + "/login.jsp");
+            return;
+        }
+        
+        
+        
+        
         
         String currentEmail = request.getParameter("currentEmail");
         String currentPassword = request.getParameter("currentPassword");

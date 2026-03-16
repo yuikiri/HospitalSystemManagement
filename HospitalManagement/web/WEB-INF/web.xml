@@ -46,6 +46,26 @@
         <servlet-name>VerifyPasswordController</servlet-name>
         <servlet-class>controller.VerifyPasswordController</servlet-class>
     </servlet>
+    <servlet>
+        <servlet-name>GetDoctorsAPI</servlet-name>
+        <servlet-class>controller.GetDoctorsAPI</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>LoadBookingPageController</servlet-name>
+        <servlet-class>controller.LoadBookingPageController</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>SubmitBookingController</servlet-name>
+        <servlet-class>controller.SubmitBookingController</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>LoadPatientDashboardController</servlet-name>
+        <servlet-class>controller.LoadPatientDashboardController</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>test01</servlet-name>
+        <servlet-class>controller.test01</servlet-class>
+    </servlet>
     <servlet-mapping>
         <servlet-name>MainController</servlet-name>
         <url-pattern>/MainController</url-pattern>
@@ -86,6 +106,26 @@
     <servlet-mapping>
         <servlet-name>VerifyPasswordController</servlet-name>
         <url-pattern>/VerifyPasswordController</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>GetDoctorsAPI</servlet-name>
+        <url-pattern>/GetDoctorsAPI</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>LoadBookingPageController</servlet-name>
+        <url-pattern>/LoadBookingPageController</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>SubmitBookingController</servlet-name>
+        <url-pattern>/SubmitBookingController</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>LoadPatientDashboardController</servlet-name>
+        <url-pattern>/LoadPatientDashboardController</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>test01</servlet-name>
+        <url-pattern>/test01</url-pattern>
     </servlet-mapping>
     <session-config>
         <session-timeout>30</session-timeout>

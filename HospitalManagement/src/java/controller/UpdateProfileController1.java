@@ -85,6 +85,7 @@ public class UpdateProfileController1 extends HttpServlet {
                 PatientDTO updatedPatient = patientService.getPatientById(patientId);
                 session.setAttribute("patient", updatedPatient);
 
+                session.setAttribute("successMessage", "Cập nhật hồ sơ cá nhân thành công!");
                 response.sendRedirect(redirectUrl);
 
             } catch (Exception e) {

@@ -115,4 +115,56 @@ public class DepartmentDAO {
         } catch (Exception e) { e.printStackTrace(); }
         return false;
     }
+    
+    //==================================
+    ///////////////////hoàng
+    //==================================
+    public List<DepartmentDTO> getClinicalDepartments() {
+        List<DepartmentDTO> list = new ArrayList<>();
+        String sql = "SELECT * FROM Departments WHERE isActive = 1 AND name LIKE N'Khoa%'";
+        
+        try (Connection conn = new DbUtils().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            
+            while (rs.next()) {
+                DepartmentDTO dept = new DepartmentDTO(
+                    rs.getInt("id"), 
+                    rs.getString("name"), 
+                    rs.getString("description"), 
+                    rs.getInt("isActive")
+                );
+                list.add(dept);
+            }
+        } catch (Exception e) { e.printStackTrace(); }
+        return list;
+    }
+
+    // ==========================================================
+    // 2. DÀNH CHO NHÂN VIÊN (Lấy các phòng ban KHÔNG có chữ "Khoa")
+    // ==========================================================
+    public List<DepartmentDTO> getStaffDepartments() {
+        List<DepartmentDTO> list = new ArrayList<>();
+        String sql = "SELECT * FROM Departments WHERE isActive = 1 AND name NOT LIKE N'Khoa%'";
+        
+        try (Connection conn = new DbUtils().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            
+            while (rs.next()) {
+                DepartmentDTO dept = new DepartmentDTO(
+                    rs.getInt("id"), 
+                    rs.getString("name"), 
+                    rs.getString("description"), 
+                    rs.getInt("isActive")
+                );
+                list.add(dept);
+            }
+        } catch (Exception e) { e.printStackTrace(); }
+        return list;
+    }
+    
+    
+    //=============================================
+    //=============================================
 }

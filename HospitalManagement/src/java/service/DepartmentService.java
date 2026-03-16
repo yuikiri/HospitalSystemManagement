@@ -65,4 +65,17 @@ public class DepartmentService {
     public boolean activateDepartment(int id) {
         return departmentDAO.toggleDepartmentStatus(id, 1); // 1 = Mở cửa lại
     }
+    
+    // Gọi xuống DAO để lấy danh sách Khoa Lâm sàng
+    
+    
+    // Lấy Khoa Y tế (Cho form Đặt Lịch, cho Bác sĩ)
+    public List<DepartmentDTO> getClinicalDepartments() {
+        return departmentDAO.getClinicalDepartments();
+    }
+
+    // Lấy Phòng ban Hành chính (Cho form Phân công Nhân viên)
+    public List<DepartmentDTO> getStaffDepartments() {
+        return departmentDAO.getStaffDepartments();
+    }
 }

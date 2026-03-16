@@ -8,6 +8,7 @@ import java.sql.ResultSet;
 import entity.User;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -85,17 +86,56 @@ public class DoctorDAO {
                 rs.getString("licenseNumber")
         );
     }
+//==================================================
+    ////////////////////////Hoàng
+    //==================================================
+    // TÌM BÁC SĨ THEO KHOA VÀ THỜI GIAN TRỰC (CHÍNH XÁC 100%)
+    public List<DoctorDTO> getAvailableDoctors(int departmentId, Timestamp bookingStart, Timestamp bookingEnd) {
+        List<DoctorDTO> list = new ArrayList<>();
+        
+        // Logic: Bác sĩ thuộc khoa X, đang hoạt động, VÀ có mặt trong 1 ca trực (Shift) 
+        // mà thời gian trực bao trùm khung giờ bệnh nhân muốn khám.
+        String sql = "SELECT DISTINCT d.* FROM Doctors d " +
+                     "JOIN DoctorDepartment dd ON d.id = dd.doctorId " +
+                     "JOIN Users u ON d.userId = u.id " +
+                     "JOIN DoctorShifts ds ON d.id = ds.doctorId " +
+                     "JOIN Shifts s ON ds.shiftId = s.id " +
+                     "WHERE dd.departmentId = ? " +
+                     "AND u.isActive = 1 " +
+                     "AND s.isActive = 1 " +
+                     "AND s.startTime <= ? " + // Ca trực phải bắt đầu trước hoặc bằng giờ khám
+                     "AND s.endTime >= ?";     // Ca trực phải kết thúc sau hoặc bằng giờ khám xong
+                     
+        try (Connection conn = new util.DbUtils().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+             
+            ps.setInt(1, departmentId);
+            ps.setTimestamp(2, bookingStart);
+            ps.setTimestamp(3, bookingEnd);
+            
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    list.add(mapDoctor(rs)); 
+                }
+            }
+        } catch (Exception e) { e.printStackTrace(); }
+        return list;
+    }
+    
+    //==================================================
+    //////////////////khoa
+    //=================================================
 
     public boolean updateDoctorProfile(int userId, String name, String email, String phone) {
         String sqlUser = "UPDATE Users SET email = ? WHERE userId = ?";
         String sqlDoctor = "UPDATE Doctors SET name = ?, phone = ? WHERE userId = ?";
 
-        // Sử dụng Transaction hoặc cập nhật lần lượt tùy cấu trúc của bạn
-        // Ở đây tôi viết logic cơ bản:
-        try ( Connection conn = DbUtils.getConnection()) {
+        // Sử dụng Transaction để đảm bảo tính toàn vẹn dữ liệu
+        try ( Connection conn = new util.DbUtils().getConnection()) {
             conn.setAutoCommit(false); // Bắt đầu transaction
 
-            try ( PreparedStatement psUser = conn.prepareStatement(sqlUser);  PreparedStatement psDoctor = conn.prepareStatement(sqlDoctor)) {
+            try ( PreparedStatement psUser = conn.prepareStatement(sqlUser);  
+                  PreparedStatement psDoctor = conn.prepareStatement(sqlDoctor)) {
 
                 // 1. Update bảng Users
                 psUser.setString(1, email);
@@ -119,4 +159,7 @@ public class DoctorDAO {
         }
         return false;
     }
+    
+    
+    
 }
