@@ -61,15 +61,24 @@ public class LoginController extends HttpServlet {
                         } catch (Exception e) { e.printStackTrace(); }
                         redirectUrl = cp + "/component/staff/staffDashboard.jsp";
                     } 
+                    // ==============================
+                    /////////////////////Hoàng
+                    // ==============================
                     else {
-                        // Mặc định là Patient
+                        service.PatientService patientService = new service.PatientService();
                         try {
-                            PatientService patientService = new PatientService();
-                            PatientDTO patient = patientService.getPatientByUserId(user.getId());
+                            // Gọi hàm lấy Patient dựa vào User ID
+                            dao.PatientDTO patient = patientService.getPatientByUserId(user.getId());
+                            // Lưu đối tượng patient lên session để JSP lấy ra dùng
                             session.setAttribute("patient", patient);
-                        } catch (Exception e) { e.printStackTrace(); }
-                        redirectUrl = cp + "/component/patient/patientDashboard.jsp";
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+
+                        url = "component/patient/patientDashboard.jsp";
                     }
+                    // ==============================
+                    // ==============================
 
                     // Dùng sendRedirect để đổi URL trên thanh địa chỉ, tránh lỗi F5 reset form
                     response.sendRedirect(redirectUrl);

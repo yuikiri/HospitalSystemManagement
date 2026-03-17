@@ -17,6 +17,9 @@ public class RoomDAO {
     //===========================================
     // ĐÃ FIX: Đổi từ JOIN thành LEFT JOIN ở bảng Departments
     // Để các phòng có departmentId = NULL vẫn hiện lên danh sách
+    ///////////////Hoàng
+    //===========================================
+    // Câu lệnh lôi cả giá tiền (rt.price) lên
     private final String SELECT_JOIN_SQL = 
         "SELECT r.*, d.name AS departmentName, rt.name AS roomTypeName, rt.price " +
         "FROM Rooms r " +
@@ -26,6 +29,8 @@ public class RoomDAO {
     // 1. Dành cho trang Đặt lịch Bệnh nhân
     public List<RoomDTO> getAllActiveRoomsAvailable() {
         List<RoomDTO> list = new ArrayList<>();
+        
+        // 🌟 THÊM ĐIỀU KIỆN: r.status = 'available' VÀO CÂU SQL
         String sql = SELECT_JOIN_SQL + "WHERE r.isActive = 1 AND r.status = 'available' ORDER BY r.roomNumber ASC";
         
         try (Connection conn = new DbUtils().getConnection();
@@ -43,7 +48,7 @@ public class RoomDAO {
         return list;
     }
 
-    // 2. Dành cho Admin 
+    // 2. Dành cho Admin (ĐÃ FIX LỖI CONSTRUCTOR)
     public List<RoomDTO> getAllRoomsForAdmin() {
         List<RoomDTO> list = new ArrayList<>();
         // ĐÃ THÊM: WHERE r.isActive >= 0
@@ -56,7 +61,7 @@ public class RoomDAO {
                     rs.getInt("id"), rs.getInt("departmentId"), rs.getString("departmentName"),
                     rs.getInt("roomType"), rs.getString("roomTypeName"),
                     rs.getInt("roomNumber"), rs.getString("status"), rs.getInt("isActive"),
-                    rs.getDouble("price")
+                    rs.getDouble("price") // <-- ĐÃ FIX: Thêm price vào đây để hết báo lỗi đỏ
                 ));
             }
         } catch (Exception e) { e.printStackTrace(); }

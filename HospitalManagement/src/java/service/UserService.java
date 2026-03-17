@@ -171,4 +171,21 @@ public class UserService {
             throw new Exception("Không thể cập nhật avatar!");
         }
     }
+
+   
+   //=====================================================
+    //////////////////////////////////////Hoàng
+    //=====================================================
+   // Cập nhật Avatar
+    public void updateAvatar(int userId, String avatarUrl) throws Exception {
+        if (avatarUrl == null || avatarUrl.trim().isEmpty()) {
+            throw new Exception("Đường dẫn ảnh không hợp lệ!");
+        }
+        boolean isSuccess = userDAO.updateAvatar(userId, avatarUrl);
+        if (!isSuccess) {
+            throw new Exception("Lỗi hệ thống: Không thể cập nhật ảnh đại diện lúc này!");
+        }
+    }
+    //=====================================================
+    //=====================================================
 }
