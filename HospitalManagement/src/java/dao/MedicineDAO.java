@@ -118,4 +118,54 @@ public class MedicineDAO {
         } catch (Exception e) { e.printStackTrace(); }
         return false;
     }
+    // 7. TÌM KIẾM THUỐC (Dùng cho thanh Search ở trang quản lý)
+    // Chỉ tìm những thuốc đang hoạt động (isActive = 1)
+    public List<MedicineDTO> searchMedicines(String keyword) {
+        List<MedicineDTO> list = new ArrayList<>();
+        String sql = "SELECT * FROM Medicines WHERE isActive = 1 AND (name LIKE ? OR description LIKE ?) ORDER BY name ASC";
+        try (Connection conn = new DbUtils().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            String searchKey = "%" + keyword + "%";
+            ps.setString(1, searchKey);
+            ps.setString(2, searchKey);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    list.add(extractDTO(rs));
+                }
+            }
+        } catch (Exception e) { e.printStackTrace(); }
+        return list;
+    }
+
+    // 8. LẤY DANH SÁCH THÙNG RÁC (Các thuốc có isActive = 0)
+    public List<MedicineDTO> getDeletedMedicines() {
+        List<MedicineDTO> list = new ArrayList<>();
+        String sql = "SELECT * FROM Medicines WHERE isActive = 0 ORDER BY id DESC";
+        try (Connection conn = new DbUtils().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                list.add(extractDTO(rs));
+            }
+        } catch (Exception e) { e.printStackTrace(); }
+        return list;
+    }
+
+    // 9. CẬP NHẬT THÔNG TIN THUỐC (Bản đầy đủ bao gồm cả số lượng tồn kho)
+    // Dùng cho Modal Edit khi Admin muốn sửa cả số lượng stock trực tiếp
+    public boolean updateMedicineFull(int id, String name, String unit, double price, int stockQuantity, String description) {
+        String sql = "UPDATE Medicines SET name = ?, unit = ?, price = ?, stockquantity = ?, description = ? WHERE id = ?";
+        try (Connection conn = new DbUtils().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, name);
+            ps.setString(2, unit);
+            ps.setDouble(3, price);
+            ps.setInt(4, stockQuantity);
+            ps.setString(5, description);
+            ps.setInt(6, id);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) { e.printStackTrace(); }
+        return false;
+    }
+
 }

@@ -103,10 +103,17 @@ public class UserService {
     }
 
     // ==============================
-    // LOCK / UNLOCK USER
+    // LOCK / UNLOCK USER (Truyền trạng thái cụ thể)
     // ==============================
     public boolean updateUserStatus(int userId, int newStatus) {
         return userDAO.updateUserStatus(userId, newStatus);
+    }
+    
+    // ==============================
+    // TOGGLE USER STATUS (Đảo trạng thái tự động cho AdminController)
+    // ==============================
+    public void toggleUserStatus(int id) throws Exception {
+        userDAO.toggleUserStatus(id);
     }
 
     // ==============================
@@ -125,8 +132,8 @@ public class UserService {
     // DELETE USER (SOFT DELETE)
     // ==============================
    public void deleteUser(int id) throws Exception {
-    userDAO.deleteUser(id);
-}
+        userDAO.deleteUser(id);
+    }
 
     // ==============================
     // GET DELETED USERS
@@ -164,5 +171,4 @@ public class UserService {
             throw new Exception("Không thể cập nhật avatar!");
         }
     }
-
 }
