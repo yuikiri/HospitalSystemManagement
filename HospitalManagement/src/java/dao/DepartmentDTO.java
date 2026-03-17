@@ -1,19 +1,11 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package dao;
 
-/**
- *
- * @author Yuikiri
- */
 public class DepartmentDTO {
+
     private int id;
     private String name;
     private String description;
     private int isActive;
-    //construxctor
 
     public DepartmentDTO() {
     }
@@ -29,21 +21,41 @@ public class DepartmentDTO {
         return id;
     }
 
+    public void setId(int id) {
+        this.id = id;
+    }
+
     public String getName() {
         return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 
     public String getDescription() {
         return description;
     }
 
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
     public int getIsActive() {
         return isActive;
     }
 
+    public void setIsActive(int isActive) {
+        this.isActive = isActive;
+    }
+
     @Override
     public String toString() {
-        return "DepartmentDTO{" + "id=" + id + ", name=" + name + ", description=" + description + ", isActive=" + isActive + '}';
+        return "DepartmentDTO{" +
+                "id=" + id +
+                ", name=" + name +
+                ", description=" + description +
+                ", isActive=" + isActive +
+                '}';
     }
-    
 }

@@ -74,4 +74,32 @@ public class MedicineService {
     public boolean activateMedicine(int id) {
         return medicineDAO.toggleMedicineStatus(id, 1); 
     }
+    // 1. TÌM KIẾM THUỐC (Dùng cho thanh Search của Admin)
+    public List<MedicineDTO> searchMedicines(String keyword) {
+        if (keyword == null || keyword.trim().isEmpty()) {
+            return medicineDAO.getAllActiveMedicines();
+        }
+        return medicineDAO.searchMedicines(keyword);
+    }
+
+    // 2. LẤY DANH SÁCH THUỐC TRONG THÙNG RÁC (isActive = 0)
+    public List<MedicineDTO> getDeletedMedicines() {
+        return medicineDAO.getDeletedMedicines();
+    }
+
+    // 3. XÓA MỀM (Chuyển vào thùng rác)
+    public boolean softDeleteMedicine(int id) {
+        return medicineDAO.toggleMedicineStatus(id, 0);
+    }
+
+    // 4. KHÔI PHỤC THUỐC (Từ thùng rác ra danh sách chính)
+    public boolean restoreMedicine(int id) {
+        return medicineDAO.toggleMedicineStatus(id, 1);
+    }
+    
+    // 5. CẬP NHẬT THÔNG TIN THUỐC (Bản đầy đủ bao gồm cả Stock trực tiếp)
+    public boolean updateMedicineFull(int id, String name, String unit, double price, int stock, String desc) {
+        if (price < 0 || stock < 0) return false;
+        return medicineDAO.updateMedicineFull(id, name, unit, price, stock, desc);
+    }
 }

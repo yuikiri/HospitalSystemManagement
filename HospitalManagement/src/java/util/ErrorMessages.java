@@ -36,7 +36,7 @@ public class ErrorMessages {
     
     public static final ErrorInfo ROOM_TYPE_NOT_FOUND = new ErrorInfo(404, "Không tìm thấy thông tin Loại phòng.");
     public static final ErrorInfo ROOM_NOT_FOUND = new ErrorInfo(404, "Phòng khám không tồn tại hoặc đã bị ngừng hoạt động.");
-    public static final ErrorInfo ROOM_EXISTED = new ErrorInfo(409, "Số phòng này đã tồn tại trong Khoa.");
+public static final ErrorInfo ROOM_EXISTED = new ErrorInfo(409, "Số phòng này đã tồn tại trong Khoa.");
 
     public static final ErrorInfo MEDICINE_NOT_FOUND = new ErrorInfo(404, "Không tìm thấy thông tin thuốc.");
     public static final ErrorInfo INVALID_MEDICINE_DATA = new ErrorInfo(400, "Giá thuốc hoặc số lượng tồn kho không được là số âm.");
@@ -68,7 +68,7 @@ public class ErrorMessages {
     // ========================================================================
     public static final ErrorInfo PAYMENT_NOT_FOUND = new ErrorInfo(404, "Không tìm thấy thông tin hóa đơn.");
     public static final ErrorInfo PAYMENT_EXISTED = new ErrorInfo(409, "Hồ sơ bệnh án này đã xuất hóa đơn rồi!");
-    public static final ErrorInfo NEGATIVE_AMOUNT = new ErrorInfo(400, "Tổng tiền thanh toán không được là số âm.");
+public static final ErrorInfo NEGATIVE_AMOUNT = new ErrorInfo(400, "Tổng tiền thanh toán không được là số âm.");
     public static final ErrorInfo INVALID_PAYMENT_METHOD = new ErrorInfo(400, "Phương thức thanh toán không hợp lệ (Chỉ nhận: cash, card, banking).");
 
     // ========================================================================

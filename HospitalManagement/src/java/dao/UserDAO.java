@@ -96,7 +96,7 @@ public List<User> getAllUsers(){
 u.setId(rs.getInt("id"));
 u.setUserName(rs.getString("userName"));
 u.setEmail(rs.getString("email"));
-u.setRole(rs.getString("role"));
+u.setRole(rs.getString("role").toUpperCase());
 u.setIsActive(rs.getInt("isActive"));
 
 list.add(u);
@@ -209,26 +209,74 @@ list.add(u);
     // UPDATE USER (ADMIN)
     // ==============================
 
-    public boolean updateUserByAdmin(int userId, String userName, String email, String role) {
+   public boolean updateUserByAdmin(int userId, String userName, String email, String role) {
 
-        String sql = "UPDATE Users SET userName=?, email=?, role=? WHERE id=?";
+    Connection conn = null;
 
-        try (Connection conn = new DbUtils().getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+    try {
 
+        conn = DbUtils.getConnection();
+        conn.setAutoCommit(false);
+
+        // update USERS
+        String sqlUser = "UPDATE Users SET userName=?, email=?, role=? WHERE id=?";
+
+        PreparedStatement psUser = conn.prepareStatement(sqlUser);
+
+        psUser.setString(1, userName);
+        psUser.setString(2, email);
+        psUser.setString(3, role.toUpperCase().trim());
+        psUser.setInt(4, userId);
+
+        psUser.executeUpdate();
+
+        String r = role.toUpperCase().trim();
+
+        if (r.equals("DOCTOR")) {
+
+            String sql = "UPDATE Doctors SET name=? WHERE userId=?";
+
+            PreparedStatement ps = conn.prepareStatement(sql);
             ps.setString(1, userName);
-            ps.setString(2, email);
-            ps.setString(3, role);
-            ps.setInt(4, userId);
-
-            return ps.executeUpdate() > 0;
-
-        } catch (Exception e) {
-            e.printStackTrace();
+            ps.setInt(2, userId);
+            ps.executeUpdate();
         }
 
-        return false;
+        else if (r.equals("STAFF")) {
+
+            String sql = "UPDATE Staffs SET name=? WHERE userId=?";
+
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setString(1, userName);
+            ps.setInt(2, userId);
+            ps.executeUpdate();
+        }
+
+        else if (r.equals("PATIENT")) {
+
+            String sql = "UPDATE Patients SET name=? WHERE userId=?";
+
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setString(1, userName);
+            ps.setInt(2, userId);
+            ps.executeUpdate();
+        }
+
+        conn.commit();
+
+        return true;
+
+    } catch (Exception e) {
+
+        try {
+            if (conn != null) conn.rollback();
+        } catch (Exception ex) {}
+
+        e.printStackTrace();
     }
+
+    return false;
+}
 
     // ==============================
     // LOCK USER
@@ -249,119 +297,170 @@ list.add(u);
     // ADD USER BY ADMIN
     // ==============================
 
-    public boolean addUserByAdmin(String userName, String email, String password, String role) {
-
-        String sql = "INSERT INTO Users(userName,email,passwordHash,role,isActive,createdAt) VALUES(?,?,?,?,1,GETDATE())";
-
-        try (Connection conn = new DbUtils().getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            ps.setString(1, userName);
-            ps.setString(2, email);
-            ps.setString(3, password);
-            ps.setString(4, role);
-
-            return ps.executeUpdate() > 0;
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        return false;
-    }
+ 
     // ==============================
 // SEARCH USER BY EMAIL
 // ==============================
 
-public List<User> searchUsers(String email, String isActive){
+public List<User> searchUsers(String query, int isActive, String role) {
 
     List<User> list = new ArrayList<>();
 
-    String sql = "SELECT * FROM Users WHERE 1=1";
+    String sql = "SELECT u.*, COALESCE(d.name, s.name, p.name, u.userName) AS trueName "
+            + "FROM Users u "
+            + "LEFT JOIN Doctors d ON u.id = d.userId "
+            + "LEFT JOIN Staffs s ON u.id = s.userId "
+            + "LEFT JOIN Patients p ON u.id = p.userId "
+            + "WHERE u.role = ? AND u.isActive != -1";
 
-    if(email != null && !email.isEmpty()){
-        sql += " AND email LIKE ?";
+    if (isActive != -99) {
+        sql += " AND u.isActive = ?";
     }
 
-    if(isActive != null && !isActive.isEmpty()){
-        sql += " AND isActive = ?";
+    if (query != null && !query.trim().isEmpty()) {
+        sql += " AND (u.email LIKE ? OR COALESCE(d.name,s.name,p.name,u.userName) LIKE ?)";
     }
 
-    try{
+    try (Connection conn = DbUtils.getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql)) {
 
-        Connection conn = DbUtils.getConnection();
+        ps.setString(1, role.toUpperCase().trim());
 
-        PreparedStatement ps = conn.prepareStatement(sql);
+        int idx = 2;
 
-        int index = 1;
-
-        if(email != null && !email.isEmpty()){
-            ps.setString(index++, "%" + email + "%");
+        if (isActive != -99) {
+            ps.setInt(idx++, isActive);
         }
 
-        if(isActive != null && !isActive.isEmpty()){
-            ps.setInt(index++, Integer.parseInt(isActive));
+        if (query != null && !query.trim().isEmpty()) {
+            String p = "%" + query + "%";
+            ps.setString(idx++, p);
+            ps.setString(idx++, p);
         }
 
         ResultSet rs = ps.executeQuery();
 
-        while(rs.next()){
+        while (rs.next()) {
 
             User u = new User();
 
             u.setId(rs.getInt("id"));
-            u.setUserName(rs.getString("userName"));
             u.setEmail(rs.getString("email"));
+            u.setUserName(rs.getString("trueName"));
             u.setRole(rs.getString("role"));
             u.setIsActive(rs.getInt("isActive"));
 
             list.add(u);
         }
 
-    }catch(Exception e){
+    } catch (Exception e) {
         e.printStackTrace();
     }
 
     return list;
 }
+public boolean updateUserStatus(int userId, int status) {
+    String sql = "UPDATE Users SET isActive = ? WHERE id = ?";
+    try (Connection conn = DbUtils.getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql)) {
+        ps.setInt(1, status);
+        ps.setInt(2, userId);
+        return ps.executeUpdate() > 0;
+    } catch (Exception e) {
+        e.printStackTrace();
+        return false;
+    }
+}
+public boolean addUser(String name, String email, String pass, String role) {
 
-// ==============================
-// FILTER USER STATUS
-// ==============================
+    Connection conn = null;
 
-public List<User> filterUserStatus(String role, int status){
+    try {
 
-    List<User> list = new ArrayList<>();
+        conn = DbUtils.getConnection();
+        conn.setAutoCommit(false);
 
-    String sql = "SELECT * FROM Users WHERE role=? AND isActive=?";
+        String sqlUser = "INSERT INTO Users(userName,email,passwordHash,role,isActive,createdAt) VALUES(?,?,?,?,1,GETDATE())";
 
-    try(Connection conn = new DbUtils().getConnection();
-        PreparedStatement ps = conn.prepareStatement(sql)){
+        PreparedStatement psUser = conn.prepareStatement(sqlUser, Statement.RETURN_GENERATED_KEYS);
 
-        ps.setString(1, role);
-        ps.setInt(2, status);
+        psUser.setString(1, name);
+        psUser.setString(2, email);
+        psUser.setString(3, pass);
+        psUser.setString(4, role.toUpperCase());
 
-        ResultSet rs = ps.executeQuery();
+        psUser.executeUpdate();
 
-        while(rs.next()){
+        ResultSet rs = psUser.getGeneratedKeys();
 
-            list.add(new User(
-                    rs.getInt("id"),
-                    rs.getString("userName"),
-                    rs.getString("email"),
-                    "",
-                    "",
-                    rs.getString("role").trim(),
-                    rs.getInt("isActive"),
-                    rs.getTimestamp("createdAt")
-            ));
+        int userId = -1;
+
+        if (rs.next()) {
+            userId = rs.getInt(1);
         }
 
-    }catch(Exception e){
+        if (userId == -1) {
+            conn.rollback();
+            return false;
+        }
+
+        String r = role.toLowerCase();
+
+        if (r.equals("doctor")) {
+
+            String sqlDoctor =
+                    "INSERT INTO Doctors(userId,name,gender,position,phone,licenseNumber) " +
+                    "VALUES(?, ?, 1, 'Doctor', '0000000000', 'TEMP')";
+
+            PreparedStatement ps = conn.prepareStatement(sqlDoctor);
+
+            ps.setInt(1, userId);
+            ps.setString(2, name);
+
+            ps.executeUpdate();
+        }
+
+        else if (r.equals("staff")) {
+
+            String sqlStaff =
+                    "INSERT INTO Staffs(userId,name,gender,position,phone) " +
+                    "VALUES(?, ?, 1, 'Staff', '0000000000')";
+
+            PreparedStatement ps = conn.prepareStatement(sqlStaff);
+
+            ps.setInt(1, userId);
+            ps.setString(2, name);
+
+            ps.executeUpdate();
+        }
+
+        else if (r.equals("patient")) {
+
+            String sqlPatient =
+                    "INSERT INTO Patients(userId,name) VALUES(?,?)";
+
+            PreparedStatement ps = conn.prepareStatement(sqlPatient);
+
+            ps.setInt(1, userId);
+            ps.setString(2, name);
+
+            ps.executeUpdate();
+        }
+
+        conn.commit();
+
+        return true;
+
+    } catch (Exception e) {
+
+        try {
+            if (conn != null) conn.rollback();
+        } catch (Exception ex) {}
+
         e.printStackTrace();
     }
 
-    return list;
+    return false;
 }
 // ==============================
 // CHECK EMAIL EXIST FOR UPDATE
@@ -409,17 +508,76 @@ public boolean updateEmail(int userId, String email){
 
     return false;
 }
-public List<User> getDeletedUsers() throws Exception {
+// GET DELETED USERS
+public List<User> getDeletedUsers() {
 
     List<User> list = new ArrayList<>();
 
     String sql = "SELECT * FROM Users WHERE isActive = -1";
 
+    try (Connection conn = DbUtils.getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql)) {
+
+        ResultSet rs = ps.executeQuery();
+
+        while (rs.next()) {
+
+            User u = new User();
+
+            u.setId(rs.getInt("id"));
+            u.setUserName(rs.getString("userName"));
+            u.setEmail(rs.getString("email"));
+            u.setRole(rs.getString("role"));
+            u.setIsActive(rs.getInt("isActive"));
+
+            list.add(u);
+        }
+
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+
+    return list;
+}
+
+public void restoreUser(int userId) throws Exception {
+
+    String sql = "UPDATE Users SET isActive = 1 WHERE id=?";
+
+    try (Connection conn = DbUtils.getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql)) {
+
+        ps.setInt(1, userId);
+        ps.executeUpdate();
+
+    }
+
+}
+public void deleteUser(int userId) throws Exception {
+
+    String sql = "UPDATE Users SET isActive = -1 WHERE id=?";
+
+    try (Connection conn = DbUtils.getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql)) {
+
+        ps.setInt(1, userId);
+        ps.executeUpdate();
+
+    }
+
+}
+public User getUserById(int id) throws Exception{
+
+    String sql = "SELECT * FROM Users WHERE id = ?";
+
     Connection conn = DbUtils.getConnection();
     PreparedStatement ps = conn.prepareStatement(sql);
+
+    ps.setInt(1, id);
+
     ResultSet rs = ps.executeQuery();
 
-    while(rs.next()){
+    if(rs.next()){
 
         User u = new User();
 
@@ -429,33 +587,58 @@ public List<User> getDeletedUsers() throws Exception {
         u.setRole(rs.getString("role"));
         u.setIsActive(rs.getInt("isActive"));
 
-        list.add(u);
+        return u;
     }
 
-    return list;
+    return null;
 }
-public void restoreUser(int id) throws Exception {
 
-    String sql = "UPDATE Users SET isActive = 1 WHERE id = ?";
+    //=====================================================
+    //////////////////////////////////////Hoàng
+    //=====================================================
+    // UPDATE AVATAR
+    public boolean updateAvatar(int userId, String avatarUrl) {
+        String sql = "UPDATE Users SET avatarUrl = ? WHERE id = ?";
+        try (Connection conn = new DbUtils().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, avatarUrl);
+            ps.setInt(2, userId);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+    // 1. Kiểm tra Email đã tồn tại chưa (Dùng khi đổi Email)
+    
 
-    Connection conn = DbUtils.getConnection();
-    PreparedStatement ps = conn.prepareStatement(sql);
+    // 3. Kiểm tra Mật khẩu hiện tại (Dùng bảo mật)
+    public boolean checkCurrentPassword(int userId, String currentPassword) {
+        String sql = "SELECT id FROM Users WHERE id = ? AND passwordHash = ?";
+        try (Connection conn = new util.DbUtils().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, userId);
+            ps.setString(2, currentPassword);
+            ResultSet rs = ps.executeQuery();
+            return rs.next();
+        } catch (Exception e) { e.printStackTrace(); }
+        return false;
+    }
 
-    ps.setInt(1, id);
+    // 4. Cập nhật Mật khẩu mới
+    public boolean updatePassword(int userId, String newPassword) {
+        String sql = "UPDATE Users SET passwordHash = ? WHERE id = ?";
+        try (Connection conn = new util.DbUtils().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, newPassword);
+            ps.setInt(2, userId);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) { e.printStackTrace(); }
+        return false;
+    }
+    //=====================================================
+    //=====================================================
 
-    ps.executeUpdate();
-}
-public void deleteUser(int id) throws Exception {
-
-    String sql = "UPDATE Users SET isActive = -1 WHERE id = ?";
-
-    Connection conn = DbUtils.getConnection();
-    PreparedStatement ps = conn.prepareStatement(sql);
-
-    ps.setInt(1, id);
-
-    ps.executeUpdate();
-}
 
     //=====================================================
     //////////////////////////////////////Hoàng

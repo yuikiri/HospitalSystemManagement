@@ -78,4 +78,30 @@ public class DepartmentService {
     public List<DepartmentDTO> getStaffDepartments() {
         return departmentDAO.getStaffDepartments();
     }
+    // SEARCH DEPARTMENT
+public List<DepartmentDTO> searchDepartment(String keyword) {
+    return departmentDAO.searchDepartment(keyword);
+}
+// ==========================================================
+    // 5. XÓA KHOA (SOFT DELETE - Set isActive = -1)
+    // ==========================================================
+    public boolean deleteDepartment(int id) {
+    DepartmentDTO dept = departmentDAO.getDepartmentById(id);
+    if (dept == null) return false;
+    
+    // Logic: Khi xóa ở đây, DAO sẽ tự động quét bảng Rooms để set NULL departmentId
+    return departmentDAO.deleteDepartment(id);
+}
+    
+    public List<DepartmentDTO> getDeletedList() {
+    return departmentDAO.getDeletedDepartments();
+}
+
+public boolean restoreDepartment(int id) {
+    return departmentDAO.restoreDepartment(id);
+}
+// Hàm lọc tổng hợp: Từ khóa + Trạng thái + Loại (Khoa/Phòng)
+public List<DepartmentDTO> getDepartmentWithFilter(String keyword, int status, String type) {
+    return departmentDAO.searchDepartmentComplex(keyword, status, type);
+}
 }

@@ -67,4 +67,29 @@ public class RoomService {
     public int getDefaultRoomByDepartment(int departmentId){
     return roomDAO.getDefaultRoomByDepartment(departmentId);
 }
+    // Thêm vào RoomService.java
+public List<RoomDTO> getRoomWithFilter(String keyword, int departmentId, String status, int isActive) {
+    return roomDAO.searchAndFilterRooms(keyword, departmentId, status, isActive);
+}
+// =========================================================
+    // XÓA PHÒNG (CHUYỂN VÀO THÙNG RÁC: isActive = -1)
+    // =========================================================
+    public boolean deleteRoom(int id) {
+        // Có thể thêm logic kiểm tra phòng có đang có người bệnh không trước khi xóa
+        return roomDAO.deleteRoom(id);
+    }
+
+    // =========================================================
+    // LẤY DANH SÁCH PHÒNG TRONG THÙNG RÁC
+    // =========================================================
+    public List<RoomDTO> getDeletedRooms() {
+        return roomDAO.getDeletedRooms();
+    }
+
+    // =========================================================
+    // KHÔI PHỤC PHÒNG TỪ THÙNG RÁC
+    // =========================================================
+    public boolean restoreRoom(int id) {
+        return roomDAO.restoreRoom(id);
+    }
 }
