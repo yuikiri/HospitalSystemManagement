@@ -316,25 +316,7 @@ INSERT INTO Departments (name, description, isActive) VALUES
 (N'Tổ Lái Xe Cấp Cứu', N'Vận chuyển bệnh nhân khẩn cấp', 1);
 
 
--- 7. DOCTOR DEPARTMENTS (Phân công 20 Bác sĩ vào 10 Khoa Y Tế Lâm Sàng - ID từ 1 đến 10)
-INSERT INTO DoctorDepartments (doctorId, departmentId) VALUES
-(1, 1), (2, 1), (3, 2), (4, 2), (5, 3), 
-(6, 3), (7, 4), (8, 4), (9, 5), (10, 5),
-(11, 6), (12, 6), (13, 7), (14, 7), (15, 8),
-(16, 8), (17, 9), (18, 9), (19, 10), (20, 10);
 
--- 8. STAFF DEPARTMENTS (Phân công 20 Nhân viên vào 10 Phòng Ban Hành Chính - ID từ 11 đến 20)
-INSERT INTO StaffDepartments (staffId, departmentId) VALUES
-(1, 11), (2, 11),  -- Lễ Tân
-(3, 12), (4, 12),  -- Kế Toán Thu Ngân
-(5, 13), (6, 13),  -- Bảo Vệ
-(7, 14), (8, 14),  -- Vệ Sinh
-(9, 15), (10, 15), -- IT
-(11, 16), (12, 16),-- Phòng/Kho Dược
-(13, 17), (14, 17),-- Nhân Sự Hành Chính
-(15, 18), (16, 18),-- CSKH
-(17, 19), (18, 19),-- Căng Tin
-(19, 20), (20, 20);-- Lái xe
 
 -- 3. ROOM TYPES (20 Loại/Mức giá phòng)
 INSERT INTO RoomType (name, price, createdAt, isActive) VALUES
@@ -430,7 +412,25 @@ INSERT INTO Patients (userId, name, dob, gender, phone, address) VALUES
 (60, N'Khách Hàng 19', '1960-07-27', 1, '0983000019', N'Thủ Đức, TP.HCM'),
 (61, N'Khách Hàng 20', '1994-08-09', 0, '0983000020', N'Bình Chánh, TP.HCM');
 
+-- 7. DOCTOR DEPARTMENTS (Phân công 20 Bác sĩ vào 10 Khoa Y Tế Lâm Sàng - ID từ 1 đến 10)
+INSERT INTO DoctorDepartments (doctorId, departmentId) VALUES
+(1, 1), (2, 1), (3, 2), (4, 2), (5, 3), 
+(6, 3), (7, 4), (8, 4), (9, 5), (10, 5),
+(11, 6), (12, 6), (13, 7), (14, 7), (15, 8),
+(16, 8), (17, 9), (18, 9), (19, 10), (20, 10);
 
+-- 8. STAFF DEPARTMENTS (Phân công 20 Nhân viên vào 10 Phòng Ban Hành Chính - ID từ 11 đến 20)
+INSERT INTO StaffDepartments (staffId, departmentId) VALUES
+(1, 11), (2, 11),  -- Lễ Tân
+(3, 12), (4, 12),  -- Kế Toán Thu Ngân
+(5, 13), (6, 13),  -- Bảo Vệ
+(7, 14), (8, 14),  -- Vệ Sinh
+(9, 15), (10, 15), -- IT
+(11, 16), (12, 16),-- Phòng/Kho Dược
+(13, 17), (14, 17),-- Nhân Sự Hành Chính
+(15, 18), (16, 18),-- CSKH
+(17, 19), (18, 19),-- Căng Tin
+(19, 20), (20, 20);-- Lái xe
 
 -- 9. ROOMS (Tạo 20 Phòng khám/Điều trị thuộc các Khoa Lâm Sàng)
 INSERT INTO Rooms (departmentId, roomType, roomNumber, status, isActive) VALUES

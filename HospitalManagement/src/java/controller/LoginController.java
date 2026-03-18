@@ -1,8 +1,9 @@
 package controller;
 
 import dao.UserDAO;
+import dao.UserDTO;
+import dao.StaffDAO; // Thêm DAO để fix lỗi thiếu Service của người làm Staff
 import dao.StaffDTO;
-import dao.PatientDTO;
 import entity.User;
 import java.io.IOException;
 import javax.servlet.RequestDispatcher;
@@ -12,90 +13,115 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
-import service.StaffService;
+import service.UserService;
 import service.PatientService;
+import util.ErrorMessages;
 
 @WebServlet(name = "LoginController", urlPatterns = {"/LoginController"})
 public class LoginController extends HttpServlet {
+
+    private UserService userService = new UserService();
 
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
         response.setContentType("text/html;charset=UTF-8");
         request.setCharacterEncoding("UTF-8");
+        response.setCharacterEncoding("UTF-8");
 
-        String cp = request.getContextPath(); // Ví dụ: /HospitalManagement
+        String cp = request.getContextPath(); // Lấy đường dẫn gốc (Bảo vệ đường dẫn Admin)
+        String url = "/index.jsp";
         HttpSession session = request.getSession();
 
-        // Lấy thông tin từ form index.jsp
-        String txtEmail = request.getParameter("txtEmail");
-        String txtPassword = request.getParameter("txtPassword");
+        if (session.getAttribute("user") == null) {
 
-        // Nếu người dùng nhấn Submit (có dữ liệu email/pass)
-        if (txtEmail != null && txtPassword != null) {
+            String txtEmail = request.getParameter("txtEmail");
+            String txtPassword = request.getParameter("txtPassword");
+
             UserDAO udao = new UserDAO();
             User user = udao.checkLogin(txtEmail, txtPassword);
 
             if (user != null) {
+
                 if (user.getIsActive() == 1) {
-                    // QUAN TRỌNG: Phải đặt tên là LOGIN_USER để các Controller khác nhận diện được
-                    session.setAttribute("LOGIN_USER", user);
+
+                    // FIX LỖI 1: Bắt buộc dùng "user" thay vì "LOGIN_USER" của Admin để không chết form sếp
+                    session.setAttribute("user", user);
 
                     String role = user.getRole().toLowerCase().trim();
-                    String redirectUrl = "";
 
-                    // Phân quyền điều hướng
                     if (role.equals("admin")) {
-                        // Admin nên chạy qua Controller để load dữ liệu thay vì vào thẳng file JSP
-                        redirectUrl = cp + "/AdminController";
+                        // Phần của Admin
+                        url = "/AdminController";
                     } 
                     else if (role.equals("doctor")) {
-                        redirectUrl = cp + "/component/doctor/doctorDashboard.jsp";
+                        // Phần của Doctor (Giữ nguyên logic của sếp)
+                        url = "/component/doctor/doctorDashboard.jsp";
                     } 
                     else if (role.equals("staff")) {
-                        // Lấy thêm thông tin Staff nếu cần
+                        // FIX LỖI 2: Dùng thẳng StaffDAO để tránh lỗi người khác chưa push StaffService
                         try {
-                            StaffService staffService = new StaffService();
-                            StaffDTO staff = staffService.getProfileByUserId(user.getId());
+                            StaffDAO staffDAO = new StaffDAO();
+                            StaffDTO staff = staffDAO.getStaffByUserId(user.getId());
                             session.setAttribute("staff", staff);
-                        } catch (Exception e) { e.printStackTrace(); }
-                        redirectUrl = cp + "/component/staff/staffDashboard.jsp";
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                        url = "/component/staff/staffDashboard.jsp";
                     } 
-                    // ==============================
-                    /////////////////////Hoàng
-                    // ==============================
                     else {
-                        service.PatientService patientService = new service.PatientService();
+                        // Phần của Patient (Giữ nguyên 100% logic gốc của sếp)
+                        PatientService patientService = new PatientService();
                         try {
-                            // Gọi hàm lấy Patient dựa vào User ID
                             dao.PatientDTO patient = patientService.getPatientByUserId(user.getId());
-                            // Lưu đối tượng patient lên session để JSP lấy ra dùng
                             session.setAttribute("patient", patient);
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
-
-                        url = "component/patient/patientDashboard.jsp";
+                        url = "/component/patient/patientDashboard.jsp";
                     }
-                    // ==============================
-                    // ==============================
 
-                    // Dùng sendRedirect để đổi URL trên thanh địa chỉ, tránh lỗi F5 reset form
-                    response.sendRedirect(redirectUrl);
+                    // FIX LỖI 3: Ghép ContextPath (cp) vào URL để chuyển hướng an toàn cho mọi Role
+                    response.sendRedirect(cp + url);
                     return;
 
                 } else {
-                    request.setAttribute("message", "Tài khoản của bạn hiện đang bị khóa!");
-                    request.setAttribute("tempEmail", txtEmail);
+                    request.setAttribute("message", "Tài khoản của bạn đã bị khóa!");
+                    request.setAttribute("txtEmail", txtEmail); // Giữ lại email trên form
+                    url = "/index.jsp";
                 }
+
             } else {
-                request.setAttribute("message", "Email hoặc mật khẩu không đúng!");
-                request.setAttribute("tempEmail", txtEmail);
+                request.setAttribute("message", "Email hoặc mật khẩu không chính xác!");
+                request.setAttribute("txtEmail", txtEmail); // Giữ lại email trên form
+                url = "/index.jsp";
             }
+
+        } else {
+            // Xử lý khi người dùng đang có session mà gõ lại URL Login
+            User user = (User) session.getAttribute("user");
+            String role = user.getRole().toLowerCase().trim();
+
+            if (role.equals("admin")) {
+                url = "/AdminController";
+            } 
+            else if (role.equals("doctor")) {
+                url = "/component/doctor/doctorDashboard.jsp";
+            } 
+            else if (role.equals("staff")) {
+                url = "/component/staff/staffDashboard.jsp";
+            } 
+            else {
+                url = "/component/patient/patientDashboard.jsp";
+            }
+
+            response.sendRedirect(cp + url);
+            return;
         }
 
-        // Nếu đăng nhập thất bại hoặc mới mở trang, quay về index.jsp
-        request.getRequestDispatcher("index.jsp").forward(request, response);
+        // Chuyển hướng khi có lỗi đăng nhập
+        RequestDispatcher rd = request.getRequestDispatcher(url);
+        rd.forward(request, response);
     }
 
     @Override
@@ -112,6 +138,6 @@ public class LoginController extends HttpServlet {
 
     @Override
     public String getServletInfo() {
-        return "Login Controller Optimized";
+        return "Login Controller Merged";
     }
 }
