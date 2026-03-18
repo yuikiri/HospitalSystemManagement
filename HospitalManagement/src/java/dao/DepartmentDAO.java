@@ -10,7 +10,7 @@ import util.DbUtils;
 public class DepartmentDAO {
 
     // 1. LẤY TẤT CẢ KHOA ĐANG HOẠT ĐỘNG (CHO PATIENT/BOOKING)
-    public List<DepartmentDTO> getAllActiveDepartments() {
+    public List<DepartmentDTO> getAllActiveDepartmentsAdmin() {
         List<DepartmentDTO> list = new ArrayList<>();
         String sql = "SELECT id, name, description, isActive FROM Departments "
                    + "WHERE isActive = 1 ORDER BY name ASC"; // Sắp xếp ASC cho dễ nhìn
@@ -26,8 +26,23 @@ public class DepartmentDAO {
         return list;
     }
 
+    public List<DepartmentDTO> getAllActiveDepartments() {
+        List<DepartmentDTO> list = new ArrayList<>();
+        String sql = "SELECT * FROM Departments WHERE isActive = 1 ORDER BY name ASC";
+        try (Connection conn = new DbUtils().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                list.add(new DepartmentDTO(
+                    rs.getInt("id"), rs.getString("name"), rs.getString("description"), rs.getInt("isActive")
+                ));
+            }
+        } catch (Exception e) { e.printStackTrace(); }
+        return list;
+    }
+
     // 2. LẤY DEPARTMENT CHO ADMIN (CHỈ LẤY ACTIVE + INACTIVE, LOẠI BỎ ĐÃ XÓA -1)
-    public List<DepartmentDTO> getAllDepartmentsForAdmin() {
+    public List<DepartmentDTO> getAllDepartmentsForAdminAdmin() {
         List<DepartmentDTO> list = new ArrayList<>();
         String sql = "SELECT id, name, description, isActive FROM Departments "
                    + "WHERE isActive != -1 ORDER BY id DESC"; // Lọc bỏ -1 ở đây
@@ -43,7 +58,22 @@ public class DepartmentDAO {
         return list;
     }
 
-    public DepartmentDTO getDepartmentById(int id) {
+    public List<DepartmentDTO> getAllDepartmentsForAdmin() {
+        List<DepartmentDTO> list = new ArrayList<>();
+        String sql = "SELECT * FROM Departments ORDER BY id DESC";
+        try (Connection conn = new DbUtils().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                list.add(new DepartmentDTO(
+                    rs.getInt("id"), rs.getString("name"), rs.getString("description"), rs.getInt("isActive")
+                ));
+            }
+        } catch (Exception e) { e.printStackTrace(); }
+        return list;
+    }
+
+    public DepartmentDTO getDepartmentByIdAdmin(int id) {
         String sql = "SELECT id, name, description, isActive FROM Departments WHERE id = ?";
         try (Connection conn = new DbUtils().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -58,8 +88,24 @@ public class DepartmentDAO {
         return null;
     }
 
+    public DepartmentDTO getDepartmentById(int id) {
+        String sql = "SELECT * FROM Departments WHERE id = ?";
+        try (Connection conn = new DbUtils().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, id);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return new DepartmentDTO(
+                        rs.getInt("id"), rs.getString("name"), rs.getString("description"), rs.getInt("isActive")
+                    );
+                }
+            }
+        } catch (Exception e) { e.printStackTrace(); }
+        return null;
+    }
+
     // 4. CHECK TRÙNG TÊN (LOẠI BỎ NHỮNG KHOA ĐÃ XÓA TRONG THÙNG RÁC)
-    public boolean checkNameExist(String name) {
+    public boolean checkNameExistAdmin(String name) {
         String sql = "SELECT id FROM Departments WHERE name = ? AND isActive != -1"; 
         try (Connection conn = new DbUtils().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -67,6 +113,18 @@ public class DepartmentDAO {
             try (ResultSet rs = ps.executeQuery()) { return rs.next(); }
         } catch (Exception e) { e.printStackTrace(); }
         return false;
+    }
+
+    public boolean checkNameExist(String name) {
+        String sql = "SELECT id FROM Departments WHERE name = ?";
+        try (Connection conn = new DbUtils().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, name);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
+        } catch (Exception e) { e.printStackTrace(); }
+        return true;
     }
 
     public boolean insertDepartment(String name, String description) {
@@ -190,7 +248,7 @@ public boolean deleteDepartment(int id) {
     // ==========================================================
     // 10. LẤY KHOA LÂM SÀNG (Bắt đầu bằng chữ 'Khoa')
     // ==========================================================
-    public List<DepartmentDTO> getClinicalDepartments() {
+    public List<DepartmentDTO> getClinicalDepartmentsAdmin() {
         List<DepartmentDTO> list = new ArrayList<>();
         // Lọc isActive != -1 để tránh lấy khoa đã xóa
         String sql = "SELECT id, name, description, isActive FROM Departments "
@@ -207,10 +265,30 @@ public boolean deleteDepartment(int id) {
         return list;
     }
 
+    public List<DepartmentDTO> getClinicalDepartments() {
+        List<DepartmentDTO> list = new ArrayList<>();
+        String sql = "SELECT * FROM Departments WHERE isActive = 1 AND name LIKE N'Khoa%' ORDER BY name ASC";
+        
+        try (Connection conn = new DbUtils().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            
+            while (rs.next()) {
+                DepartmentDTO dept = new DepartmentDTO(
+                    rs.getInt("id"), 
+                    rs.getString("name"), 
+                    rs.getString("description"), 
+                    rs.getInt("isActive")
+                );
+                list.add(dept);
+            }
+        } catch (Exception e) { e.printStackTrace(); }
+        return list;
+    }
     // ==========================================================
     // 11. LẤY PHÒNG BAN HÀNH CHÍNH (Không bắt đầu bằng chữ 'Khoa')
     // ==========================================================
-    public List<DepartmentDTO> getStaffDepartments() {
+    public List<DepartmentDTO> getStaffDepartmentsAdmin() {
         List<DepartmentDTO> list = new ArrayList<>();
         // Lọc isActive != -1 để tránh lấy phòng ban đã xóa
         String sql = "SELECT id, name, description, isActive FROM Departments "
@@ -226,6 +304,27 @@ public boolean deleteDepartment(int id) {
         } catch (Exception e) { e.printStackTrace(); }
         return list;
     }
+public List<DepartmentDTO> getStaffDepartments() {
+        List<DepartmentDTO> list = new ArrayList<>();
+        String sql = "SELECT * FROM Departments WHERE isActive = 1 AND name NOT LIKE N'Khoa%'";
+        
+        try (Connection conn = new DbUtils().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            
+            while (rs.next()) {
+                DepartmentDTO dept = new DepartmentDTO(
+                    rs.getInt("id"), 
+                    rs.getString("name"), 
+                    rs.getString("description"), 
+                    rs.getInt("isActive")
+                );
+                list.add(dept);
+            }
+        } catch (Exception e) { e.printStackTrace(); }
+        return list;
+    }
+    
     public List<DepartmentDTO> searchDepartmentComplex(String keyword, int status, String type) {
     List<DepartmentDTO> list = new ArrayList<>();
     // Gốc câu lệnh: không lấy hàng trong thùng rác (isActive != -1)
