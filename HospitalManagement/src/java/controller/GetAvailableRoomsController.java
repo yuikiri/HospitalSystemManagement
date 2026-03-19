@@ -20,51 +20,47 @@ import javax.servlet.http.HttpServletResponse;
 @WebServlet(name = "GetAvailableRoomsController", urlPatterns = {"/layphongtrong"})
 public class GetAvailableRoomsController extends HttpServlet {
 
-    protected void processRequest(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-        response.setContentType("text/html;charset=UTF-8");
+   protected void processRequest(HttpServletRequest request, HttpServletResponse response)
+        throws ServletException, IOException {
+    response.setContentType("text/html;charset=UTF-8");
+    
+    try {
+        // 1. Lấy thông tin từ Web
+        int day = Integer.parseInt(request.getParameter("day"));
+        int shift = Integer.parseInt(request.getParameter("shift"));
+        int week = Integer.parseInt(request.getParameter("week"));
+
+        // 2. SỬ DỤNG ShiftService ĐỂ TÍNH THỜI GIAN (Đảm bảo đồng bộ 100%)
+        service.ShiftService shiftService = new service.ShiftService();
+        Timestamp[] range = shiftService.calculateShiftRange(day, shift, week);
+        Timestamp startTime = range[0];
+        Timestamp endTime = range[1];
+
+        // 3. Gọi DAO với đầy đủ Start và End
+        dao.ShiftDAO shiftDAO = new dao.ShiftDAO();
+        // Truyền cả startTime và endTime vào đây
+        List<dao.RoomDTO> rooms = shiftDAO.getAvailableRooms(startTime, endTime); 
         
-        try {
-            // 1. Lấy thông tin thời gian từ Web gửi lên
-            int day = Integer.parseInt(request.getParameter("day"));
-            int shift = Integer.parseInt(request.getParameter("shift"));
-            int week = Integer.parseInt(request.getParameter("week"));
-
-            // 2. Tính toán Timestamp bắt đầu ca trực (Logic đồng bộ với ShiftService)
-            LocalDate targetDate = LocalDate.now()
-                    .with(DayOfWeek.MONDAY)
-                    .plusWeeks(week)
-                    .plusDays(day - 2);
-            
-            int startHour = 6 + (shift - 1) * 2;
-            Timestamp startTime = Timestamp.valueOf(targetDate.atTime(startHour, 0));
-
-            // 3. Gọi DAO lấy danh sách phòng chưa bị ai đặt vào giờ này
-            ShiftDAO shiftDAO = new ShiftDAO();
-            List<RoomDTO> rooms = shiftDAO.getAvailableRooms(startTime, startTime);
-            
-            // 4. Trả về đoạn mã HTML <option> để JavaScript nhét vào Dropdown
-            StringBuilder html = new StringBuilder("<option value=''>-- Chọn phòng trống --</option>");
-            
-            if (rooms.isEmpty()) {
-                html = new StringBuilder("<option value=''>❌ Không còn phòng trống</option>");
-            } else {
-                for (RoomDTO r : rooms) {
-                    html.append("<option value='").append(r.getId()).append("'>")
-                        .append("Phòng ").append(r.getRoomNumber())
-                        .append(" - ").append(r.getDepartmentName() != null ? r.getDepartmentName() : "Chưa phân khoa")
-                        .append("</option>");
-                }
+        // 4. Trả về HTML (Giữ nguyên đoạn StringBuilder bên dưới của bạn)
+        StringBuilder html = new StringBuilder("<option value=''>-- Chọn phòng trống --</option>");
+        if (rooms.isEmpty()) {
+            html = new StringBuilder("<option value=''>❌ Không còn phòng trống</option>");
+        } else {
+            for (dao.RoomDTO r : rooms) {
+                html.append("<option value='").append(r.getId()).append("'>")
+                    .append("Phòng ").append(r.getRoomNumber())
+                    .append(" - ").append(r.getDepartmentName() != null ? r.getDepartmentName() : "Chưa phân khoa")
+                    .append("</option>");
             }
-            
-            response.getWriter().write(html.toString());
-            
-        } catch (Exception e) {
-            e.printStackTrace();
-            response.getWriter().write("<option value=''>Lỗi tải dữ liệu</option>");
         }
+        response.getWriter().write(html.toString());
+        
+    } catch (Exception e) {
+        e.printStackTrace();
+        response.getWriter().write("<option value=''>Lỗi tải dữ liệu</option>");
     }
-
+}            
+       
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {

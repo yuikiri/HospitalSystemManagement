@@ -119,4 +119,23 @@ public class ShiftService {
         }
         return false;
     }
+    public java.sql.Timestamp[] calculateShiftRange(int dayOfWeek, int shiftNumber, int weekOffset) {
+    java.time.LocalDate today = java.time.LocalDate.now();
+    // Tính ngày mục tiêu (Thứ 2 = 2, ..., Chủ Nhật = 8)
+    java.time.LocalDate targetDate = today.with(java.time.DayOfWeek.MONDAY)
+            .plusWeeks(weekOffset)
+            .plusDays(dayOfWeek - 2);
+    
+    // Tính giờ bắt đầu: Ca 1 = 6h, Ca 2 = 8h...
+    int startHour = 6 + (shiftNumber - 1) * 2;
+    
+    // Ép về đúng 00 phút, 00 giây để SQL không bị lệch milis giây
+    java.time.LocalDateTime startLDT = targetDate.atTime(startHour, 0, 0, 0);
+    java.time.LocalDateTime endLDT = startLDT.plusHours(2);
+    
+    return new java.sql.Timestamp[]{
+        java.sql.Timestamp.valueOf(startLDT), 
+        java.sql.Timestamp.valueOf(endLDT)
+    };
+}
 }

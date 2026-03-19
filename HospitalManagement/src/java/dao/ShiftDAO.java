@@ -80,71 +80,80 @@ public class ShiftDAO {
 
     // 4. LẤY LỊCH TRỰC TRONG TUẦN THEO EMAIL
     public List<ShiftDTO> getWeeklyShiftsByEmail(String email, String personType, Timestamp startOfWeek, Timestamp endOfWeek) {
-        List<ShiftDTO> list = new ArrayList<>();
-        String sql = "";
-        
-        if ("doctor".equals(personType)) {
-            sql = "SELECT s.id, s.roomId, r.roomNumber, d.name AS departmentName, s.startTime, s.endTime, s.status, s.isActive, ds.role AS note " +
-                  "FROM Shifts s " +
-                  "JOIN Rooms r ON s.roomId = r.id " +
-                  "JOIN Departments d ON r.departmentId = d.id " +
-                  "JOIN DoctorShifts ds ON s.id = ds.shiftId " +
-                  "JOIN Users u ON ds.doctorId = u.id " +
-                  "WHERE u.email = ? AND s.startTime >= ? AND s.startTime < ? AND s.isActive = 1";
-        } else {
-            sql = "SELECT s.id, s.roomId, r.roomNumber, d.name AS departmentName, s.startTime, s.endTime, s.status, s.isActive, ss.role AS note " +
-                  "FROM Shifts s " +
-                  "JOIN Rooms r ON s.roomId = r.id " +
-                  "JOIN Departments d ON r.departmentId = d.id " +
-                  "JOIN StaffShifts ss ON s.id = ss.shiftId " +
-                  "JOIN Users u ON ss.staffId = u.id " +
-                  "WHERE u.email = ? AND s.startTime >= ? AND s.startTime < ? AND s.isActive = 1";
+    List<ShiftDTO> list = new ArrayList<>();
+    String sql = "";
+    
+    // ĐÃ SỬA: JOIN bắc cầu qua bảng Doctors/Staffs để lấy đúng ID chuyên môn
+    if ("doctor".equals(personType)) {
+        sql = "SELECT s.id, s.roomId, r.roomNumber, dpt.name AS departmentName, s.startTime, s.endTime, s.status, s.isActive, ds.role AS note " +
+              "FROM Shifts s " +
+              "JOIN Rooms r ON s.roomId = r.id " +
+              "JOIN Departments dpt ON r.departmentId = dpt.id " +
+              "JOIN DoctorShifts ds ON s.id = ds.shiftId " +
+              "JOIN Doctors doc ON ds.doctorId = doc.id " + // Cầu nối quan trọng
+              "JOIN Users u ON doc.userId = u.id " +       // Khớp với Email
+              "WHERE u.email = ? AND s.startTime >= ? AND s.startTime < ? AND s.isActive = 1";
+    } else {
+        sql = "SELECT s.id, s.roomId, r.roomNumber, dpt.name AS departmentName, s.startTime, s.endTime, s.status, s.isActive, ss.role AS note " +
+              "FROM Shifts s " +
+              "JOIN Rooms r ON s.roomId = r.id " +
+              "JOIN Departments dpt ON r.departmentId = dpt.id " +
+              "JOIN StaffShifts ss ON s.id = ss.shiftId " +
+              "JOIN Staffs stf ON ss.staffid = stf.id " +   // Cầu nối quan trọng
+              "JOIN Users u ON stf.userId = u.id " +       // Khớp với Email
+              "WHERE u.email = ? AND s.startTime >= ? AND s.startTime < ? AND s.isActive = 1";
+    }
+
+    try (Connection conn = new util.DbUtils().getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql)) {
+        ps.setString(1, email);
+        ps.setTimestamp(2, startOfWeek);
+        ps.setTimestamp(3, endOfWeek);
+        try (ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                list.add(new ShiftDTO(
+                    rs.getInt("id"), rs.getInt("roomId"), rs.getInt("roomNumber"),
+                    rs.getString("departmentName"), rs.getTimestamp("startTime"),
+                    rs.getTimestamp("endTime"), rs.getString("status"),
+                    rs.getInt("isActive"), rs.getString("note")
+                ));
+            }
         }
-
-        try (Connection conn = new DbUtils().getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, email);
-            ps.setTimestamp(2, startOfWeek);
-            ps.setTimestamp(3, endOfWeek);
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    list.add(new ShiftDTO(
-                        rs.getInt("id"), rs.getInt("roomId"), rs.getInt("roomNumber"),
-                        rs.getString("departmentName"), rs.getTimestamp("startTime"),
-                        rs.getTimestamp("endTime"), rs.getString("status"),
-                        rs.getInt("isActive"), rs.getString("note")
-                    ));
-                }
-            }
-        } catch (Exception e) { e.printStackTrace(); }
-        return list;
-    }
-
+    } catch (Exception e) { e.printStackTrace(); }
+    return list;
+}
     // 5. LẤY DANH SÁCH PHÒNG TRỐNG (AJAX)
-    public List<RoomDTO> getAvailableRooms(Timestamp start, Timestamp end) {
-        List<RoomDTO> list = new ArrayList<>();
-        String sql = "SELECT r.id, r.roomNumber, d.name as departmentName " +
-                     "FROM Rooms r " +
-                     "JOIN Departments d ON r.departmentId = d.id " +
-                     "WHERE r.isActive = 1 AND r.id NOT IN (" +
-                     "    SELECT roomId FROM Shifts " +
-                     "    WHERE startTime = ? AND isActive = 1" +
-                     ")";
-        try (Connection conn = new DbUtils().getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setTimestamp(1, start);
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    RoomDTO r = new RoomDTO();
-                    r.setId(rs.getInt("id"));
-                    r.setRoomNumber(rs.getInt("roomNumber"));
-                    r.setDepartmentName(rs.getString("departmentName"));
-                    list.add(r);
-                }
+   public List<RoomDTO> getAvailableRooms(Timestamp start, Timestamp end) {
+    List<RoomDTO> list = new ArrayList<>();
+    // Logic: Lấy những phòng KHÔNG nằm trong danh sách đang có ca trực trùng giờ
+    String sql = "SELECT r.id, r.roomNumber, d.name as departmentName " +
+                 "FROM Rooms r " +
+                 "JOIN Departments d ON r.departmentId = d.id " +
+                 "WHERE r.isActive = 1 AND r.id NOT IN (" +
+                 "    SELECT roomId FROM Shifts " +
+                 "    WHERE isActive = 1 " +
+                 "    AND ( (startTime >= ? AND startTime < ?) " + // Bắt đầu nằm trong khoảng
+                 "       OR (endTime > ? AND endTime <= ?) " +    // Kết thúc nằm trong khoảng
+                 "       OR (startTime <= ? AND endTime >= ?) )" + // Bao trùm cả khoảng
+                 ")";
+    try (Connection conn = new DbUtils().getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql)) {
+        ps.setTimestamp(1, start); ps.setTimestamp(2, end);
+        ps.setTimestamp(3, start); ps.setTimestamp(4, end);
+        ps.setTimestamp(5, start); ps.setTimestamp(6, end);
+        
+        try (ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                RoomDTO r = new RoomDTO();
+                r.setId(rs.getInt("id"));
+                r.setRoomNumber(rs.getInt("roomNumber"));
+                r.setDepartmentName(rs.getString("departmentName"));
+                list.add(r);
             }
-        } catch (Exception e) { e.printStackTrace(); }
-        return list;
-    }
+        }
+    } catch (Exception e) { e.printStackTrace(); }
+    return list;
+}
 
     // 6. TÌM SHIFT ID ĐÃ TỒN TẠI (Sửa lại logic JOIN cho Staff)
     public int getExistingShiftId(String email, String personType, Timestamp startTime) {
@@ -204,36 +213,57 @@ public class ShiftDAO {
     }
 
     // 9. PHÂN CÔNG (ASSIGN) CHO NGƯỜI DÙNG
-    public boolean assignShiftToPerson(int shiftId, String email, String personType, String role) {
-        String queryUserId = "SELECT id FROM Users WHERE email = ?";
-        int userId = -1;
-        try (Connection conn = new DbUtils().getConnection();
-             PreparedStatement psUser = conn.prepareStatement(queryUserId)) {
-            psUser.setString(1, email);
-            try (ResultSet rs = psUser.executeQuery()) {
-                if (rs.next()) userId = rs.getInt("id");
+   public boolean assignShiftToPerson(int shiftId, String email, String personType, String role) {
+    // JOIN bảng Users với Doctors/Staffs để lấy đúng cái 'id' (cột đầu tiên trong hình bạn gửi)
+    String queryId = "doctor".equals(personType) 
+            ? "SELECT d.id FROM Doctors d JOIN Users u ON d.userId = u.id WHERE u.email = ?" 
+            : "SELECT s.id FROM Staffs s JOIN Users u ON s.userId = u.id WHERE u.email = ?";
+    
+    int targetId = -1; 
+    
+    try (Connection conn = new util.DbUtils().getConnection()) {
+        // 1. Lấy đúng cái 'id' chuyên môn
+        try (PreparedStatement psId = conn.prepareStatement(queryId)) {
+            psId.setString(1, email);
+            try (ResultSet rs = psId.executeQuery()) {
+                if (rs.next()) targetId = rs.getInt("id");
             }
-            if (userId == -1) return false;
-            
-            // Xóa phân công cũ nếu có (để update nhiệm vụ)
-            String deleteOld = "doctor".equals(personType) ? "DELETE FROM DoctorShifts WHERE shiftId = ?" : "DELETE FROM StaffShifts WHERE shiftId = ?";
-            try (PreparedStatement psDel = conn.prepareStatement(deleteOld)) {
-                psDel.setInt(1, shiftId);
-                psDel.executeUpdate();
-            }
+        }
 
-            String insertSql = "doctor".equals(personType) 
-                    ? "INSERT INTO DoctorShifts (doctorId, shiftId, role) VALUES (?, ?, ?)"
-                    : "INSERT INTO StaffShifts (staffId, shiftId, role) VALUES (?, ?, ?)";
-            try (PreparedStatement psInsert = conn.prepareStatement(insertSql)) {
-                psInsert.setInt(1, userId);
-                psInsert.setInt(2, shiftId);
-                psInsert.setString(3, role);
-                return psInsert.executeUpdate() > 0;
-            }
-        } catch (Exception e) { e.printStackTrace(); }
-        return false;
+        if (targetId == -1) {
+            System.err.println(">>> KHÔNG TÌM THẤY HỒ SƠ CHO: " + email);
+            return false;
+        }
+
+        // 2. XÓA PHÂN CÔNG CŨ (Dọn đường tránh trùng Primary Key)
+        String deleteSql = "doctor".equals(personType) 
+                ? "DELETE FROM DoctorShifts WHERE doctorId = ? AND shiftId = ?" 
+                : "DELETE FROM StaffShifts WHERE staffid = ? AND shiftId = ?";
+        
+        try (PreparedStatement psDel = conn.prepareStatement(deleteSql)) {
+            psDel.setInt(1, targetId);
+            psDel.setInt(2, shiftId);
+            psDel.executeUpdate();
+        }
+
+        // 3. CHÈN DỮ LIỆU MỚI (Dùng targetId chuẩn)
+        String insertSql = "doctor".equals(personType) 
+                ? "INSERT INTO DoctorShifts (doctorId, shiftId, role) VALUES (?, ?, ?)"
+                : "INSERT INTO StaffShifts (staffid, shiftId, role) VALUES (?, ?, ?)";
+
+        try (PreparedStatement psInsert = conn.prepareStatement(insertSql)) {
+            psInsert.setInt(1, targetId);
+            psInsert.setInt(2, shiftId);
+            psInsert.setString(3, role);
+            return psInsert.executeUpdate() > 0;
+        }
+        
+    } catch (Exception e) {
+        System.err.println(">>> LỖI SQL PHÂN CÔNG: " + e.getMessage());
+        e.printStackTrace();
     }
+    return false;
+}
     // BẬT / TẮT TRẠNG THÁI CA TRỰC (Hủy hoặc Khôi phục)
     public boolean toggleShiftStatus(int id, int isActive) {
         String sql = "UPDATE Shifts SET isActive = ? WHERE id = ?";
@@ -247,4 +277,5 @@ public class ShiftDAO {
         }
         return false;
     }
+    
 }

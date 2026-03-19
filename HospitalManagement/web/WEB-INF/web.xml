@@ -78,6 +78,14 @@
         <servlet-name>GetAvailableRoomsController</servlet-name>
         <servlet-class>controller.GetAvailableRoomsController</servlet-class>
     </servlet>
+    <servlet>
+        <servlet-name>UserScheduleController</servlet-name>
+        <servlet-class>UserScheduleController</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>UserScheduleController</servlet-name>
+        <servlet-class>controller.UserScheduleController</servlet-class>
+    </servlet>
     <servlet-mapping>
         <servlet-name>MainController</servlet-name>
         <url-pattern>/MainController</url-pattern>
@@ -150,6 +158,10 @@
     <servlet-mapping>
         <servlet-name>GetAvailableRoomsController</servlet-name>
         <url-pattern>/GetAvailableRoomsController</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>UserScheduleController</servlet-name>
+        <url-pattern>/MySchedule</url-pattern>
     </servlet-mapping>
     <session-config>
         <session-timeout>30</session-timeout>

@@ -3,9 +3,9 @@ package controller;
 import dao.UserDAO;
 import dao.StaffDTO;
 import dao.PatientDTO;
+import dao.DoctorDTO; // Đảm bảo đã import
 import entity.User;
 import java.io.IOException;
-import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
@@ -14,6 +14,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import service.StaffService;
 import service.PatientService;
+import service.DoctorService; // Đảm bảo đã import
 
 @WebServlet(name = "LoginController", urlPatterns = {"/LoginController"})
 public class LoginController extends HttpServlet {
@@ -24,68 +25,86 @@ public class LoginController extends HttpServlet {
         response.setContentType("text/html;charset=UTF-8");
         request.setCharacterEncoding("UTF-8");
 
-        String cp = request.getContextPath(); // Ví dụ: /HospitalManagement
+        String cp = request.getContextPath(); 
         HttpSession session = request.getSession();
 
-        // Lấy thông tin từ form index.jsp
         String txtEmail = request.getParameter("txtEmail");
         String txtPassword = request.getParameter("txtPassword");
 
-        // Nếu người dùng nhấn Submit (có dữ liệu email/pass)
         if (txtEmail != null && txtPassword != null) {
             UserDAO udao = new UserDAO();
             User user = udao.checkLogin(txtEmail, txtPassword);
 
             if (user != null) {
                 if (user.getIsActive() == 1) {
-                    // QUAN TRỌNG: Phải đặt tên là LOGIN_USER để các Controller khác nhận diện được
+                    // Lưu User vào session
                     session.setAttribute("LOGIN_USER", user);
 
                     String role = user.getRole().toLowerCase().trim();
                     String redirectUrl = "";
 
-                    // Phân quyền điều hướng
+                    // --- PHÂN QUYỀN ĐIỀU HƯỚNG ---
                     if (role.equals("admin")) {
-                        // Admin nên chạy qua Controller để load dữ liệu thay vì vào thẳng file JSP
                         redirectUrl = cp + "/AdminController";
-                    } 
-                    else if (role.equals("doctor")) {
-                        redirectUrl = cp + "/component/doctor/doctorDashboard.jsp";
-                    } 
-                    else if (role.equals("staff")) {
-                        // Lấy thêm thông tin Staff nếu cần
+                        
+                    }else if (role.equals("doctor")) {
+
+    try {
+        service.DoctorService doctorService = new service.DoctorService();
+        dao.DoctorDTO doctor = doctorService.getProfileByUserId(user.getId());
+        session.setAttribute("doctor", doctor);
+        
+        // SỬA LẠI ĐƯỜNG DẪN Ở ĐÂY (Bỏ chữ /contents/ đi)
+       redirectUrl = cp + "/component/doctor/contents/doctorDashboard.jsp";
+        
+        System.out.println(">>> Đăng nhập Doctor thành công! Đang chuyển hướng tới: " + redirectUrl);
+        
+    } catch (Exception e) {
+        e.printStackTrace();
+        request.setAttribute("message", "Tài khoản bác sĩ chưa có hồ sơ!");
+        request.getRequestDispatcher("index.jsp").forward(request, response);
+        return;
+    }
+
+
+                        
+                    } else if (role.equals("staff")) {
                         try {
                             StaffService staffService = new StaffService();
                             StaffDTO staff = staffService.getProfileByUserId(user.getId());
                             session.setAttribute("staff", staff);
-                        } catch (Exception e) { e.printStackTrace(); }
-                        redirectUrl = cp + "/component/staff/staffDashboard.jsp";
-                    } 
-                    else {
+                            redirectUrl = cp + "/component/staff/staffDashboard.jsp";
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                            request.setAttribute("message", "Lỗi hồ sơ nhân viên!");
+                            request.getRequestDispatcher("index.jsp").forward(request, response);
+                            return;
+                        }
+                        
+                    } else {
                         // Mặc định là Patient
                         try {
                             PatientService patientService = new PatientService();
                             PatientDTO patient = patientService.getPatientByUserId(user.getId());
                             session.setAttribute("patient", patient);
+                            redirectUrl = cp + "/component/patient/patientDashboard.jsp";
                         } catch (Exception e) { e.printStackTrace(); }
-                        redirectUrl = cp + "/component/patient/patientDashboard.jsp";
                     }
 
-                    // Dùng sendRedirect để đổi URL trên thanh địa chỉ, tránh lỗi F5 reset form
+                    // Chuyển hướng thành công
                     response.sendRedirect(redirectUrl);
                     return;
 
                 } else {
                     request.setAttribute("message", "Tài khoản của bạn hiện đang bị khóa!");
-                    request.setAttribute("tempEmail", txtEmail);
                 }
             } else {
                 request.setAttribute("message", "Email hoặc mật khẩu không đúng!");
-                request.setAttribute("tempEmail", txtEmail);
             }
         }
-
-        // Nếu đăng nhập thất bại hoặc mới mở trang, quay về index.jsp
+        
+        // Quay về trang login nếu thất bại
+        request.setAttribute("tempEmail", txtEmail);
         request.getRequestDispatcher("index.jsp").forward(request, response);
     }
 
@@ -99,10 +118,5 @@ public class LoginController extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         processRequest(request, response);
-    }
-
-    @Override
-    public String getServletInfo() {
-        return "Login Controller Optimized";
     }
 }

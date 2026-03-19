@@ -16,19 +16,36 @@ public class DoctorDAO {
 
     // 1. LẤY HỒ SƠ THEO USERID (Dùng ngay sau khi bác sĩ Login thành công)
     public DoctorDTO getDoctorByUserId(int userId) {
-        String sql = "SELECT * FROM Doctors WHERE userId = ?";
-        try ( Connection conn = new DbUtils().getConnection();  PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, userId);
-            try ( ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    return mapDoctor(rs);
-                }
+    // JOIN với bảng Users để lấy Email, Avatar và IsActive luôn
+    String sql = "SELECT d.*, u.email, u.avatarUrl, u.isActive " +
+                 "FROM Doctors d " +
+                 "JOIN Users u ON d.userId = u.id " +
+                 "WHERE d.userId = ?";
+    try (Connection conn = new util.DbUtils().getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql)) {
+        ps.setInt(1, userId);
+        try (ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                // Gọi Constructor 10 tham số (cái xịn nhất ở đầu file DTO)
+                return new DoctorDTO(
+                    rs.getInt("id"),
+                    rs.getInt("userId"),
+                    rs.getString("email"),
+                    rs.getString("avatarUrl"),
+                    rs.getInt("isActive"),
+                    rs.getString("name"),
+                    rs.getInt("gender"),
+                    rs.getString("position"),
+                    rs.getString("phone"),
+                    rs.getString("licenseNumber")
+                );
             }
-        } catch (Exception e) {
-            e.printStackTrace();
         }
-        return null;
+    } catch (Exception e) {
+        e.printStackTrace();
     }
+    return null;
+}
 
     // 2. CẬP NHẬT HỒ SƠ (Dành cho nút "Cập nhật thông tin")
     public boolean updateDoctorProfile(int id, String name, int gender, String position, String phone, String licenseNumber) {
@@ -76,16 +93,16 @@ public class DoctorDAO {
     }
 
     private DoctorDTO mapDoctor(ResultSet rs) throws SQLException {
-        return new DoctorDTO(
-                rs.getInt("id"),
-                rs.getInt("userId"),
-                rs.getString("name"),
-                rs.getInt("gender"),
-                rs.getString("position"),
-                rs.getString("phone"),
-                rs.getString("licenseNumber")
-        );
-    }
+    return new DoctorDTO(
+            rs.getInt("id"),
+            rs.getInt("userId"),
+            rs.getString("name"),
+            rs.getInt("gender"),
+            rs.getString("position"),
+            rs.getString("phone"),
+            rs.getString("licenseNumber")
+    );
+}
 //==================================================
     ////////////////////////Hoàng
     //==================================================
