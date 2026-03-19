@@ -124,6 +124,11 @@
             transform: rotate(-10deg);
         }
 
+        /* Thêm màu tím riêng cho phần Ca Trực */
+        .text-purple {
+            color: #6f42c1 !important;
+        }
+
         .card-title {
             color: var(--text-main);
             font-weight: 700;
@@ -203,6 +208,9 @@
             </a>
             <a href="AdminController?action=medicine">
                 <i class="fa fa-pills"></i> <span>Kho dược</span>
+            </a>
+            <a href="AdminController?action=shifts">
+                <i class="fa fa-calendar-days"></i> <span>Ca trực</span>
             </a>
 
             <div style="margin-top: 100px;">
@@ -311,6 +319,18 @@
                     <div class="mt-3 text-danger fw-bold small">Vào kho dược <i class="fa fa-arrow-right ms-1"></i></div>
                 </a>
             </div>
+
+            <div class="col-xl-3 col-md-6">
+                <a href="AdminController?action=shifts" class="card dashboard-card p-5 text-center h-100">
+                    <div class="icon-box text-purple">
+                        <i class="fa fa-clock"></i>
+                    </div>
+                    <h5 class="card-title">Ca trực</h5>
+                    <p class="card-desc">Theo dõi, phân bổ và cập nhật lịch trực tuần cho Bác sĩ & Nhân viên.</p>
+                    <div class="mt-3 text-purple fw-bold small">Xếp lịch ngay <i class="fa fa-arrow-right ms-1"></i></div>
+                </a>
+            </div>
+
         </div>
         
         <div class="mt-5 pt-4 border-top text-center text-muted small">

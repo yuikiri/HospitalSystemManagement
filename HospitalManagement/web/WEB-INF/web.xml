@@ -74,6 +74,10 @@
         <servlet-name>CancelAppointmentController</servlet-name>
         <servlet-class>controller.CancelAppointmentController</servlet-class>
     </servlet>
+    <servlet>
+        <servlet-name>GetAvailableRoomsController</servlet-name>
+        <servlet-class>controller.GetAvailableRoomsController</servlet-class>
+    </servlet>
     <servlet-mapping>
         <servlet-name>MainController</servlet-name>
         <url-pattern>/MainController</url-pattern>
@@ -142,6 +146,10 @@
     <servlet-mapping>
         <servlet-name>CancelAppointmentController</servlet-name>
         <url-pattern>/CancelAppointmentController</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>GetAvailableRoomsController</servlet-name>
+        <url-pattern>/GetAvailableRoomsController</url-pattern>
     </servlet-mapping>
     <session-config>
         <session-timeout>30</session-timeout>

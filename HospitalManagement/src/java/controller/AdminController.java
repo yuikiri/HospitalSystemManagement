@@ -3,13 +3,15 @@ package controller;
 import dao.DepartmentDAO;
 import dao.DepartmentDTO;
 import dao.MedicineDTO;
-import dao.RoomDTO;           
-import dao.RoomTypeDTO;       
+import dao.RoomDTO;            
+import dao.RoomTypeDTO;        
 import entity.User;
 import service.UserService;
 import service.DepartmentService;
-import service.RoomService;       
-import service.RoomTypeService;   
+import service.RoomService;        
+import service.RoomTypeService;    
+import service.MedicineService;
+import service.ShiftService; // Đã thêm import ShiftService
 
 import java.io.IOException;
 import java.util.List;
@@ -19,17 +21,16 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
-import service.MedicineService;
 
 @WebServlet(name = "AdminController", urlPatterns = {"/AdminController"})
 public class AdminController extends HttpServlet {
 
-   @Override
+    @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-request.setCharacterEncoding("UTF-8");
-    response.setCharacterEncoding("UTF-8");
-    response.setContentType("text/html; charset=UTF-8");
+        request.setCharacterEncoding("UTF-8");
+        response.setCharacterEncoding("UTF-8");
+        response.setContentType("text/html; charset=UTF-8");
         String cp = request.getContextPath();
         
         // TẠM THỜI COMMENT BẢO MẬT SESSION ĐỂ DEV KHÔNG BỊ VĂNG RA INDEX
@@ -88,7 +89,6 @@ request.setCharacterEncoding("UTF-8");
                 case "userTrash": {
                     List<User> list = userService.getDeletedUsers();
                     request.setAttribute("userList", list);
-                    // ĐÃ SỬA LẠI TÊN FILE CHUẨN LÀ trashUsers.jsp
                     request.getRequestDispatcher("/component/admin/trashUsers.jsp").forward(request, response);
                     break;
                 }
@@ -150,7 +150,7 @@ request.setCharacterEncoding("UTF-8");
                 // ==============================================================
                 // 3. QUẢN LÝ PHÒNG BỆNH (ROOMS)
                 // ==============================================================
-              case "rooms": {
+                case "rooms": {
                     String keyword = request.getParameter("search");
                     String deptIdStr = request.getParameter("departmentId");
                     String status = request.getParameter("status"); 
@@ -158,7 +158,6 @@ request.setCharacterEncoding("UTF-8");
 
                     int departmentId = (deptIdStr != null && !deptIdStr.isEmpty()) ? Integer.parseInt(deptIdStr) : 0;
                     
-                    // ĐÃ FIX Ở DÒNG NÀY: Sửa -1 thành -99 (Tất cả)
                     int isActive = (isActiveStr != null && !isActiveStr.isEmpty()) ? Integer.parseInt(isActiveStr) : -99;
                     
                     if (status == null || status.isEmpty()) status = "all";
@@ -201,7 +200,6 @@ request.setCharacterEncoding("UTF-8");
                 case "roomTrash": {
                     List<RoomDTO> list = roomService.getDeletedRooms();
                     request.setAttribute("roomList", list);
-                    // Nhớ tạo file trashRooms.jsp nhé
                     request.getRequestDispatcher("/component/admin/trashRooms.jsp").forward(request, response);
                     break;
                 }
@@ -211,49 +209,87 @@ request.setCharacterEncoding("UTF-8");
                     response.sendRedirect("AdminController?action=roomTrash");
                     break;
                 }
-// ==============================================================
-// 4. QUẢN LÝ KHO DƯỢC (MEDICINES)
-// ==============================================================
-case "medicine": {
-    String keyword = request.getParameter("search");
-    MedicineService medicineService = new MedicineService(); // Khởi tạo service
-    
-    List<MedicineDTO> list;
-    if (keyword != null && !keyword.isEmpty()) {
-        list = medicineService.searchMedicines(keyword); // Tìm kiếm thuốc isActive = 1
-    } else {
-        list = medicineService.getActiveList(); // Lấy tất cả thuốc isActive = 1
-    }
-    
-    request.setAttribute("medicineList", list);
-    request.setAttribute("currentSearch", keyword);
-    request.getRequestDispatcher("/component/admin/manageMedicine.jsp").forward(request, response);
-    break;
-}
 
-case "deleteMedicine": {
-    int id = Integer.parseInt(request.getParameter("id"));
-    MedicineService medicineService = new MedicineService();
-    medicineService.softDeleteMedicine(id); // Update isActive = 0
-    response.sendRedirect("AdminController?action=medicine&msg=deleteSuccess");
-    break;
-}
+                // ==============================================================
+                // 4. QUẢN LÝ KHO DƯỢC (MEDICINES)
+                // ==============================================================
+                case "medicine": {
+                    String keyword = request.getParameter("search");
+                    MedicineService medicineService = new MedicineService(); 
+                    
+                    List<MedicineDTO> list;
+                    if (keyword != null && !keyword.isEmpty()) {
+                        list = medicineService.searchMedicines(keyword); 
+                    } else {
+                        list = medicineService.getActiveList(); 
+                    }
+                    
+                    request.setAttribute("medicineList", list);
+                    request.setAttribute("currentSearch", keyword);
+                    request.getRequestDispatcher("/component/admin/manageMedicine.jsp").forward(request, response);
+                    break;
+                }
+                case "deleteMedicine": {
+                    int id = Integer.parseInt(request.getParameter("id"));
+                    MedicineService medicineService = new MedicineService();
+                    medicineService.softDeleteMedicine(id); 
+                    response.sendRedirect("AdminController?action=medicine&msg=deleteSuccess");
+                    break;
+                }
+                case "medicineTrash": {
+                    MedicineService medicineService = new MedicineService();
+                    List<MedicineDTO> list = medicineService.getDeletedMedicines(); 
+                    request.setAttribute("trashList", list);
+                    request.getRequestDispatcher("/component/admin/trashMedicines.jsp").forward(request, response);
+                    break;
+                }
+                case "restoreMedicine": {
+                    int id = Integer.parseInt(request.getParameter("id"));
+                    MedicineService medicineService = new MedicineService();
+                    medicineService.restoreMedicine(id); 
+                    response.sendRedirect("AdminController?action=medicineTrash&msg=restoreSuccess");
+                    break;
+                }
 
-case "medicineTrash": {
-    MedicineService medicineService = new MedicineService();
-    List<MedicineDTO> list = medicineService.getDeletedMedicines(); // Lấy thuốc isActive = 0
-    request.setAttribute("trashList", list);
-    request.getRequestDispatcher("/component/admin/trashMedicines.jsp").forward(request, response);
-    break;
-}
+                // ==============================================================
+                // 5. QUẢN LÝ CA TRỰC (SHIFTS) - TÍCH HỢP MỚI
+                // ==============================================================
+                case "shifts": {
+                    String type = request.getParameter("type");
+                    String emailSearch = null;
+                    if ("doctor".equals(type)) {
+                        emailSearch = request.getParameter("docEmail");
+                    } else if ("staff".equals(type)) {
+                        emailSearch = request.getParameter("staffEmail");
+                    }
 
-case "restoreMedicine": {
-    int id = Integer.parseInt(request.getParameter("id"));
-    MedicineService medicineService = new MedicineService();
-    medicineService.restoreMedicine(id); // Update isActive = 1
-    response.sendRedirect("AdminController?action=medicineTrash&msg=restoreSuccess");
-    break;
-}
+                    String weekOffsetStr = request.getParameter("weekOffset");
+                    int weekOffset = (weekOffsetStr == null || weekOffsetStr.isEmpty()) ? 0 : Integer.parseInt(weekOffsetStr);
+                    
+                    ShiftService shiftService = new ShiftService();
+
+                    if (emailSearch != null && !emailSearch.trim().isEmpty()) {
+                        if ("doctor".equals(type)) {
+                            request.setAttribute("docSchedule", shiftService.getScheduleMatrix(emailSearch, "doctor", weekOffset));
+                            request.setAttribute("docEmail", emailSearch);
+                        } else if ("staff".equals(type)) {
+                            request.setAttribute("staffSchedule", shiftService.getScheduleMatrix(emailSearch, "staff", weekOffset));
+                            request.setAttribute("staffEmail", emailSearch);
+                        }
+                    }
+
+                    request.setAttribute("activeType", type);
+                    request.setAttribute("currentWeekOffset", weekOffset);
+                    
+                    // --- ĐÂY LÀ ĐOẠN QUAN TRỌNG NHẤT ---
+                    // 1. Nạp danh sách phòng vào trước
+                    request.setAttribute("roomList", roomService.getListForAdmin());
+                    
+                    // 2. Chuyển sang trang JSP (CHỈ GỌI 1 LẦN DUY NHẤT Ở CUỐI)
+                    request.getRequestDispatcher("/component/admin/manageShifts.jsp").forward(request, response);
+                    break;
+                }
+
                 default:
                     response.sendRedirect(cp + "/AdminController");
                     break;
@@ -268,9 +304,9 @@ case "restoreMedicine": {
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         request.setCharacterEncoding("UTF-8");
-    response.setCharacterEncoding("UTF-8");
-    response.setContentType("text/html; charset=UTF-8");
-      
+        response.setCharacterEncoding("UTF-8");
+        response.setContentType("text/html; charset=UTF-8");
+        
         String cp = request.getContextPath();
         String action = request.getParameter("action");
         
@@ -352,38 +388,55 @@ case "restoreMedicine": {
                 if (status == 1) roomService.deactivateRoom(id);
                 else roomService.activateRoom(id);
                 response.sendRedirect("AdminController?action=rooms");
+
+            // ==============================================================
+            // 4. QUẢN LÝ KHO DƯỢC
+            // ==============================================================
             } else if ("addMedicine".equals(action)) {
-    String name = request.getParameter("name");
-    String unit = request.getParameter("unit");
-    double price = Double.parseDouble(request.getParameter("price"));
-    int stock = Integer.parseInt(request.getParameter("stockQuantity"));
-    String desc = request.getParameter("description");
+                String name = request.getParameter("name");
+                String unit = request.getParameter("unit");
+                double price = Double.parseDouble(request.getParameter("price"));
+                int stock = Integer.parseInt(request.getParameter("stockQuantity"));
+                String desc = request.getParameter("description");
 
-    MedicineService medicineService = new MedicineService();
-    // Đổi thành createNewMedicine
-    medicineService.createNewMedicine(name, unit, price, stock, desc); 
-    response.sendRedirect("AdminController?action=medicine");
+                MedicineService medicineService = new MedicineService();
+                medicineService.createNewMedicine(name, unit, price, stock, desc); 
+                response.sendRedirect("AdminController?action=medicine");
 
-} else if ("updateMedicine".equals(action)) {
-    int id = Integer.parseInt(request.getParameter("id"));
-    String name = request.getParameter("name");
-    String unit = request.getParameter("unit");
-    double price = Double.parseDouble(request.getParameter("price"));
-    int stock = Integer.parseInt(request.getParameter("stockQuantity"));
-    String desc = request.getParameter("description");
+            } else if ("updateMedicine".equals(action)) {
+                int id = Integer.parseInt(request.getParameter("id"));
+                String name = request.getParameter("name");
+                String unit = request.getParameter("unit");
+                double price = Double.parseDouble(request.getParameter("price"));
+                int stock = Integer.parseInt(request.getParameter("stockQuantity"));
+                String desc = request.getParameter("description");
 
-    MedicineService medicineService = new MedicineService();
-    // Truyền đúng 5 tham số: id, name, unit, price, desc
-    medicineService.updateMedicineInfo(id, name, unit, price, desc);
-    response.sendRedirect("AdminController?action=medicine");
-}
-            
+                MedicineService medicineService = new MedicineService();
+                medicineService.updateMedicineInfo(id, name, unit, price, desc);
+                response.sendRedirect("AdminController?action=medicine");
 
-        }
-        // ==============================================================
-// 4. QUẢN LÝ KHO DƯỢC
-// ==============================================================
-catch (Exception e) {
+            // ==============================================================
+            // 5. QUẢN LÝ CA TRỰC (SHIFTS) - TÍCH HỢP MỚI
+            // ==============================================================
+            } else if ("updateShift".equals(action)) {
+                String personType = request.getParameter("personType"); 
+                String email = request.getParameter("targetEmail"); // Email của bác sĩ/nhân viên đang được sửa lịch
+                
+                int roomId = Integer.parseInt(request.getParameter("roomId"));
+                String roleNote = request.getParameter("roleNote");
+                int dayOfWeek = Integer.parseInt(request.getParameter("dayOfWeek"));
+                int shiftNumber = Integer.parseInt(request.getParameter("shiftNumber"));
+                int weekOffset = Integer.parseInt(request.getParameter("weekOffset"));
+
+                ShiftService shiftService = new ShiftService();
+                boolean success = shiftService.saveOrUpdateShift(personType, email, roomId, roleNote, dayOfWeek, shiftNumber, weekOffset);
+                
+                // Trả về đúng email và tab hiện tại để giao diện không bị load lại mất dữ liệu
+                String emailParam = "doctor".equals(personType) ? "&docEmail=" + email : "&staffEmail=" + email;
+                response.sendRedirect(cp + "/AdminController?action=shifts&type=" + personType + emailParam + "&weekOffset=" + weekOffset + (success ? "" : "&error=true"));
+            }
+
+        } catch (Exception e) {
             e.printStackTrace();
             response.sendRedirect(cp + "/error.jsp");
         }

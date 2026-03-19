@@ -1,17 +1,15 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package service;
 
 import dao.ShiftDAO;
 import dao.ShiftDTO;
 import java.sql.Timestamp;
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
-import util.ErrorMessages;
 
 /**
- *
+ * Service xử lý logic cho Ca trực
  * @author Yuikiri
  */
 public class ShiftService {
@@ -21,6 +19,10 @@ public class ShiftService {
         this.shiftDAO = new ShiftDAO();
     }
 
+    // =========================================================
+    // PHẦN 1: CÁC HÀM QUẢN LÝ CƠ BẢN
+    // =========================================================
+
     public List<ShiftDTO> getActiveList() {
         return shiftDAO.getAllActiveShifts();
     }
@@ -29,38 +31,92 @@ public class ShiftService {
         return shiftDAO.getAllShiftsForAdmin();
     }
 
-    // THÊM CA TRỰC MỚI (Kèm kiểm tra Logic khắt khe)
+    // THÊM CA TRỰC MỚI (Dùng cho giao diện quản lý danh sách)
     public boolean createNewShift(int roomId, Timestamp startTime, Timestamp endTime, String note) {
-        // Ràng buộc 1: Giờ kết thúc phải SAU giờ bắt đầu
-        if (!endTime.after(startTime)) {
+        if (!endTime.after(startTime)) return false; 
+
+        // Chống đụng lịch phòng
+        if (shiftDAO.checkTimeConflict(roomId, startTime, endTime)) {
             return false; 
         }
 
-        // Ràng buộc 2: Chống đụng lịch (Không thể xếp 2 ca trực trong cùng 1 phòng vào cùng 1 thời điểm)
-        if (shiftDAO.checkTimeConflict(roomId, startTime, endTime)) {
-            return false; // Bị trùng lịch, từ chối tạo!
-        }
-
-        return shiftDAO.insertShift(roomId, startTime, endTime, note);
-    }
-
-    // SỬA CA TRỰC
-    public boolean updateShiftInfo(int id, int roomId, Timestamp startTime, Timestamp endTime, String status, String note) {
-        if (!endTime.after(startTime)) return false;
-
-        // Lưu ý: Nếu Admin đổi thời gian, có thể cần check lại Conflict 
-        // (Trong thực tế cần viết hàm checkTimeConflict loại trừ chính ID đang sửa ra, 
-        // nhưng tạm thời chúng ta cứ update thông tin cơ bản)
-        
-        return shiftDAO.updateShift(id, roomId, startTime, endTime, status, note);
+        return shiftDAO.insertShiftReturnId(roomId, startTime, endTime, note) > 0;
     }
 
     // HỦY / KHÔI PHỤC CA TRỰC
     public boolean deactivateShift(int id) {
-        return shiftDAO.toggleShiftStatus(id, 0); // 0 = Hủy ca
+        return shiftDAO.toggleShiftStatus(id, 0);
     }
 
     public boolean activateShift(int id) {
-        return shiftDAO.toggleShiftStatus(id, 1); // 1 = Khôi phục ca
+        return shiftDAO.toggleShiftStatus(id, 1);
+    }
+
+    // =========================================================
+    // PHẦN 2: XỬ LÝ MA TRẬN THỜI KHÓA BIỂU (TIMETABLE)
+    // =========================================================
+
+    public ShiftDTO[][] getScheduleMatrix(String email, String personType, int weekOffset) {
+        LocalDate today = LocalDate.now();
+        LocalDate monday = today.with(DayOfWeek.MONDAY).plusWeeks(weekOffset);
+        LocalDate nextMonday = monday.plusWeeks(1);
+
+        Timestamp startOfWeek = Timestamp.valueOf(monday.atStartOfDay());
+        Timestamp endOfWeek = Timestamp.valueOf(nextMonday.atStartOfDay());
+
+        List<ShiftDTO> rawShifts = shiftDAO.getWeeklyShiftsByEmail(email, personType, startOfWeek, endOfWeek);
+        ShiftDTO[][] matrix = new ShiftDTO[8][7];
+
+        for (ShiftDTO shift : rawShifts) {
+            LocalDateTime dt = shift.getStartTime().toLocalDateTime();
+            int colIndex = dt.getDayOfWeek().getValue() - 1; // Thứ 2 = 0
+            int hour = dt.getHour();
+            int rowIndex = (hour - 6) / 2; // 6h = 0, 8h = 1...
+
+            if (rowIndex >= 0 && rowIndex < 8 && colIndex >= 0 && colIndex < 7) {
+                matrix[rowIndex][colIndex] = shift;
+            }
+        }
+        return matrix;
+    }
+
+    /**
+     * HÀM QUAN TRỌNG: Lưu hoặc Cập nhật ca trực từ giao diện kéo thả/click
+     */
+    public boolean saveOrUpdateShift(String personType, String email, int roomId, String roleNote, int dayOfWeek, int shiftNumber, int weekOffset) {
+        // 1. Tính toán thời gian
+        LocalDate today = LocalDate.now();
+        // dayOfWeek: 2 (Thứ 2) -> plusDays(0), 3 (Thứ 3) -> plusDays(1)...
+        LocalDate targetDate = today.with(DayOfWeek.MONDAY).plusWeeks(weekOffset).plusDays(dayOfWeek - 2); 
+        
+        int startHour = 6 + (shiftNumber - 1) * 2;
+        Timestamp startTS = Timestamp.valueOf(targetDate.atTime(startHour, 0));
+        Timestamp endTS = Timestamp.valueOf(targetDate.atTime(startHour + 2, 0));
+
+        // 2. KIỂM TRA: Ca trực này đã tồn tại cho người này chưa?
+        int existingShiftId = shiftDAO.getExistingShiftId(email, personType, startTS);
+
+        if (existingShiftId > 0) {
+            // TRƯỜNG HỢP UPDATE: Đã có ca trực vào giờ này -> Chỉ đổi phòng và nhiệm vụ
+            // Kiểm tra xem phòng mới có bị ai khác trực chưa (ngoại trừ chính ca này)
+            // (Để đơn giản, ta cứ cho update nếu dùng Dropdown lọc phòng trống đã xử lý ở giao diện)
+            System.out.println(">>> DEBUG: Cập nhật ca trực ID = " + existingShiftId);
+            boolean upShift = shiftDAO.updateShiftRoom(existingShiftId, roomId, "Updated via Timetable");
+            boolean upAssign = shiftDAO.assignShiftToPerson(existingShiftId, email, personType, roleNote);
+            return upShift && upAssign;
+        } else {
+            // TRƯỜNG HỢP INSERT MỚI: Chưa có ca trực
+            // Kiểm tra đụng phòng trước khi tạo mới
+            if (shiftDAO.checkTimeConflict(roomId, startTS, endTS)) {
+                System.out.println(">>> DEBUG LỖI: Phòng " + roomId + " đã bị bận vào giờ này!");
+                return false;
+            }
+
+            int newShiftId = shiftDAO.insertShiftReturnId(roomId, startTS, endTS, "Created via Timetable");
+            if (newShiftId > 0) {
+                return shiftDAO.assignShiftToPerson(newShiftId, email, personType, roleNote);
+            }
+        }
+        return false;
     }
 }
