@@ -41,8 +41,14 @@ public class DoctorDTO {
         this.licenseNumber = licenseNumber;
     }
 
-    DoctorDTO(int aInt, int aInt0, String string, int aInt1, String string0, String string1, String string2) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    public DoctorDTO(int id, int userId, String name, int gender, String position, String phone, String licenseNumber) {
+        this.id = id;
+        this.userId = userId;
+        this.name = name;
+        this.gender = gender;
+        this.position = position;
+        this.phone = phone;
+        this.licenseNumber = licenseNumber;
     }
 
     public int getId() {

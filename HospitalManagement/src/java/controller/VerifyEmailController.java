@@ -39,37 +39,33 @@ public class VerifyEmailController extends HttpServlet {
         String pendingEmail = (String) session.getAttribute("pendingEmail");
         User currentUser = (User) session.getAttribute("user");
         
-        // Chốt chặn an toàn: Bắt buộc phải có user đăng nhập
         if (currentUser == null) {
             response.sendRedirect(request.getContextPath() + "/index.jsp");
             return;
         }
         
         if (savedOtp != null && savedOtp.equals(inputOtp)) {
-            // 1. CHUẨN TỪ CODE 1: Cập nhật xuống Database và cập nhật Session hiện tại
             new UserDAO().updateEmail(currentUser.getId(), pendingEmail);
             currentUser.setEmail(pendingEmail);
-            session.setAttribute("user", currentUser); // Ghi đè lại user với email mới
+            session.setAttribute("user", currentUser); 
             
-            // 2. Dọn dẹp rác Session
             session.removeAttribute("savedEmailOtp");
             session.removeAttribute("pendingEmail");
             
             session.setAttribute("successMessage", "Thay đổi Email thành công!");
 
-            // 3. CHUẨN TỪ CODE 2: Kiểm tra Role để đá về đúng trang Dashboard
+            // ĐÃ FIX: TRỎ VỀ ĐÚNG KHUNG DASHBOARD
             String role = currentUser.getRole().toLowerCase().trim();
             if (role.equals("patient")) {
-                response.sendRedirect(request.getContextPath() + "/component/patient/patientDashboard.jsp");
+                response.sendRedirect(request.getContextPath() + "/MainController?action=LoadPatientDashboard");
             } else if (role.equals("doctor")) {
-                response.sendRedirect(request.getContextPath() + "/component/doctor/doctorDashboard.jsp?page=profile");
+                response.sendRedirect(request.getContextPath() + "/component/doctor/doctorDashboard.jsp");
             } else if (role.equals("staff")) {
                 response.sendRedirect(request.getContextPath() + "/component/staff/staffDashboard.jsp");
             } else {
                 response.sendRedirect(request.getContextPath() + "/index.jsp");
             }
         } else {
-            // Nhập sai thì ở lại trang nhập OTP và báo lỗi
             request.setAttribute("errorMessage", "Mã OTP không chính xác!");
             request.getRequestDispatcher("verifyEmailOTP.jsp").forward(request, response);
         }

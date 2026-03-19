@@ -1,6 +1,20 @@
+<%@page import="entity.User"%>
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
+<%
+    // 1. CHỐNG LƯU CACHE TRÌNH DUYỆT (CHỐNG NÚT BACK)
+    response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+    response.setHeader("Pragma", "no-cache");
+    response.setDateHeader("Expires", 0);
+
+    // 2. KIỂM TRA ĐĂNG NHẬP VÀ ĐÚNG ROLE
+    User user = (User) session.getAttribute("user");
+    if (user == null || !user.getRole().equalsIgnoreCase("staff")) {
+        response.sendRedirect(request.getContextPath() + "/index.jsp");
+        return;
+    }
+%>
 <!DOCTYPE html>
-<html>
+<html lang="vi">
 <head>
 <meta charset="UTF-8">
 <title>Staff Dashboard | MediCare</title>

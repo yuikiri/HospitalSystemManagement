@@ -30,35 +30,31 @@ public class VerifyPasswordController extends HttpServlet {
         String pendingNewPassword = (String) session.getAttribute("pendingNewPassword");
         User currentUser = (User) session.getAttribute("user");
 
-        // Nếu chưa đăng nhập thì đá về trang chủ
         if (currentUser == null) {
             response.sendRedirect(request.getContextPath() + "/index.jsp");
             return;
         }
 
         if (savedOtp != null && savedOtp.equals(inputOtp)) {
-            // 1. CHUẨN TỪ CODE 1: Gọi DAO update mật khẩu xuống DB
             new UserDAO().updatePassword(currentUser.getId(), pendingNewPassword);
 
-            // 2. Xóa đúng session của Đổi mật khẩu
             session.removeAttribute("savedPwdOtp"); 
             session.removeAttribute("pendingNewPassword"); 
             
             session.setAttribute("successMessage", "Đổi mật khẩu thành công!");
 
-            // 3. CHUẨN TỪ CODE 2: Kiểm tra role để đá về đúng trang Dashboard
+            // ĐÃ FIX: TRỎ VỀ ĐÚNG KHUNG DASHBOARD
             String role = currentUser.getRole().toLowerCase().trim();
             if (role.equals("patient")) {
-                response.sendRedirect(request.getContextPath() + "/component/patient/patientDashboard.jsp");
+                response.sendRedirect(request.getContextPath() + "/MainController?action=LoadPatientDashboard");
             } else if (role.equals("doctor")) {
-                response.sendRedirect(request.getContextPath() + "/component/doctor/doctorDashboard.jsp?page=profile");
+                response.sendRedirect(request.getContextPath() + "/component/doctor/doctorDashboard.jsp");
             } else if (role.equals("staff")) {
                 response.sendRedirect(request.getContextPath() + "/component/staff/staffDashboard.jsp");
             } else {
                 response.sendRedirect(request.getContextPath() + "/index.jsp");
             }
         } else {
-            // Trả về đúng trang Verify Password nếu nhập OTP sai
             request.setAttribute("errorMessage", "Mã OTP không chính xác!");
             request.getRequestDispatcher("verifyPasswordOTP.jsp").forward(request, response);
         }

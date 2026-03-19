@@ -14,16 +14,20 @@ public class LogoutController extends HttpServlet {
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        // 1. Lấy session hiện tại (không tạo mới nếu chưa có)
+        // 1. BẮT BUỘC: Xóa Cache trình duyệt để chống nút Back
+        response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate"); // HTTP 1.1
+        response.setHeader("Pragma", "no-cache"); // HTTP 1.0
+        response.setDateHeader("Expires", 0); // Proxies
+
+        // 2. Lấy session hiện tại (không tạo mới nếu chưa có)
         HttpSession session = request.getSession(false);
 
-        // 2. Nếu tồn tại thì hủy hoàn toàn các attribute (LOGIN_USER, staff, patient...)
+        // 3. Nếu tồn tại thì hủy hoàn toàn các attribute (user, doctor, patient...)
         if (session != null) {
             session.invalidate();
         }
 
-        // 3. Quay về trang index bằng đường dẫn tuyệt đối để tránh lỗi 404
-        // request.getContextPath() đảm bảo luôn về đúng gốc dự án
+        // 4. Quay về trang index 
         response.sendRedirect(request.getContextPath() + "/index.jsp");
     }
 

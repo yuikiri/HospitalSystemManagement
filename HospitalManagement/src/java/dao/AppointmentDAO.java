@@ -370,6 +370,82 @@ public class AppointmentDAO {
         } catch (Exception e) { e.printStackTrace(); }
         return -1;
     }
+    
+    // ==========================================================
+    // 9. LẤY LỊCH CHỜ CỦA KHOA (Tab 1 - Chưa có bác sĩ nhận)
+    // ==========================================================
+    public List<AppointmentDTO> getPendingAppointmentsByDept(int departmentId) {
+        List<AppointmentDTO> list = new ArrayList<>();
+        String sql = "SELECT a.*, p.name AS patientName, NULL AS doctorName, " +
+                     "r.roomNumber, dept.name AS departmentName " +
+                     "FROM Appointments a " +
+                     "JOIN Patients p ON a.patientId = p.id " +
+                     "JOIN Rooms r ON a.roomId = r.id " +
+                     "JOIN Departments dept ON r.departmentId = dept.id " +
+                     "WHERE a.status = 'pending' AND a.isActive = 1 AND r.departmentId = ? " +
+                     "ORDER BY a.startTime ASC";
+        try (Connection conn = new util.DbUtils().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, departmentId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    list.add(new AppointmentDTO(
+                        rs.getInt("id"), rs.getInt("patientId"), rs.getString("patientName"),
+                        0, "", rs.getInt("roomId"), rs.getInt("roomNumber"), rs.getString("departmentName"),
+                        rs.getTimestamp("startTime"), rs.getTimestamp("endTime"),
+                        rs.getString("status"), rs.getTimestamp("createdAt"), rs.getInt("isActive")
+                    ));
+                }
+            }
+        } catch (Exception e) { e.printStackTrace(); }
+        return list;
+    }
+
+    // ==========================================================
+    // 10. LẤY CA KHÁM CỦA TÔI (Tab 2 - Đã nhận ca)
+    // ==========================================================
+    public List<AppointmentDTO> getAcceptedAppointmentsByDoctor(int doctorId) {
+        List<AppointmentDTO> list = new ArrayList<>();
+        String sql = "SELECT a.*, p.name AS patientName, d.name AS doctorName, " +
+                     "r.roomNumber, dept.name AS departmentName " +
+                     "FROM Appointments a " +
+                     "JOIN Patients p ON a.patientId = p.id " +
+                     "JOIN Doctors d ON a.doctorId = d.id " +
+                     "JOIN Rooms r ON a.roomId = r.id " +
+                     "JOIN Departments dept ON r.departmentId = dept.id " +
+                     "WHERE a.status = 'accepted' AND a.isActive = 1 AND a.doctorId = ? " +
+                     "ORDER BY a.startTime ASC";
+        try (Connection conn = new util.DbUtils().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, doctorId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    list.add(new AppointmentDTO(
+                        rs.getInt("id"), rs.getInt("patientId"), rs.getString("patientName"),
+                        rs.getInt("doctorId"), rs.getString("doctorName"),
+                        rs.getInt("roomId"), rs.getInt("roomNumber"), rs.getString("departmentName"),
+                        rs.getTimestamp("startTime"), rs.getTimestamp("endTime"),
+                        rs.getString("status"), rs.getTimestamp("createdAt"), rs.getInt("isActive")
+                    ));
+                }
+            }
+        } catch (Exception e) { e.printStackTrace(); }
+        return list;
+    }
+
+    // ==========================================================
+    // 11. BÁC SĨ BẤM NHẬN CA (Chuyển pending -> accepted)
+    // ==========================================================
+    public boolean acceptAppointment(int appointmentId, int doctorId) {
+        String sql = "UPDATE Appointments SET doctorId = ?, status = 'accepted' WHERE id = ? AND status = 'pending'";
+        try (Connection conn = new util.DbUtils().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, doctorId);
+            ps.setInt(2, appointmentId);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) { e.printStackTrace(); }
+        return false;
+    }
     // ==========================================================
     // ==========================================================
 }

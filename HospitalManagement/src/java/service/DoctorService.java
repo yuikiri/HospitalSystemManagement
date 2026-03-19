@@ -16,27 +16,11 @@ import util.ErrorMessages;
  * @author Yuikiri
  */
 public class DoctorService {
-    private DoctorDAO doctorDAO = new DoctorDAO();
-
-    // =========================================================
-    // 1. LẤY THÔNG TIN ĐỂ HIỂN THỊ
-    // =========================================================
-    public DoctorDTO getProfileByUserId(int userId) throws ErrorMessages.AppException {
-        DoctorDTO doctor = doctorDAO.getDoctorByUserId(userId);
-        if (doctor == null) {
-            throw new ErrorMessages.AppException(ErrorMessages.DOCTOR_NOT_FOUND);
-        }
-        return doctor;
-    }
-
-    public List<DoctorDTO> getDoctorListForIndex() {
-        return doctorDAO.getAllActiveDoctors();
-    }
 
     // =========================================================
     // 2. LOGIC CẬP NHẬT HỒ SƠ (Nút "Cập nhật thông tin")
-    // =========================================================
-    public void updateDoctor(int doctorId, String name, int gender, String position, String phone, String licenseNumber) throws ErrorMessages.AppException {
+    // ==========================1===============================
+    public void updateDoctor1(int doctorId, String name, int gender, String position, String phone, String licenseNumber) throws ErrorMessages.AppException {
         // A. Kiểm tra dữ liệu trống
         if (name == null || name.trim().isEmpty() || phone == null || licenseNumber == null) {
             throw new ErrorMessages.AppException(ErrorMessages.INVALID_PARAMETER);
@@ -58,23 +42,35 @@ public class DoctorService {
             throw new ErrorMessages.AppException(ErrorMessages.SYSTEM_ERROR);
         }
     }
-    public void updateDoctor1(int doctorId, String name, int gender, String position, String phone, String licenseNumber) throws Exception {
-        
+    private DoctorDAO doctorDAO = new DoctorDAO();
+
+    // Lấy thông tin Bác sĩ theo ID của User
+    public DoctorDTO getProfileByUserId(int userId) throws Exception {
+        DoctorDTO doctor = doctorDAO.getDoctorByUserId(userId);
+        if (doctor == null) {
+            throw new Exception("Không tìm thấy hồ sơ Bác sĩ!");
+        }
+        return doctor;
+    }
+
+    // Xử lý Cập nhật
+    public void updateDoctor(int doctorId, String name, int gender, String position, String phone, String licenseNumber) throws Exception {
+
         if (name == null || name.trim().isEmpty()) {
             throw new Exception("Tên bác sĩ không được để trống!");
         }
 
         // Validate trùng số điện thoại
         if (doctorDAO.checkUniqueField("phone", phone, doctorId)) {
-            throw new Exception("Số điện thoại '" + phone + "' đã bị trùng với bác sĩ khác!");
+            throw new Exception("Số điện thoại '" + phone + "' đã bị trùng với nhân viên khác!");
         }
 
         // Validate trùng số giấy phép hành nghề
         if (doctorDAO.checkUniqueField("licenseNumber", licenseNumber, doctorId)) {
-            throw new Exception("Số giấy phép hành nghề '" + licenseNumber + "' đã tồn tại!");
+            throw new Exception("Số CCHN '" + licenseNumber + "' đã được đăng ký cho bác sĩ khác!");
         }
 
-        // Thực thi Update (Hàm updateDoctorProfile đã có sẵn trong DoctorDAO)
+        // Thực thi Update vào Database
         boolean isSuccess = doctorDAO.updateDoctorProfile(doctorId, name, gender, position, phone, licenseNumber);
         if (!isSuccess) {
             throw new Exception("Cập nhật thất bại do lỗi kết nối cơ sở dữ liệu!");
@@ -86,6 +82,6 @@ public class DoctorService {
     // =========================================================
     public void adminUpdateDoctor(int doctorId, String name, int gender, String position, String phone, String licenseNumber) throws ErrorMessages.AppException {
         // Admin sửa thì không cần quá nhiều bước check mail, nhưng vẫn phải check trùng SĐT/Giấy phép
-        updateDoctor(doctorId, name, gender, position, phone, licenseNumber);
+        updateDoctor1(doctorId, name, gender, position, phone, licenseNumber);
     }
 }

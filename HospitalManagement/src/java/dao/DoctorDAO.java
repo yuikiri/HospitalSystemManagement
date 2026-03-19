@@ -14,26 +14,30 @@ import java.util.List;
 
 public class DoctorDAO {
 
-    // 1. LẤY HỒ SƠ THEO USERID (Dùng ngay sau khi bác sĩ Login thành công)
+    // 1. LẤY HỒ SƠ THEO USERID
     public DoctorDTO getDoctorByUserId(int userId) {
         String sql = "SELECT * FROM Doctors WHERE userId = ?";
-        try ( Connection conn = new DbUtils().getConnection();  PreparedStatement ps = conn.prepareStatement(sql)) {
+        try ( Connection conn = new util.DbUtils().getConnection();  
+              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, userId);
             try ( ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
-                    return mapDoctor(rs);
+                    return new DoctorDTO(
+                        rs.getInt("id"), rs.getInt("userId"), rs.getString("name"),
+                        rs.getInt("gender"), rs.getString("position"),
+                        rs.getString("phone"), rs.getString("licenseNumber")
+                    ); // Giả sử dùng hàm tạo 7 tham số
                 }
             }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        } catch (Exception e) { e.printStackTrace(); }
         return null;
     }
 
-    // 2. CẬP NHẬT HỒ SƠ (Dành cho nút "Cập nhật thông tin")
+    // 2. CẬP NHẬT HỒ SƠ
     public boolean updateDoctorProfile(int id, String name, int gender, String position, String phone, String licenseNumber) {
         String sql = "UPDATE Doctors SET name = ?, gender = ?, position = ?, phone = ?, licenseNumber = ? WHERE id = ?";
-        try ( Connection conn = new DbUtils().getConnection();  PreparedStatement ps = conn.prepareStatement(sql)) {
+        try ( Connection conn = new util.DbUtils().getConnection();  
+              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, name);
             ps.setInt(2, gender);
             ps.setString(3, position);
@@ -41,10 +45,22 @@ public class DoctorDAO {
             ps.setString(5, licenseNumber);
             ps.setInt(6, id);
             return ps.executeUpdate() > 0;
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        } catch (Exception e) { e.printStackTrace(); }
         return false;
+    }
+
+    // 3. KIỂM TRA TRÙNG LẶP SĐT / CCHN
+    public boolean checkUniqueField(String fieldName, String value, int excludeDoctorId) {
+        // Chỉ ghép chuỗi fieldName, dùng ? cho value để chống SQL Injection
+        String sql = "SELECT id FROM Doctors WHERE " + fieldName + " = ? AND id != ?";
+        try ( Connection conn = new util.DbUtils().getConnection();  
+              PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, value);
+            ps.setInt(2, excludeDoctorId);
+            try ( ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
+        } catch (Exception e) { return true; }
     }
 
     // 3. LẤY DANH SÁCH BÁC SĨ ĐANG HOẠT ĐỘNG (JOIN với Users để check isActive)
@@ -61,19 +77,7 @@ public class DoctorDAO {
         return list;
     }
 
-    // 4. KIỂM TRA TRÙNG SỐ ĐIỆN THOẠI / GIẤY PHÉP
-    public boolean checkUniqueField(String fieldName, String value, int excludeDoctorId) {
-        String sql = "SELECT id FROM Doctors WHERE " + fieldName + " = ? AND id != ?";
-        try ( Connection conn = new DbUtils().getConnection();  PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, value);
-            ps.setInt(2, excludeDoctorId);
-            try ( ResultSet rs = ps.executeQuery()) {
-                return rs.next();
-            }
-        } catch (Exception e) {
-            return true;
-        }
-    }
+    
 
     private DoctorDTO mapDoctor(ResultSet rs) throws SQLException {
         return new DoctorDTO(

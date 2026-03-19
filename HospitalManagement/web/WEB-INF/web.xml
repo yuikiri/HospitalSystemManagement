@@ -82,6 +82,26 @@
         <servlet-name>SePayWebhookController</servlet-name>
         <servlet-class>controller.SePayWebhookController</servlet-class>
     </servlet>
+    <servlet>
+        <servlet-name>LoadDoctorProfileController</servlet-name>
+        <servlet-class>controller.LoadDoctorProfileController</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>LoadGetAppointmentController</servlet-name>
+        <servlet-class>dao.LoadGetAppointmentController</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>AcceptAppointmentController</servlet-name>
+        <servlet-class>controller.AcceptAppointmentController</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>CompleteAppointmentController</servlet-name>
+        <servlet-class>controller.CompleteAppointmentController</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>LoadGetAppointmentController1</servlet-name>
+        <servlet-class>controller.LoadGetAppointmentController1</servlet-class>
+    </servlet>
     <servlet-mapping>
         <servlet-name>MainController</servlet-name>
         <url-pattern>/MainController</url-pattern>
@@ -158,6 +178,26 @@
     <servlet-mapping>
         <servlet-name>SePayWebhookController</servlet-name>
         <url-pattern>/SePayWebhookController</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>LoadDoctorProfileController</servlet-name>
+        <url-pattern>/LoadDoctorProfileController</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>LoadGetAppointmentController</servlet-name>
+        <url-pattern>/LoadGetAppointmentController</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>AcceptAppointmentController</servlet-name>
+        <url-pattern>/AcceptAppointmentController</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>CompleteAppointmentController</servlet-name>
+        <url-pattern>/CompleteAppointmentController</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>LoadGetAppointmentController1</servlet-name>
+        <url-pattern>/LoadGetAppointmentController1</url-pattern>
     </servlet-mapping>
     <session-config>
         <session-timeout>30</session-timeout>

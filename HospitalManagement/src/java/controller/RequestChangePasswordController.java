@@ -8,6 +8,7 @@ import dao.UserDAO;
 import entity.User;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.Random;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -32,27 +33,25 @@ public class RequestChangePasswordController extends HttpServlet {
      */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        request.setCharacterEncoding("UTF-8");
         HttpSession session = request.getSession();
         User currentUser = (User) session.getAttribute("user");
-        
-        
-        
-        
-        User user = (User) session.getAttribute("user");
-        if (user == null || !user.getRole().equals("patient")) {
-            response.sendRedirect(request.getContextPath() + "/login.jsp");
+
+        if (currentUser == null) {
+            response.sendRedirect(request.getContextPath() + "/index.jsp");
             return;
         }
-        
-        
-        
-        
-        
-        
+
         String currentPass = request.getParameter("currentPassword");
         String newPass = request.getParameter("newPassword");
         String confirmPass = request.getParameter("confirmPassword");
-        
+
+        // ĐÃ FIX: TRỎ VỀ ĐÚNG KHUNG DASHBOARD THEO ROLE
+        String role = currentUser.getRole().toLowerCase().trim();
+        String errorRedirectUrl = request.getContextPath() + "/MainController?action=LoadPatientDashboard"; 
+        if (role.equals("doctor")) errorRedirectUrl = request.getContextPath() + "/component/doctor/doctorDashboard.jsp";
+        else if (role.equals("staff")) errorRedirectUrl = request.getContextPath() + "/component/staff/staffDashboard.jsp";
+
         try {
             if (!newPass.equals(confirmPass)) {
                 throw new ErrorMessages.AppException(ErrorMessages.PASSWORD_MISMATCH);
@@ -60,22 +59,22 @@ public class RequestChangePasswordController extends HttpServlet {
             if (!new UserDAO().checkCurrentPassword(currentUser.getId(), currentPass)) {
                 throw new ErrorMessages.AppException(ErrorMessages.WRONG_PASSWORD);
             }
-            
-            String otp = String.format("%06d", new java.util.Random().nextInt(999999));
-            
-//            System.out.println("\n=================================");
-//            System.out.println("MÃ OTP ĐỔI MẬT KHẨU CỦA SẾP LÀ: " + otp);
-//            System.out.println("=================================\n");
-            
+
+            String otp = String.format("%06d", new Random().nextInt(999999));
             session.setAttribute("savedPwdOtp", otp);
             session.setAttribute("pendingNewPassword", newPass);
             
-            util.SenMailUtil.sendOTP(currentUser.getEmail(), otp); // Gửi OTP vào mail HIỆN TẠI
-            response.sendRedirect(request.getContextPath() + "/verifyPasswordOTP.jsp");
+            util.SenMailUtil.sendOTP(currentUser.getEmail(), otp); 
             
+            response.sendRedirect(request.getContextPath() + "/verifyPasswordOTP.jsp");
+
         } catch (ErrorMessages.AppException e) {
             session.setAttribute("errorMessage", e.getMessage());
-            response.sendRedirect(request.getContextPath() + "/component/patient/patientDashboard.jsp");
+            response.sendRedirect(errorRedirectUrl);
+        } catch (Exception e) {
+            e.printStackTrace();
+            session.setAttribute("errorMessage", "Hệ thống đang bận. Vui lòng thử lại!");
+            response.sendRedirect(errorRedirectUrl);
         }
     }
 }

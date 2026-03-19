@@ -32,11 +32,10 @@ public class UpdateProfileController1 extends HttpServlet {
         String role = currentUser.getRole().toLowerCase().trim();
 
         // ==========================================
-        // RẼ NHÁNH 1: LUỒNG CỦA STAFF (Giữ nguyên 100% code gốc của người làm Staff)
+        // 1. LUỒNG CỦA STAFF
         // ==========================================
         if (role.equals("staff")) {
             String userIdRaw = request.getParameter("userId");
-
             if (userIdRaw == null) {
                 response.sendRedirect("index.jsp");
                 return;
@@ -55,20 +54,25 @@ public class UpdateProfileController1 extends HttpServlet {
             if (check) {
                 StaffDTO staff = dao.getStaffByUserId(userId);
                 session.setAttribute("staff", staff);
-
                 currentUser.setEmail(email);
                 session.setAttribute("user", currentUser);
-
+                
+                session.setAttribute("successMessage", "Cập nhật hồ sơ thành công!");
+                // QUAY VỀ TRANG DASHBOARD CỦA STAFF
                 response.sendRedirect("component/staff/staffDashboard.jsp");
             } else {
-                response.sendRedirect("updateProfile.jsp");
+                session.setAttribute("errorMessage", "Cập nhật thất bại!");
+                response.sendRedirect("component/staff/staffDashboard.jsp");
             }
-            return; // Dừng luôn luồng Staff tại đây
-        } // ==========================================
-        // ///////////////////Hoàng patient
+            return;
+        } 
+        
+        // ==========================================
+        // 2. LUỒNG CỦA PATIENT
         // ==========================================
         else if (role.equals("patient")) {
-            String redirectUrl = "component/patient/patientDashboard.jsp";
+            // QUAY VỀ TRANG DASHBOARD CỦA BỆNH NHÂN
+            String redirectUrl = request.getContextPath() + "/LoadPatientDashboardController";
             try {
                 int patientId = Integer.parseInt(request.getParameter("patientId"));
                 String name = request.getParameter("name");
@@ -77,34 +81,33 @@ public class UpdateProfileController1 extends HttpServlet {
                 int gender = Integer.parseInt(request.getParameter("gender"));
                 String address = request.getParameter("address");
 
-                // Gọi Service xử lý
                 PatientService patientService = new PatientService();
                 patientService.updatePatient(patientId, name, dob, gender, phone, address);
 
-                // Cập nhật lại session mới nhất cho Patient
                 PatientDTO updatedPatient = patientService.getPatientById(patientId);
                 session.setAttribute("patient", updatedPatient);
-
+                
                 session.setAttribute("successMessage", "Cập nhật hồ sơ cá nhân thành công!");
                 response.sendRedirect(redirectUrl);
 
             } catch (Exception e) {
                 e.printStackTrace();
-                // Bắt lỗi trùng số điện thoại và báo lên UI
                 session.setAttribute("errorMessage", e.getMessage());
                 response.sendRedirect(redirectUrl);
             }
-            return; // Dừng luồng Patient tại đây
-        } // ==========================================
-        // RẼ NHÁNH 3: LUỒNG CỦA DOCTOR 
+            return;
+        } 
+        
+        // ==========================================
+        // 3. LUỒNG CỦA DOCTOR
         // ==========================================
         else if (role.equals("doctor")) {
-            // 1. SỬA LẠI ĐƯỜNG DẪN CHO CHÍNH XÁC
-            String redirectUrl = "doctorDashboard.jsp?page=profile";
-
+            // ĐÃ SỬA: QUAY VỀ TRANG DASHBOARD CỦA BÁC SĨ THAY VÌ MAIN CONTROLLER
+            String redirectUrl = request.getContextPath() + "/component/doctor/doctorDashboard.jsp";
+            
             try {
                 int doctorId = Integer.parseInt(request.getParameter("doctorId"));
-                int userId = currentUser.getId(); // Lấy từ session để fetch lại data
+                int userId = currentUser.getId(); 
 
                 String name = request.getParameter("name");
                 int gender = Integer.parseInt(request.getParameter("gender"));
@@ -112,29 +115,24 @@ public class UpdateProfileController1 extends HttpServlet {
                 String phone = request.getParameter("phone");
                 String licenseNumber = request.getParameter("licenseNumber");
 
-                // Gọi Service xử lý Update
                 DoctorService doctorService = new DoctorService();
                 doctorService.updateDoctor(doctorId, name, gender, position, phone, licenseNumber);
 
-                // Cập nhật lại session mới nhất cho Doctor sau khi lưu DB thành công
+                // Cập nhật lại Session để có tên Bác sĩ mới nhất
                 DoctorDTO updatedDoctor = doctorService.getProfileByUserId(userId);
                 session.setAttribute("doctor", updatedDoctor);
 
-                // Set thông báo thành công
                 session.setAttribute("successMessage", "Cập nhật hồ sơ thành công!");
-
-                response.sendRedirect(redirectUrl);
+                response.sendRedirect(redirectUrl); // Nhảy về Dashboard, JavaScript sẽ tự hiện cái bảng Profile lên
 
             } catch (Exception e) {
                 e.printStackTrace();
-                // Bắt lỗi (ví dụ: trùng số điện thoại) và báo lên UI
                 session.setAttribute("errorMessage", e.getMessage());
                 response.sendRedirect(redirectUrl);
             }
-        } // ==========================================
-
-        // Nếu không thuộc Role nào thì đá về trang chủ
-        response.sendRedirect("index.jsp");
+        } else {
+            response.sendRedirect("index.jsp");
+        }
     }
 
 }

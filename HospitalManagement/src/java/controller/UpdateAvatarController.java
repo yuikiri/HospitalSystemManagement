@@ -4,11 +4,15 @@
  */
 package controller;
 
+import dao.UserDAO;
 import entity.User;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintWriter;
 import java.nio.file.Paths;
+import java.util.Base64;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.MultipartConfig;
 import javax.servlet.annotation.WebServlet;
@@ -23,11 +27,10 @@ import service.UserService;
  *
  * @author Yuikiri
  */
+@MultipartConfig(maxFileSize = 1024 * 1024 * 5) // Giới hạn ảnh 5MB
 @WebServlet(name = "UpdateAvatarController", urlPatterns = {"/UpdateAvatarController"})
 // Phải có dòng này thì mới nhận được file upload!
-@MultipartConfig(fileSizeThreshold = 1024 * 1024 * 2, // 2MB
-             maxFileSize = 1024 * 1024 * 5,      // Tối đa 5MB
-             maxRequestSize = 1024 * 1024 * 10)  // Tối đa 10MB/Request
+
 public class UpdateAvatarController extends HttpServlet {
 
     /**
@@ -47,51 +50,63 @@ public class UpdateAvatarController extends HttpServlet {
         User currentUser = (User) session.getAttribute("user");
         
         if (currentUser == null) {
-            response.sendRedirect("index.jsp");
+            response.sendRedirect(request.getContextPath() + "/index.jsp");
             return;
         }
 
         try {
-            // 1. Lấy file ảnh từ form gửi lên (name="avatarFile")
+            // 1. Lấy file ảnh từ Form
             Part filePart = request.getPart("avatarFile");
-            String fileName = Paths.get(filePart.getSubmittedFileName()).getFileName().toString();
             
-            // Nếu người dùng có chọn file
-            if (fileName != null && !fileName.isEmpty()) {
-                
-                // Đổi tên file để không bị trùng (Ví dụ: avatar_BN_45_1638218.jpg)
-                String uniqueFileName = "avatar_user_" + currentUser.getId() + "_" + System.currentTimeMillis() + ".jpg";
-                
-                // 2. Định nghĩa thư mục lưu ảnh (Nằm trong thư mục /uploads/ của webapp)
-                // Lưu ý: Sếp phải TẠO THỦ CÔNG một thư mục tên là "uploads" nằm ngang hàng với thư mục "component" nhé.
-                String uploadPath = request.getServletContext().getRealPath("") + File.separator + "uploads";
-                File uploadDir = new File(uploadPath);
-                if (!uploadDir.exists()) {
-                    uploadDir.mkdir(); // Nếu chưa có thư mục thì tự động tạo
+            if (filePart != null && filePart.getSize() > 0) {
+                // 2. Đọc file ảnh thành mảng Byte (byte[])
+                InputStream fileContent = filePart.getInputStream();
+                ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+                int nRead;
+                byte[] data = new byte[1024];
+                while ((nRead = fileContent.read(data, 0, data.length)) != -1) {
+                    buffer.write(data, 0, nRead);
                 }
+                buffer.flush();
+                byte[] fileBytes = buffer.toByteArray();
+
+                // 3. Mã hóa mảng Byte thành chuỗi Base64
+                String base64String = Base64.getEncoder().encodeToString(fileBytes);
                 
-                // 3. Lưu file vào ổ cứng Server
-                String savePath = uploadPath + File.separator + uniqueFileName;
-                filePart.write(savePath);
-                
-                // 4. Đường dẫn sẽ lưu vào DB (Đường dẫn tương đối: "uploads/ten-file.jpg")
-                String dbAvatarUrl = "uploads/" + uniqueFileName;
-                
-                // 5. Cập nhật vào DB
-                UserService userService = new UserService();
-                userService.updateAvatar(currentUser.getId(), dbAvatarUrl);
-                
-                // 6. Cập nhật lại Session để UI đổi ảnh ngay lập tức
-                currentUser.setAvatarUrl(dbAvatarUrl);
-                session.setAttribute("user", currentUser);
+                // 4. Nối thêm tiền tố để Trình duyệt hiểu đây là ảnh
+                String mimeType = filePart.getContentType(); // VD: image/jpeg
+                String base64ImageURI = "data:" + mimeType + ";base64," + base64String;
+
+                // 5. Lưu chuỗi dài này vào Database
+                UserDAO userDAO = new UserDAO();
+                boolean isUpdated = userDAO.updateAvatar(currentUser.getId(), base64ImageURI);
+
+                if (isUpdated) {
+                    // Cập nhật lại Session để giao diện đổi ảnh ngay lập tức
+                    currentUser.setAvatarUrl(base64ImageURI);
+                    session.setAttribute("user", currentUser);
+                    session.setAttribute("successMessage", "Cập nhật ảnh đại diện thành công!");
+                } else {
+                    session.setAttribute("errorMessage", "Lỗi khi lưu ảnh vào cơ sở dữ liệu.");
+                }
+            } else {
+                session.setAttribute("errorMessage", "Bạn chưa chọn ảnh nào!");
             }
-            
-            response.sendRedirect("component/patient/patientDashboard.jsp");
-            
         } catch (Exception e) {
             e.printStackTrace();
-            response.sendRedirect("component/patient/patientDashboard.jsp");
+            session.setAttribute("errorMessage", "File quá lớn hoặc không đúng định dạng!");
         }
+
+        // ĐÁ VỀ TRANG CHỦ CỦA USER ĐÓ (Dùng JavaScript History để load lại)
+        String role = currentUser.getRole().toLowerCase();
+        if (role.equals("doctor")) {
+            response.sendRedirect(request.getContextPath() + "/component/doctor/doctorDashboard.jsp");
+        } else if (role.equals("patient")) {
+            response.sendRedirect(request.getContextPath() + "/LoadPatientDashboardController");
+        } else {
+            response.sendRedirect(request.getContextPath() + "/index.jsp");
+        }
+    
     }
 
 }

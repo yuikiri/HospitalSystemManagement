@@ -8,6 +8,7 @@ import dao.UserDAO;
 import entity.User;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.Random;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -31,54 +32,54 @@ public class RequestChangeEmailController extends HttpServlet {
      * @throws IOException if an I/O error occurs
      */
     @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {HttpSession session = request.getSession();
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        request.setCharacterEncoding("UTF-8");
+        HttpSession session = request.getSession();
         User currentUser = (User) session.getAttribute("user");
-        
-        
-        
-        
-        
-        User user = (User) session.getAttribute("user");
-        if (user == null || !user.getRole().equals("patient")) {
-            response.sendRedirect(request.getContextPath() + "/login.jsp");
+
+        if (currentUser == null) {
+            response.sendRedirect(request.getContextPath() + "/index.jsp");
             return;
         }
-        
-        
-        
-        
-        
+
         String currentEmail = request.getParameter("currentEmail");
         String currentPassword = request.getParameter("currentPassword");
         String newEmail = request.getParameter("newEmail");
-        
+
+        // ĐÃ FIX: TRỎ VỀ ĐÚNG KHUNG DASHBOARD THEO ROLE
+        String role = currentUser.getRole().toLowerCase().trim();
+        String errorRedirectUrl = request.getContextPath() + "/MainController?action=LoadPatientDashboard"; 
+        if (role.equals("doctor")) errorRedirectUrl = request.getContextPath() + "/component/doctor/doctorDashboard.jsp";
+        else if (role.equals("staff")) errorRedirectUrl = request.getContextPath() + "/component/staff/staffDashboard.jsp";
+
         try {
-            if (!currentEmail.equals(currentUser.getEmail())) {
-                throw new ErrorMessages.AppException(ErrorMessages.WRONG_CURRENT_EMAIL);
-            }
             UserDAO userDAO = new UserDAO();
+            
+            if (!currentUser.getEmail().equalsIgnoreCase(currentEmail)) {
+                session.setAttribute("errorMessage", "Email hiện tại không khớp với tài khoản của bạn!");
+                response.sendRedirect(errorRedirectUrl); return;
+            }
             if (!userDAO.checkCurrentPassword(currentUser.getId(), currentPassword)) {
-                throw new ErrorMessages.AppException(ErrorMessages.WRONG_PASSWORD);
+                session.setAttribute("errorMessage", "Mật khẩu xác nhận không chính xác!");
+                response.sendRedirect(errorRedirectUrl); return;
             }
-            if (userDAO.checkEmailExist(newEmail)) {
-                throw new ErrorMessages.AppException(ErrorMessages.EMAIL_EXISTED);
+            if (userDAO.checkEmailExistForUpdate(newEmail, currentUser.getId())) {
+                session.setAttribute("errorMessage", "Email mới này đã được người khác sử dụng!");
+                response.sendRedirect(errorRedirectUrl); return;
             }
+
+            String otpCode = String.format("%06d", new Random().nextInt(999999));
+            // Gửi OTP
+            util.SenMailUtil.sendOTP(newEmail, otpCode);
             
-            String otp = String.format("%06d", new java.util.Random().nextInt(999999));
-            
-//            System.out.println("\n=================================");
-//            System.out.println("MÃ OTP ĐỔI EMAIL CỦA SẾP LÀ: " + otp);
-//            System.out.println("=================================\n");
-            
-            session.setAttribute("savedEmailOtp", otp);
+            session.setAttribute("savedEmailOtp", otpCode);
             session.setAttribute("pendingEmail", newEmail);
-            
-            util.SenMailUtil.sendOTP(newEmail, otp); // Gửi OTP vào mail MỚI
             response.sendRedirect(request.getContextPath() + "/verifyEmailOTP.jsp");
-            
-        } catch (ErrorMessages.AppException e) {
-            session.setAttribute("errorMessage", e.getMessage());
-            response.sendRedirect(request.getContextPath() + "/component/patient/patientDashboard.jsp");
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            session.setAttribute("errorMessage", "Đã xảy ra lỗi hệ thống!");
+            response.sendRedirect(errorRedirectUrl);
         }
     }
 }

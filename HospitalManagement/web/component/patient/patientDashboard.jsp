@@ -1,4 +1,18 @@
+<%@page import="entity.User"%>
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
+<%
+    // 1. CHỐNG LƯU CACHE TRÌNH DUYỆT (CHỐNG NÚT BACK)
+    response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate"); // HTTP 1.1
+    response.setHeader("Pragma", "no-cache"); // HTTP 1.0
+    response.setDateHeader("Expires", 0); // Proxies
+
+    // 2. KIỂM TRA ĐĂNG NHẬP VÀ ĐÚNG ROLE
+    User user = (User) session.getAttribute("user");
+    if (user == null || !user.getRole().equalsIgnoreCase("patient")) {
+        response.sendRedirect(request.getContextPath() + "/index.jsp");
+        return; // Lệnh return cực kỳ quan trọng để chặn không cho load mã HTML bên dưới
+    }
+%>
 <!DOCTYPE html>
 <html lang="vi">
     <head>
@@ -144,7 +158,16 @@
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
         <script>
+            // ĐÃ FIX: Tạo biến đường dẫn mặc định chuẩn tuyệt đối
+            const CONTEXT_PATH = '${pageContext.request.contextPath}';
+            const DEFAULT_URL = CONTEXT_PATH + '/component/patient/contents/patientProfile.jsp';
+
             function loadContent(pageUrl, element) {
+                // BẢO VỆ: Chống lỗi đường dẫn rỗng
+                if (!pageUrl || pageUrl.trim() === '' || pageUrl === 'null' || pageUrl === 'undefined') {
+                    pageUrl = DEFAULT_URL;
+                }
+
                 const contentDiv = document.getElementById('dynamic-content');
 
                 // 1. Cập nhật màu sắc cho Menu bên trái
@@ -179,12 +202,11 @@
                             void contentDiv.offsetWidth;
                             contentDiv.innerHTML = html;
                             contentDiv.classList.add('fade-in');
-
-                            // 🌟 BÍ KÍP CHỐNG ĐƠ SCRIPT TẠI ĐÂY:
-                            // Ép trình duyệt tìm và chạy tất cả các đoạn <script> vừa được nhét vào màn hình
                             executeScripts(contentDiv);
                         })
                         .catch(error => {
+                            // TỰ ĐỘNG DỌN RÁC NẾU LINK BỊ LỖI
+                            sessionStorage.removeItem('savedTabUrl');
                             contentDiv.innerHTML = `
                             <div class="alert alert-danger shadow-sm rounded-4 border-0 p-4 mt-4 fade-in">
                                 <h5 class="text-danger fw-bold"><i class="fas fa-exclamation-triangle"></i> Lỗi tải trang!</h5>
@@ -193,15 +215,13 @@
                         });
             }
 
-            // Hàm phụ trợ: Đánh thức các đoạn code JS ngủ quên trong innerHTML
             function executeScripts(element) {
                 const scripts = element.querySelectorAll('script');
                 scripts.forEach(oldScript => {
                     const newScript = document.createElement('script');
-                    // Chép ruột code sang thẻ script mới để nó chạy
                     newScript.textContent = oldScript.textContent;
                     document.body.appendChild(newScript);
-                    oldScript.remove(); // Dọn dẹp xác thẻ cũ
+                    oldScript.remove(); 
                 });
             }
 
@@ -210,10 +230,12 @@
                 let savedUrl = sessionStorage.getItem('savedTabUrl');
                 let savedId = sessionStorage.getItem('savedTabId');
 
-                if (savedUrl && savedId && document.getElementById(savedId)) {
+                // CHỈ LOAD SESSION NẾU URL HỢP LỆ
+                if (savedUrl && savedUrl !== 'null' && document.getElementById(savedId)) {
                     loadContent(savedUrl, document.getElementById(savedId));
                 } else {
-                    loadContent('contents/patientProfile.jsp', document.getElementById('menu-info'));
+                    // ĐÃ FIX: Load trang mặc định chuẩn xác
+                    loadContent(DEFAULT_URL, document.getElementById('menu-info'));
                 }
             });
         </script>

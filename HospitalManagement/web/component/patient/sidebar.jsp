@@ -52,7 +52,7 @@
 </div>
 
 <div class="menu-list">
-    <a id="menu-info" onclick="loadContent('contents/patientProfile.jsp', this)" class="nav-item-custom active">
+    <a id="menu-info" onclick="loadContent('${pageContext.request.contextPath}/component/patient/contents/patientProfile.jsp', this)" class="nav-item-custom active">
         <i class="fas fa-id-card nav-icon"></i> Thông tin cá nhân
     </a>
     
@@ -64,11 +64,11 @@
         <i class="fas fa-file-medical-alt nav-icon"></i> Lịch sử khám
     </a>
     
-    <a id="menu-doctors" onclick="loadContent('contents/searchDoctor.jsp', this)" class="nav-item-custom">
+    <a id="menu-doctors" onclick="loadContent('${pageContext.request.contextPath}/component/patient/contents/searchDoctor.jsp', this)" class="nav-item-custom">
         <i class="fas fa-user-md nav-icon"></i> Tra cứu Bác sĩ
     </a>
     
-    <a id="menu-about" onclick="loadContent('contents/aboutUs.jsp', this)" class="nav-item-custom">
+    <a id="menu-about" onclick="loadContent('${pageContext.request.contextPath}/component/patient/contents/aboutUs.jsp', this)" class="nav-item-custom">
         <i class="fas fa-hand-holding-heart nav-icon"></i> Về chúng tôi
     </a>
 
