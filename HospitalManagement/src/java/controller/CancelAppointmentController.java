@@ -5,6 +5,7 @@
 package controller;
 
 import dao.AppointmentDAO;
+import dao.PatientDTO;
 import entity.User;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -63,7 +64,11 @@ public class CancelAppointmentController extends HttpServlet {
                 session.setAttribute("errorMessage", "Không thể hủy! Lịch hẹn đã được Bác sĩ tiếp nhận.");
             }
             
-            response.sendRedirect(request.getContextPath() + "/component/patient/patientDashboard.jsp");
-        } catch (Exception e) { e.printStackTrace(); }
+            // ĐÃ SỬA: ĐÁ VỀ CONTROLLER, KHÔNG ĐÁ VỀ FILE JSP
+            response.sendRedirect(request.getContextPath() + "/LoadPatientDashboardController");
+        } catch (Exception e) { 
+            e.printStackTrace(); 
+            response.sendRedirect(request.getContextPath() + "/LoadPatientDashboardController");
+        }
     }
 }

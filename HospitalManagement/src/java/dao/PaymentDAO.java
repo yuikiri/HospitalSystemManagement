@@ -110,4 +110,55 @@ public class PaymentDAO {
         } catch (Exception e) { e.printStackTrace(); }
         return false;
     }
+    //======================================================
+    //=====================Hoàng
+    //======================================================
+    // 6. XÁC NHẬN THANH TOÁN XUYÊN TỪ APPOINTMENT ID (Dùng cho QR Code & Webhook)
+    public boolean markAsPaidByAppointmentId(int appointmentId, String paymentMethod) {
+        String sql = "UPDATE Payments SET status = 'paid', paymentMethod = ?, paidAt = GETDATE() " +
+                     "WHERE medicalRecordId IN (SELECT id FROM MedicalRecords WHERE appointmentId = ?)";
+        try (Connection conn = new DbUtils().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, paymentMethod);
+            ps.setInt(2, appointmentId);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) { e.printStackTrace(); }
+        return false;
+    }
+    
+    // 7. LẤY SỐ TIỀN CẦN THU TỪ APPOINTMENT ID (Để đối chiếu với số tiền khách chuyển)
+    public double getRequiredAmountByAppointmentId(int appointmentId) {
+        String sql = "SELECT pay.totalAmount FROM Payments pay " +
+                     "JOIN MedicalRecords mr ON pay.medicalRecordId = mr.id " +
+                     "WHERE mr.appointmentId = ?";
+        try (Connection conn = new DbUtils().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, appointmentId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getDouble("totalAmount"); // Trả về số tiền gốc cần thu
+                }
+            }
+        } catch (Exception e) { e.printStackTrace(); }
+        return -1; // Trả về -1 nếu không tìm thấy hóa đơn
+    }
+    
+    // 8. KIỂM TRA TRẠNG THÁI THANH TOÁN CỦA LỊCH HẸN (Dùng cho Auto-reload giao diện)
+    public String getPaymentStatusByAppointmentId(int appointmentId) {
+        String sql = "SELECT pay.status FROM Payments pay " +
+                     "JOIN MedicalRecords mr ON pay.medicalRecordId = mr.id " +
+                     "WHERE mr.appointmentId = ?";
+        try (Connection conn = new util.DbUtils().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, appointmentId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getString("status"); // Sẽ trả về 'paid' hoặc 'unpaid'
+                }
+            }
+        } catch (Exception e) { e.printStackTrace(); }
+        return "unpaid"; // Mặc định nếu lỗi thì coi như chưa trả
+    }
+    //==================================================================================
+    //==================================================================================
 }

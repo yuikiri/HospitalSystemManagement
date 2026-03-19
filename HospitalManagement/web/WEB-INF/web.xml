@@ -74,6 +74,14 @@
         <servlet-name>CancelAppointmentController</servlet-name>
         <servlet-class>controller.CancelAppointmentController</servlet-class>
     </servlet>
+    <servlet>
+        <servlet-name>ConfirmPaymentController</servlet-name>
+        <servlet-class>controller.ConfirmPaymentController</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>SePayWebhookController</servlet-name>
+        <servlet-class>controller.SePayWebhookController</servlet-class>
+    </servlet>
     <servlet-mapping>
         <servlet-name>MainController</servlet-name>
         <url-pattern>/MainController</url-pattern>
@@ -142,6 +150,14 @@
     <servlet-mapping>
         <servlet-name>CancelAppointmentController</servlet-name>
         <url-pattern>/CancelAppointmentController</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>ConfirmPaymentController</servlet-name>
+        <url-pattern>/ConfirmPaymentController</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>SePayWebhookController</servlet-name>
+        <url-pattern>/SePayWebhookController</url-pattern>
     </servlet-mapping>
     <session-config>
         <session-timeout>30</session-timeout>

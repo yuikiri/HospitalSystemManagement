@@ -990,3 +990,25 @@ DEALLOCATE pres_cursor;
 
 PRINT N'--- THÀNH CÔNG! MỖI ĐƠN THUỐC BÂY GIỜ ĐỀU CÓ 3 MÓN THUỐC CHI TIẾT ---';
 GO
+
+-- 1. Tạo một Lịch hẹn giả định (ID là 999)
+SET IDENTITY_INSERT Appointments ON;
+INSERT INTO Appointments (id, patientId, doctorId, roomId, startTime, endTime, status, createdAt, isActive)
+VALUES (999, 1, 1, 21, GETDATE(), DATEADD(hour, 1, GETDATE()), 'completed', GETDATE(), 1);
+SET IDENTITY_INSERT Appointments OFF;
+
+-- 2. Tạo Bệnh án tương ứng (Nối với Appointment 999)
+INSERT INTO MedicalRecords (appointmentId, diagnosis, notes, createdAt, isActive)
+VALUES (999, N'Kiểm tra hệ thống thanh toán', N'Dữ liệu test 1.000 VNĐ', GETDATE(), 1);
+
+-- Lấy ID của MedicalRecord vừa tạo để làm Payment
+DECLARE @MR_ID INT = SCOPE_IDENTITY();
+
+-- 3. Tạo Đơn thuốc rỗng (Để tiền thuốc = 0)
+INSERT INTO Prescriptions (medicalRecordId, notes, createdAt, status, isActive)
+VALUES (@MR_ID, N'Không dùng thuốc - Chỉ test phí khám', GETDATE(), 'active', 1);
+
+-- 4. Tạo Hóa đơn thanh toán với giá 1.000 VNĐ (Trạng thái 'unpaid')
+INSERT INTO Payments (medicalRecordId, totalAmount, paymentMethod, status, paidAt, isActive)
+VALUES (@MR_ID, 2000.00, 'banking', 'unpaid', NULL, 1);
+

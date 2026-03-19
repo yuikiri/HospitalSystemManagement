@@ -3,22 +3,12 @@
 
 <style>
     .form-select {
-        border-radius: 12px;
-        padding: 12px 15px;
-        border: 1px solid #e2e8f0;
-        background-color: #f8fafc;
-        transition: all 0.3s;
-        cursor: pointer;
+        border-radius: 12px; padding: 12px 15px; border: 1px solid #e2e8f0;
+        background-color: #f8fafc; transition: all 0.3s; cursor: pointer;
     }
-    .form-select:focus {
-        border-color: #4361ee;
-        box-shadow: 0 0 0 0.25rem rgba(67, 97, 238, 0.15);
-        background-color: #fff;
-    }
+    .form-select:focus { border-color: #4361ee; box-shadow: 0 0 0 0.25rem rgba(67, 97, 238, 0.15); background-color: #fff; }
     .step-badge {
-        background: #e0eafc;
-        color: #4361ee;
-        width: 35px; height: 35px;
+        background: #e0eafc; color: #4361ee; width: 35px; height: 35px;
         display: inline-flex; align-items: center; justify-content: center;
         border-radius: 50%; font-weight: bold; margin-right: 15px;
     }
@@ -32,12 +22,12 @@
                 <p class="text-muted">Lựa chọn Khoa và Phòng khám mong muốn. Bạn có thể để hệ thống tự xếp phòng (0đ) nếu không rõ.</p>
             </div>
 
-            <form action="${pageContext.request.contextPath}/SubmitBookingController" method="POST">
+            <form action="${pageContext.request.contextPath}/MainController" method="POST">
+                
+                <input type="hidden" name="action" value="SubmitBooking">
                 
                 <div class="mb-4">
-                    <h5 class="fw-bold mb-3 d-flex align-items-center">
-                        <span class="step-badge">1</span> Thời gian khám
-                    </h5>
+                    <h5 class="fw-bold mb-3 d-flex align-items-center"><span class="step-badge">1</span> Thời gian khám</h5>
                     <div class="row g-3 ms-4">
                         <div class="col-md-6">
                             <label class="form-label fw-semibold text-muted">Chọn ngày khám *</label>
@@ -62,9 +52,7 @@
                 <hr class="my-4 border-light">
 
                 <div class="mb-4">
-                    <h5 class="fw-bold mb-3 d-flex align-items-center">
-                        <span class="step-badge">2</span> Chuyên khoa & Dịch vụ
-                    </h5>
+                    <h5 class="fw-bold mb-3 d-flex align-items-center"><span class="step-badge">2</span> Chuyên khoa & Dịch vụ</h5>
                     <div class="row g-3 ms-4">
                         <div class="col-md-6">
                             <label class="form-label fw-semibold text-primary">Chọn Khoa / Phòng Ban *</label>
@@ -101,37 +89,6 @@
         </div>
     </div>
 </div>
-            <%-- 1. THÔNG BÁO THÀNH CÔNG (MÀU XANH) --%>
-        <c:if test="${not empty sessionScope.successMessage}">
-            <div id="alertSuccess" class="alert alert-success alert-dismissible fade show shadow-sm" role="alert" 
-                 style="border-radius: 10px; font-weight: bold; margin: 20px; border-left: 5px solid #198754;">
-                <i class="fas fa-check-circle me-2" style="font-size: 1.2rem;"></i> 
-                ${sessionScope.successMessage}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-            <%-- Cực kỳ quan trọng: Xóa thông báo sau khi hiện để F5 không bị lặp lại --%>
-            <c:remove var="successMessage" scope="session" />
-        </c:if>
-
-        <%-- 2. THÔNG BÁO LỖI (MÀU ĐỎ) --%>
-        <c:if test="${not empty sessionScope.errorMessage}">
-            <div id="alertError" class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert" 
-                 style="border-radius: 10px; font-weight: bold; margin: 20px; border-left: 5px solid #dc3545;">
-                <i class="fas fa-exclamation-triangle me-2" style="font-size: 1.2rem;"></i> 
-                ${sessionScope.errorMessage}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-            <c:remove var="errorMessage" scope="session" />
-        </c:if>
-        
-        <script>
-            setTimeout(function() {
-                let alertS = document.getElementById('alertSuccess');
-                let alertE = document.getElementById('alertError');
-                if (alertS) { alertS.classList.remove('show'); setTimeout(() => alertS.remove(), 300); }
-                if (alertE) { alertE.classList.remove('show'); setTimeout(() => alertE.remove(), 300); }
-            }, 4000);
-        </script>
 
 <script>
     // 1. Chặn chọn ngày trong quá khứ
@@ -147,7 +104,6 @@
         let roomSelect = document.getElementById('roomSelect');
         let roomDataElements = document.querySelectorAll('#hiddenRoomStorage .room-data');
         
-        // Reset danh sách phòng, thêm option Mặc định (0đ) lên đầu tiên
         let htmlContent = '<option value="">-- Không chọn (Hệ thống tự xếp phòng 0đ) --</option>';
         let foundRooms = 0;
 
@@ -168,7 +124,7 @@
             roomSelect.disabled = false;
         } else {
             roomSelect.innerHTML = '<option value="">-- Khoa này chưa có phòng (Tự động xếp) --</option>';
-            roomSelect.disabled = false; // Vẫn mở để submit value rỗng về
+            roomSelect.disabled = false;
         }
     };
 </script>

@@ -7,7 +7,11 @@ package service;
 import dao.AppointmentDAO;
 import dao.AppointmentDTO;
 import dao.MedicalHistoryDTO;
+import dao.PaymentDAO;
+import dao.PrescriptionItemDAO;
 import dao.PrescriptionItemDTO;
+import dao.RoomDAO;
+import dao.RoomDTO;
 import java.util.List;
 import util.ErrorMessages;
 import entity.Appointment;
@@ -75,72 +79,107 @@ public class AppointmentService {
     //=========================================================
     ////////////////////////Hoàng
     //=========================================================
-    // HÀM 1: LẤY LỊCH SỬ VÀ TÍNH TOÁN TIỀN KHÁM
+    
     public List<MedicalHistoryDTO> getProcessedMedicalHistory(int patientId, String tabType) {
-        // 1. Nhờ DAO lấy danh sách thô
         List<MedicalHistoryDTO> list = appointmentDAO.getHistoryByPatient(patientId, tabType);
+        
+        if (tabType.equals("completed")) {
+            PrescriptionItemDAO itemDAO = new PrescriptionItemDAO();
+            RoomDAO roomDAO = new RoomDAO();
+            
+            for (MedicalHistoryDTO dto : list) {
+                try {
+                    // 1. Lấy chi tiết chẩn đoán và ghi chú
+                    String[] recordDetail = appointmentDAO.getMedicalRecordDetail(dto.getAppointmentId());
+                    if (recordDetail[0] != null) {
+                        dto.setDiagnosis(recordDetail[0]);
+                        dto.setNotes(recordDetail[1]);
+                    } else {
+                        dto.setDiagnosis("Không có chẩn đoán");
+                        dto.setNotes("");
+                    }
 
-        // 2. Xử lý nghiệp vụ: Chỉ khi là tab "completed" mới đi tìm đơn thuốc và tính tiền
-        if ("completed".equals(tabType)) {
-            for (MedicalHistoryDTO app : list) {
-                // Nạp Chẩn đoán & Ghi chú
-                String[] details = appointmentDAO.getMedicalRecordDetail(app.getAppointmentId());
-                app.setDiagnosis(details[0]);
-                app.setNotes(details[1]);
-
-                // Nạp Danh sách Đơn thuốc
-                List<dao.PrescriptionItemDTO> meds = appointmentDAO.getPrescriptionItemsByAppId(app.getAppointmentId());
-                app.setMedicines(meds);
-
-                // Tính Phí khám = Tổng hóa đơn - Tổng tiền thuốc
-                double medTotal = 0;
-                for (dao.PrescriptionItemDTO m : meds) {
-                    medTotal += (m.getQuantity() * m.getMedicinePrice());
+                    // 2. Lấy danh sách thuốc và Tính tổng tiền thuốc
+                    List<PrescriptionItemDTO> meds = appointmentDAO.getPrescriptionItemsByAppId(dto.getAppointmentId());
+                    dto.setMedicines(meds);
+                    
+                    double medTotal = 0;
+                    for (PrescriptionItemDTO m : meds) {
+                        medTotal += (m.getMedicinePrice() * m.getQuantity());
+                    }
+                    dto.setTotalMedPrice(medTotal);
+                    
+                    // 3. Tính tiền phòng (dựa theo mã phòng đã khám)
+                    RoomDTO room = roomDAO.getRoomByNumber(dto.getRoomNumber()); 
+                    double roomPrice = (room != null) ? room.getPrice() : 0.0; 
+                    String roomName = (room != null) ? room.getRoomTypeName() : "Phòng Khám";
+                    
+                    dto.setRoomName(roomName);
+                    dto.setRoomPrice(roomPrice);
+                    dto.setDays(1); // Mặc định tính là 1 ngày khám
+                    
+                    // 4. Tính bù trừ ra công bác sĩ (Không bị âm tiền)
+                    double doctorFee = dto.getTotalAmount() - medTotal - (roomPrice * 1);
+                    if (doctorFee < 0) doctorFee = 0; 
+                    
+                    dto.setDoctorFee(doctorFee);
+                    
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
-                app.setServiceFee(app.getTotalAmount() - medTotal);
             }
         }
         return list;
     }
 
-    // HÀM 2: HỦY LỊCH HẸN (Pending)
     public boolean cancelPendingAppointmentByPatient(int appointmentId, int patientId) {
         return appointmentDAO.cancelPendingAppointment(appointmentId, patientId);
     }
-    
+
     // =========================================================
     // HÀM CHO BÁC SĨ: HOÀN THÀNH KHÁM & TÍNH TỔNG TIỀN
     // =========================================================
     public boolean completeExaminationWithFee(int appointmentId, int roomId, String diagnosis, String notes, double doctorFee, List<PrescriptionItemDTO> meds) {
         try {
-            // 1. Lấy giá của phòng khám hiện tại (Sếp nhớ tạo hàm getRoomPrice trong RoomDAO nhé)
-            // Tạm ví dụ giá phòng lấy được là roomPrice
-            double roomPrice = 150000; // Giả sử query ra 150k
+            // 1. Lấy giá phòng
+            RoomDAO roomDAO = new RoomDAO();
+            RoomDTO room = roomDAO.getRoomById(roomId);
+            double roomPrice = (room != null) ? room.getPrice() : 0;
 
             // 2. Tính tổng tiền thuốc
             double medicineTotal = 0;
-            if (meds != null) {
+            if (meds != null && !meds.isEmpty()) {
                 for (PrescriptionItemDTO med : meds) {
+                    // Cần đảm bảo object med có getMedicinePrice()
                     medicineTotal += (med.getQuantity() * med.getMedicinePrice());
                 }
             }
 
-            // 3. TÍNH TỔNG TIỀN CUỐI CÙNG LƯU VÀO DATABASE
+            // 3. Tổng tiền cuối cùng
             double finalTotalAmount = roomPrice + medicineTotal + doctorFee;
 
-            // 4. Bắt đầu lưu vào DB theo đúng thứ tự:
-            // Bước 4.1: Chuyển status Appointments -> 'completed'
+            // 4. LƯU VÀO DATABASE THEO QUY TRÌNH
+            // 4.1: Chuyển status Appointments -> 'completed'
             appointmentDAO.updateAppointmentStatus(appointmentId, "completed");
 
-            // Bước 4.2: Tạo MedicalRecords (Lấy ID vừa tạo) -> diagnosis, notes
-            int mrId = appointmentDAO.createEmptyMedicalRecordAndGetId(appointmentId); // Cần sửa lại hàm này truyền param diagnosis, notes
+            // 4.2: Cập nhật Bệnh án (Do lúc nãy bệnh án đang rỗng) & Lấy ID Bệnh án
+            int mrId = appointmentDAO.updateAndGetMedicalRecordId(appointmentId, diagnosis, notes);
+            if (mrId <= 0) return false;
 
-            // Bước 4.3: Tạo Prescriptions & PrescriptionItems (Nếu có thuốc)
-            // ... Gọi vòng lặp insert thuốc ...
+            // 4.3: Cập nhật Đơn thuốc thành 'active' & Lấy ID Đơn thuốc
+            int presId = appointmentDAO.updateAndGetPrescriptionId(mrId, "active");
 
-            // Bước 4.4: TẠO PAYMENTS VỚI FINAL TOTAL AMOUNT
-            // String sqlPay = "INSERT INTO Payments (medicalRecordId, totalAmount, paymentMethod, status, paidAt, isActive) VALUES (?, ?, 'cash', 'unpaid', NULL, 1)";
-            // (Thực thi insert finalTotalAmount vào đây)
+            // 4.4: Insert Chi tiết thuốc
+            if (presId > 0 && meds != null && !meds.isEmpty()) {
+                PrescriptionItemDAO itemDAO = new PrescriptionItemDAO();
+                for (PrescriptionItemDTO med : meds) {
+                    itemDAO.insertItem(presId, med.getMedicineId(), med.getQuantity(), med.getDosage(), med.getFrequency(), med.getDuration());
+                }
+            }
+
+            // 4.5: Tạo Hóa Đơn Thanh Toán (Payment)
+            PaymentDAO payDAO = new PaymentDAO();
+            payDAO.insertPayment(mrId, finalTotalAmount);
 
             return true;
         } catch (Exception e) {
@@ -148,7 +187,6 @@ public class AppointmentService {
             return false;
         }
     }
-        
-    //=====================================
-    //=====================================
+    //===========================================================================================================================
+    //===========================================================================================================================
 }

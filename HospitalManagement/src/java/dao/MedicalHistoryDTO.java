@@ -1,163 +1,85 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package dao;
 
-import java.sql.Timestamp;
+import java.util.Date;
 import java.util.List;
 
-/**
- *
- * @author Yuikiri
- */
 public class MedicalHistoryDTO {
     private int appointmentId;
-    private Timestamp startTime;
     private String departmentName;
-    private Integer doctorId; // Dùng Integer để có thể chứa null nếu chưa có BS
+    private int doctorId;
     private String doctorName;
     private int roomNumber;
-    private String status; // pending, accepted, completed, cancelled
+    private Date startTime;
+    private String status;
     
-    // Phần dành cho Tab Đã hoàn thành
-    private double totalAmount; // Tổng viện phí
-    private String paymentStatus; // paid, unpaid
-    private String diagnosis; // Chẩn đoán
-    private String notes; // Lời khuyên
-    private double serviceFee; // Tiền khám bệnh (Tổng tiền - Tiền thuốc)
-    private List<PrescriptionItemDTO> medicines; // Danh sách thuốc
-    //constructor
+    private String diagnosis;
+    private String notes;
+    private double totalAmount;
+    private String paymentStatus;
+    
+    // Các biến mở rộng để tính tiền và hiện thuốc
+    private List<PrescriptionItemDTO> medicines;
+    private String roomName;
+    private double roomPrice;
+    private int days;
+    private double totalMedPrice;
+    private double doctorFee;
 
+    // Constructor rỗng
     public MedicalHistoryDTO() {
     }
 
-    public MedicalHistoryDTO(int appointmentId, Timestamp startTime, String departmentName, Integer doctorId, String doctorName, int roomNumber, String status, double totalAmount, String paymentStatus, String diagnosis, String notes, double serviceFee, List<PrescriptionItemDTO> medicines) {
-        this.appointmentId = appointmentId;
-        this.startTime = startTime;
-        this.departmentName = departmentName;
-        this.doctorId = doctorId;
-        this.doctorName = doctorName;
-        this.roomNumber = roomNumber;
-        this.status = status;
-        this.totalAmount = totalAmount;
-        this.paymentStatus = paymentStatus;
-        this.diagnosis = diagnosis;
-        this.notes = notes;
-        this.serviceFee = serviceFee;
-        this.medicines = medicines;
-    }
+    // ============================================
+    // TOÀN BỘ GETTER VÀ SETTER (BẮT BUỘC PHẢI CÓ)
+    // ============================================
+    public int getAppointmentId() { return appointmentId; }
+    public void setAppointmentId(int appointmentId) { this.appointmentId = appointmentId; }
 
-    public void setAppointmentId(int appointmentId) {
-        this.appointmentId = appointmentId;
-    }
+    public String getDepartmentName() { return departmentName; }
+    public void setDepartmentName(String departmentName) { this.departmentName = departmentName; }
 
-    public void setStartTime(Timestamp startTime) {
-        this.startTime = startTime;
-    }
+    public int getDoctorId() { return doctorId; }
+    public void setDoctorId(int doctorId) { this.doctorId = doctorId; }
 
-    public void setDepartmentName(String departmentName) {
-        this.departmentName = departmentName;
-    }
+    public String getDoctorName() { return doctorName; }
+    public void setDoctorName(String doctorName) { this.doctorName = doctorName; }
 
-    public void setDoctorId(Integer doctorId) {
-        this.doctorId = doctorId;
-    }
+    public int getRoomNumber() { return roomNumber; }
+    public void setRoomNumber(int roomNumber) { this.roomNumber = roomNumber; }
 
-    public void setDoctorName(String doctorName) {
-        this.doctorName = doctorName;
-    }
+    public Date getStartTime() { return startTime; }
+    public void setStartTime(Date startTime) { this.startTime = startTime; }
 
-    public void setRoomNumber(int roomNumber) {
-        this.roomNumber = roomNumber;
-    }
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
 
-    public void setStatus(String status) {
-        this.status = status;
-    }
+    public String getDiagnosis() { return diagnosis; }
+    public void setDiagnosis(String diagnosis) { this.diagnosis = diagnosis; }
 
-    public void setTotalAmount(double totalAmount) {
-        this.totalAmount = totalAmount;
-    }
+    public String getNotes() { return notes; }
+    public void setNotes(String notes) { this.notes = notes; }
 
-    public void setPaymentStatus(String paymentStatus) {
-        this.paymentStatus = paymentStatus;
-    }
+    public double getTotalAmount() { return totalAmount; }
+    public void setTotalAmount(double totalAmount) { this.totalAmount = totalAmount; }
 
-    public void setDiagnosis(String diagnosis) {
-        this.diagnosis = diagnosis;
-    }
+    public String getPaymentStatus() { return paymentStatus; }
+    public void setPaymentStatus(String paymentStatus) { this.paymentStatus = paymentStatus; }
 
-    public void setNotes(String notes) {
-        this.notes = notes;
-    }
+    public List<PrescriptionItemDTO> getMedicines() { return medicines; }
+    public void setMedicines(List<PrescriptionItemDTO> medicines) { this.medicines = medicines; }
 
-    public void setServiceFee(double serviceFee) {
-        this.serviceFee = serviceFee;
-    }
+    public String getRoomName() { return roomName; }
+    public void setRoomName(String roomName) { this.roomName = roomName; }
 
-    public void setMedicines(List<PrescriptionItemDTO> medicines) {
-        this.medicines = medicines;
-    }
+    public double getRoomPrice() { return roomPrice; }
+    public void setRoomPrice(double roomPrice) { this.roomPrice = roomPrice; }
 
-    
+    public int getDays() { return days; }
+    public void setDays(int days) { this.days = days; }
 
-    public int getAppointmentId() {
-        return appointmentId;
-    }
+    public double getTotalMedPrice() { return totalMedPrice; }
+    public void setTotalMedPrice(double totalMedPrice) { this.totalMedPrice = totalMedPrice; }
 
-    public Timestamp getStartTime() {
-        return startTime;
-    }
-
-    public String getDepartmentName() {
-        return departmentName;
-    }
-
-    public Integer getDoctorId() {
-        return doctorId;
-    }
-
-    public String getDoctorName() {
-        return doctorName;
-    }
-
-    public int getRoomNumber() {
-        return roomNumber;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public double getTotalAmount() {
-        return totalAmount;
-    }
-
-    public String getPaymentStatus() {
-        return paymentStatus;
-    }
-
-    public String getDiagnosis() {
-        return diagnosis;
-    }
-
-    public String getNotes() {
-        return notes;
-    }
-
-    public double getServiceFee() {
-        return serviceFee;
-    }
-
-    public List<PrescriptionItemDTO> getMedicines() {
-        return medicines;
-    }
-
-    @Override
-    public String toString() {
-        return "MedicalHistoryDTO{" + "appointmentId=" + appointmentId + ", startTime=" + startTime + ", departmentName=" + departmentName + ", doctorId=" + doctorId + ", doctorName=" + doctorName + ", roomNumber=" + roomNumber + ", status=" + status + ", totalAmount=" + totalAmount + ", paymentStatus=" + paymentStatus + ", diagnosis=" + diagnosis + ", notes=" + notes + ", serviceFee=" + serviceFee + ", medicines=" + medicines + '}';
-    }
-    
-    
+    public double getDoctorFee() { return doctorFee; }
+    public void setDoctorFee(double doctorFee) { this.doctorFee = doctorFee; }
 }

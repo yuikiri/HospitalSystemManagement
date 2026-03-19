@@ -50,7 +50,7 @@ public class SubmitBookingController extends HttpServlet {
         // 1. Kiểm tra đăng nhập
         User user = (User) session.getAttribute("user");
         if (user == null) {
-            response.sendRedirect(request.getContextPath() + "/patientDashboard.jsp"); 
+            response.sendRedirect(request.getContextPath() + "/index.jsp"); 
             return;
         }
 
@@ -115,8 +115,8 @@ public class SubmitBookingController extends HttpServlet {
 
             if (finalRoomId == -1) {
                 session.setAttribute("errorMessage", "Hệ thống chưa có phòng Khám Mặc Định. Vui lòng liên hệ Admin!");
-                // ĐÃ FIX ĐƯỜNG DẪN TẠI ĐÂY
-                response.sendRedirect(request.getContextPath() + "/component/patient/patientDashboard.jsp");
+                // ĐÃ SỬA: ĐÁ VỀ CONTROLLER DASHBOARD
+                response.sendRedirect(request.getContextPath() + "/LoadPatientDashboardController");
                 return;
             }
 
@@ -139,14 +139,14 @@ public class SubmitBookingController extends HttpServlet {
                 session.setAttribute("errorMessage", "Lưu Đặt lịch thất bại. Vui lòng kiểm tra lại dữ liệu!");
             }
             
-            // ĐÃ FIX ĐƯỜNG DẪN TẠI ĐÂY
-            response.sendRedirect(request.getContextPath() + "/component/patient/patientDashboard.jsp");
+            // ĐÃ SỬA: ĐÁ VỀ CONTROLLER DASHBOARD
+            response.sendRedirect(request.getContextPath() + "/LoadPatientDashboardController");
 
         } catch (Exception e) {
             e.printStackTrace();
             session.setAttribute("errorMessage", "Hệ thống đang bận hoặc dữ liệu không hợp lệ. Vui lòng thử lại!");
-            // ĐÃ FIX ĐƯỜNG DẪN TẠI ĐÂY
-            response.sendRedirect(request.getContextPath() + "/component/patient/patientDashboard.jsp");
+            // ĐÃ SỬA: ĐÁ VỀ CONTROLLER DASHBOARD
+            response.sendRedirect(request.getContextPath() + "/LoadPatientDashboardController");
         }
     }
 }

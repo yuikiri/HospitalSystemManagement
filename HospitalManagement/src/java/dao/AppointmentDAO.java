@@ -274,22 +274,25 @@ public class AppointmentDAO {
     // ==========================================================
     // 3. LẤY DANH SÁCH THUỐC (Dùng Constructor có tham số)
     // ==========================================================
+    // ==========================================================
+    // 3. LẤY DANH SÁCH THUỐC (ĐÃ FIX LỖI CRASH SQL)
+    // ==========================================================
     public List<PrescriptionItemDTO> getPrescriptionItemsByAppId(int appointmentId) {
         List<PrescriptionItemDTO> list = new ArrayList<>();
+        // ĐÃ SỬA: Bỏ pi.isActive vì bảng PrescriptionItems không có cột này. Chuyển sang check p.isActive
         String sql = "SELECT pi.id, pi.prescriptionId, pi.medicineId, m.name AS medName, m.unit, m.price, " +
                      "pi.quantity, pi.dosage, pi.frequency, pi.duration " +
                      "FROM PrescriptionItems pi " +
                      "JOIN Medicines m ON pi.medicineId = m.id " +
                      "JOIN Prescriptions p ON pi.prescriptionId = p.id " +
                      "JOIN MedicalRecords mr ON p.medicalRecordId = mr.id " +
-                     "WHERE mr.appointmentId = ? AND pi.isActive = 1";
+                     "WHERE mr.appointmentId = ? AND p.isActive = 1";
                      
         try (Connection conn = new util.DbUtils().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, appointmentId);
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
-                // Đưa thẳng dữ liệu vào Constructor (Đúng thứ tự sếp đã thiết kế)
                 PrescriptionItemDTO item = new PrescriptionItemDTO(
                     rs.getInt("id"),
                     rs.getInt("prescriptionId"),
@@ -320,6 +323,52 @@ public class AppointmentDAO {
             return ps.executeUpdate() > 0;
         } catch (Exception e) { e.printStackTrace(); }
         return false;
+    }
+    
+    public int updateAndGetMedicalRecordId(int appointmentId, String diagnosis, String notes) {
+        String sqlUpdate = "UPDATE MedicalRecords SET diagnosis = ?, notes = ? WHERE appointmentId = ?";
+        String sqlGetId = "SELECT id FROM MedicalRecords WHERE appointmentId = ?";
+        try (Connection conn = new util.DbUtils().getConnection()) {
+            // Cập nhật
+            try (PreparedStatement psUpdate = conn.prepareStatement(sqlUpdate)) {
+                psUpdate.setString(1, diagnosis);
+                psUpdate.setString(2, notes);
+                psUpdate.setInt(3, appointmentId);
+                psUpdate.executeUpdate();
+            }
+            // Lấy ID trả về
+            try (PreparedStatement psGet = conn.prepareStatement(sqlGetId)) {
+                psGet.setInt(1, appointmentId);
+                try (ResultSet rs = psGet.executeQuery()) {
+                    if (rs.next()) return rs.getInt("id");
+                }
+            }
+        } catch (Exception e) { e.printStackTrace(); }
+        return -1;
+    }
+
+    // ==========================================================
+    // [HÀM BỔ SUNG CHO HOÀNG] 6. Kích hoạt Đơn Thuốc và lấy ra ID Đơn thuốc
+    // ==========================================================
+    public int updateAndGetPrescriptionId(int medicalRecordId, String status) {
+        String sqlUpdate = "UPDATE Prescriptions SET status = ? WHERE medicalRecordId = ?";
+        String sqlGetId = "SELECT id FROM Prescriptions WHERE medicalRecordId = ?";
+        try (Connection conn = new util.DbUtils().getConnection()) {
+            // Cập nhật
+            try (PreparedStatement psUpdate = conn.prepareStatement(sqlUpdate)) {
+                psUpdate.setString(1, status);
+                psUpdate.setInt(2, medicalRecordId);
+                psUpdate.executeUpdate();
+            }
+            // Lấy ID trả về
+            try (PreparedStatement psGet = conn.prepareStatement(sqlGetId)) {
+                psGet.setInt(1, medicalRecordId);
+                try (ResultSet rs = psGet.executeQuery()) {
+                    if (rs.next()) return rs.getInt("id");
+                }
+            }
+        } catch (Exception e) { e.printStackTrace(); }
+        return -1;
     }
     // ==========================================================
     // ==========================================================

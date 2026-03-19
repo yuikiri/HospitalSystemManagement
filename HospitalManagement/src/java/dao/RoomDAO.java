@@ -61,13 +61,57 @@ public class RoomDAO {
                     rs.getInt("id"), rs.getInt("departmentId"), rs.getString("departmentName"),
                     rs.getInt("roomType"), rs.getString("roomTypeName"),
                     rs.getInt("roomNumber"), rs.getString("status"), rs.getInt("isActive"),
-                    rs.getDouble("price") // <-- ĐÃ FIX: Thêm price vào đây để hết báo lỗi đỏ
+                    rs.getDouble("price") 
                 ));
             }
         } catch (Exception e) { e.printStackTrace(); }
         return list;
     }
     
+    // =========================================================
+    // [HÀM MỚI BỔ SUNG] - Lấy thông tin phòng theo số phòng (Dùng để tính tiền)
+    // =========================================================
+    public RoomDTO getRoomByNumber(int roomNumber) {
+        String sql = SELECT_JOIN_SQL + "WHERE r.roomNumber = ?";
+        try (Connection conn = new DbUtils().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, roomNumber);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return new RoomDTO(
+                        rs.getInt("id"), rs.getInt("departmentId"), rs.getString("departmentName"),
+                        rs.getInt("roomType"), rs.getString("roomTypeName"),
+                        rs.getInt("roomNumber"), rs.getString("status"), rs.getInt("isActive"),
+                        rs.getDouble("price")
+                    );
+                }
+            }
+        } catch (Exception e) { e.printStackTrace(); }
+        return null;
+    }
+
+    // =========================================================
+    // [HÀM MỚI BỔ SUNG] - Lấy thông tin phòng theo ID
+    // =========================================================
+    public RoomDTO getRoomById(int id) {
+        String sql = SELECT_JOIN_SQL + "WHERE r.id = ?";
+        try (Connection conn = new DbUtils().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, id);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return new RoomDTO(
+                        rs.getInt("id"), rs.getInt("departmentId"), rs.getString("departmentName"),
+                        rs.getInt("roomType"), rs.getString("roomTypeName"),
+                        rs.getInt("roomNumber"), rs.getString("status"), rs.getInt("isActive"),
+                        rs.getDouble("price")
+                    );
+                }
+            }
+        } catch (Exception e) { e.printStackTrace(); }
+        return null;
+    }
+
     public int getDefaultRoomByDepartment(int departmentId) {
         String sql =
         "SELECT TOP 1 r.id " +

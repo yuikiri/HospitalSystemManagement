@@ -27,41 +27,63 @@ public class MainController extends HttpServlet {
      * @throws ServletException if a servlet-specific error occurs
      * @throws IOException if an I/O error occurs
      */
+
+        // KHA BÁO ĐỊA CHỈ CỦA CÁC CONTROLLER CON
+    private static final String ERROR_PAGE = "index.jsp";
+    
+    private static final String LOGIN = "LoginController";
+    private static final String REGISTER = "RegisterController";
+    private static final String LOGOUT = "LogoutController";
+    
+    private static final String LOAD_PATIENT_DASHBOARD = "LoadPatientDashboardController";
+    private static final String LOAD_BOOKING_PAGE = "LoadBookingPageController";
+    private static final String LOAD_MEDICAL_HISTORY = "LoadMedicalHistoryController";
+    
+    private static final String SUBMIT_BOOKING = "SubmitBookingController";
+    private static final String CANCEL_APPOINTMENT = "CancelAppointmentController";
+    private static final String CONFIRM_PAYMENT = "ConfirmPaymentController";
+
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        // Đảm bảo tiếng Việt không bị lỗi font
-        request.setCharacterEncoding("UTF-8");
-        response.setCharacterEncoding("UTF-8");
+        
         response.setContentType("text/html;charset=UTF-8");
+        request.setCharacterEncoding("UTF-8");
 
-        String action = request.getParameter("action");
-        String url = "index.jsp"; // Mặc định trả về trang chủ
+        String url = ERROR_PAGE;
+        
+        try {
+            String action = request.getParameter("action");
 
-        if (action == null) {
-            action = ""; 
+            if (action == null) {
+                url = ERROR_PAGE;
+            } 
+            else if (action.equals("Login")) url = LOGIN;
+            else if (action.equals("Register")) url = REGISTER;
+            else if (action.equals("Logout")) url = LOGOUT;
+            else if (action.equals("LoadPatientDashboard")) url = LOAD_PATIENT_DASHBOARD;
+            else if (action.equals("LoadBookingPage")) url = LOAD_BOOKING_PAGE;
+            else if (action.equals("SubmitBooking")) url = SUBMIT_BOOKING;
+            else if (action.equals("LoadMedicalHistory")) url = LOAD_MEDICAL_HISTORY;
+            else if (action.equals("CancelAppointment")) url = CANCEL_APPOINTMENT;
+            else if (action.equals("ConfirmPayment")) url = CONFIRM_PAYMENT;
+            
+            // API TRẢ VỀ TRẠNG THÁI CHO JAVASCRIPT AUTO-RELOAD
+            else if (action.equals("CheckPaymentStatus")) {
+                int appId = Integer.parseInt(request.getParameter("appointmentId"));
+                String status = new dao.PaymentDAO().getPaymentStatusByAppointmentId(appId);
+                
+                response.setContentType("text/plain;charset=UTF-8");
+                response.getWriter().write(status);
+                return; // Thoát ngang, không forward
+            }
+            else {
+                request.setAttribute("errorMessage", "Action không được hỗ trợ!");
+            }
+        } catch (Exception e) {
+            log("Lỗi tại MainController: " + e.toString());
+        } finally {
+            request.getRequestDispatcher(url).forward(request, response);
         }
-
-        // CHIA NHÁNH (ROUTER) BẰNG SWITCH-CASE ĐỂ CODE CHẠY NHANH VÀ DỄ ĐỌC HƠN
-        switch (action) {
-            case "login":
-                url = "LoginController";
-                break;
-            case "logout":
-                url = "LogoutController";
-                break;
-            case "register":
-                url = "RegisterController";
-                break;
-            case "search":
-                url = "SearchController";
-                break;
-            default:
-                // Nếu action trống hoặc gõ bậy bạ, url vẫn là "index.jsp"
-                break;
-        }
-
-        // Chuyển hướng Request đến đúng Controller hoặc Trang đích
-        request.getRequestDispatcher(url).forward(request, response);
     }
 
     // <editor-fold defaultstate="collapsed" desc="HttpServlet methods. Click on the + sign on the left to edit the code.">
@@ -100,7 +122,7 @@ public class MainController extends HttpServlet {
      */
     @Override
     public String getServletInfo() {
-        return "Short description";
+        return "Main Controller - Front Controller Pattern";
     }// </editor-fold>
 
 }
