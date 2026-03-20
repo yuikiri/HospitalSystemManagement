@@ -40,17 +40,15 @@ public class LoadGetAppointmentController1 extends HttpServlet {
 
         if (doctor != null) {
             try {
-                // 1. Lấy Khoa của Bác sĩ
                 DoctorDepartmentDAO ddDAO = new DoctorDepartmentDAO();
                 List<DoctorDepartmentDTO> deptList = ddDAO.getDepartmentsByDoctor(doctor.getId());
                 int departmentId = deptList.isEmpty() ? -1 : deptList.get(0).getDepartmentId();
 
-                // 2. Lấy danh sách bệnh nhân
                 AppointmentDAO appDAO = new AppointmentDAO();
                 request.setAttribute("pendingList", appDAO.getPendingAppointmentsByDept(departmentId));
                 request.setAttribute("acceptedList", appDAO.getAcceptedAppointmentsByDoctor(doctor.getId()));
 
-                // 3. Lấy danh sách THUỐC
+                // NẠP DANH SÁCH THUỐC TỪ DB
                 MedicineService medService = new MedicineService();
                 request.setAttribute("medicineList", medService.getActiveList());
 

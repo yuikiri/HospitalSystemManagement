@@ -1,3 +1,4 @@
+
 /*
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/JSP_Servlet/Servlet.java to edit this template
@@ -49,7 +50,7 @@ public class LoadDoctorShiftController extends HttpServlet {
             System.out.println("Số ca trực tìm thấy: " + shiftList.size());
         }
         
-        request.getRequestDispatcher("/component/doctor/contents/shift.jsp").forward(request, response);
+        request.getRequestDispatcher("/component/doctor/contents/doctorShift.jsp").forward(request, response);
     }
 
     // <editor-fold defaultstate="collapsed" desc="HttpServlet methods. Click on the + sign on the left to edit the code.">

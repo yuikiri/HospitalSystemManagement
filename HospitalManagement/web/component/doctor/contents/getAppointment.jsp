@@ -143,25 +143,21 @@
                             <h6 class="fw-bold text-success mb-3"><i class="bi bi-capsule me-2"></i>Kê Đơn Thuốc</h6>
                             
                             <div class="row g-2 mb-3">
-    <div class="col-md-4">
-        <div class="input-group">
-            <input type="text" class="form-control border-success" id="searchMedicine" placeholder="Gõ tên thuốc để tìm...">
-            <button class="btn btn-success" type="button" onclick="window.filterMedicines()"><i class="bi bi-search"></i> Lọc</button>
-        </div>
-    </div>
-    <div class="col-md-5">
-        <select class="form-select border-success" id="medicineSelect">
-            <option value="" selected disabled>-- Chọn thuốc từ danh sách --</option>
-            </select>
-    </div>
-    <div class="col-md-3 d-flex gap-2">
-        <button class="btn btn-success fw-bold flex-grow-1" type="button" onclick="window.addMedicine()"><i class="bi bi-plus-lg"></i> Thêm</button>
-        
-        <a href="${pageContext.request.contextPath}/Test01Controller" target="_blank" class="btn btn-danger fw-bold" title="Test DB">
-            <i class="bi bi-bug"></i> Test01
-        </a>
-    </div>
-</div>
+                                <div class="col-md-5">
+                                    <div class="input-group">
+                                        <input type="text" class="form-control border-success" id="searchMedicine" placeholder="Gõ tên thuốc để tìm...">
+                                        <button class="btn btn-success" type="button" onclick="window.filterMedicines()"><i class="bi bi-search"></i> Lọc</button>
+                                    </div>
+                                </div>
+                                <div class="col-md-5">
+                                    <select class="form-select border-success" id="medicineSelect">
+                                        <option value="" selected disabled>-- Chọn thuốc từ danh sách --</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <button class="btn btn-success fw-bold w-100" type="button" onclick="window.addMedicine()"><i class="bi bi-plus-lg"></i> Thêm</button>
+                                </div>
+                            </div>
                         </div>
                         
                         <div class="card-body">
@@ -183,7 +179,7 @@
                                 </table>
                             </div>
                             <div id="emptyMedicineWarning" class="text-center text-muted my-3 small">
-                                <em>Chưa kê loại thuốc nào.</em>
+                                <em>Chưa kê loại thuốc nào. Bệnh nhân sẽ chỉ tính tiền công khám.</em>
                             </div>
                         </div>
                     </div>
@@ -213,11 +209,12 @@
 </style>
 
 <script>
-    // Phải khai báo biến Toàn cục (window) để không bị mất khi AJAX load
+    // Khai báo biến toàn cục
     window.ROOM_PRICE_PER_DAY = 200000; 
 
-    // HÀM TẠO DANH SÁCH THUỐC TỪ KHO ẨN
-    window.renderMedicineDropdown = function(filterText = "") {
+    // 1. HÀM TẠO DANH SÁCH THUỐC TỪ KHO ẨN
+    window.renderMedicineDropdown = function(filterText) {
+        filterText = filterText || "";
         let select = document.getElementById("medicineSelect");
         let storage = document.querySelectorAll('#hiddenMedicineStorage .medicine-data');
         
@@ -234,21 +231,17 @@
                 let stock = el.getAttribute('data-stock');
                 let formattedPrice = price.toLocaleString('vi-VN');
                 
-                html += `<option value="`+id+`" data-name="`+name+`" data-unit="`+unit+`" data-price="`+price+`" data-stock="`+stock+`">`+name+` (`+unit+`) - Tồn: `+stock+` - Giá: `+formattedPrice+` đ</option>`;
+                // Dùng chuỗi thường, KHÔNG dùng backtick ` `
+                html += '<option value="' + id + '" data-name="' + name + '" data-unit="' + unit + '" data-price="' + price + '" data-stock="' + stock + '">' + name + ' (' + unit + ') - Tồn: ' + stock + ' - Giá: ' + formattedPrice + ' đ</option>';
                 count++;
             }
         });
 
         select.innerHTML = html;
-
-        if (filterText !== "" && count > 0) {
-            select.selectedIndex = 1; // Tự trỏ vào thuốc tìm thấy đầu tiên
-        } else if (filterText !== "" && count === 0) {
-            alert("Không tìm thấy thuốc nào chứa từ khóa này!");
-        }
+        if (filterText !== "" && count > 0) select.selectedIndex = 1;
     };
 
-    // MỞ MODAL
+    // 2. MỞ MODAL
     window.openPrescriptionModal = function(appId, patientName) {
         document.getElementById('modalAppointmentId').value = appId;
         document.getElementById('modalPatientName').innerText = patientName;
@@ -260,21 +253,24 @@
         document.getElementById('inputRoomDays').value = 0;
         document.getElementById('searchMedicine').value = '';
         
-        window.renderMedicineDropdown(""); // Tải full thuốc ban đầu
+        window.renderMedicineDropdown(""); 
         window.calculateTotal(); 
         new bootstrap.Modal(document.getElementById('prescriptionModal')).show();
     };
 
-    // TÌM KIẾM
+    // 3. TÌM KIẾM
     window.filterMedicines = function() {
         let input = document.getElementById("searchMedicine").value;
         window.renderMedicineDropdown(input);
     };
 
-    // THÊM VÀO BẢNG
+    // 4. THÊM THUỐC VÀO BẢNG (ĐÃ FIX LỖI MẤT BIẾN JSP)
     window.addMedicine = function() {
         const select = document.getElementById('medicineSelect');
-        if (select.selectedIndex <= 0) return;
+        if (select.selectedIndex <= 0) {
+            alert("Sếp chưa chọn thuốc mà!");
+            return;
+        }
         
         const option = select.options[select.selectedIndex];
         const medId = option.value;
@@ -284,48 +280,46 @@
         const medStock = parseInt(option.getAttribute('data-stock')) || 0;
         
         if (medStock <= 0) {
-            alert('Thuốc này đã hết hàng trong kho!'); return;
+            alert('Thuốc này hết sạch trong kho rồi sếp!'); return;
         }
 
-        const tbody = document.getElementById('medicineListBody');
         if (document.getElementById('row_med_' + medId)) {
-            alert('Thuốc này đã có trong đơn! Vui lòng bấm dấu + để tăng số lượng.'); return;
+            alert('Thuốc này có trong đơn rồi, sếp bấm nút (+) để tăng số lượng nhé!'); return;
         }
 
         document.getElementById('emptyMedicineWarning').style.display = 'none';
+        const tbody = document.getElementById('medicineListBody');
         const tr = document.createElement('tr');
         tr.id = 'row_med_' + medId;
         tr.className = 'med-row'; 
         tr.setAttribute('data-price', medPrice); 
         
-        tr.innerHTML = `
-            <td class="fw-semibold text-primary">
-                ${medName} <br><small class="text-muted">Kho: ${medStock}</small>
-                <input type="hidden" name="medIds" value="${medId}">
-            </td>
-            <td>
-                <div class="input-group input-group-sm" style="width: 110px;">
-                    <button class="btn btn-outline-secondary" type="button" onclick="window.changeQty('${medId}', -1, ${medStock})"><i class="bi bi-dash"></i></button>
-                    <input type="number" class="form-control text-center med-qty" name="medQty_${medId}" id="qty_${medId}" value="1" min="1" max="${medStock}" onchange="window.calculateTotal()" readonly>
-                    <button class="btn btn-outline-secondary" type="button" onclick="window.changeQty('${medId}', 1, ${medStock})"><i class="bi bi-plus"></i></button>
-                </div>
-            </td>
-            <td class="text-danger fw-bold">` + medPrice.toLocaleString('vi-VN') + ` đ</td>
-            <td><input type="text" class="form-control form-control-sm" name="medDosage_${medId}" placeholder="1 viên" required></td>
-            <td><input type="text" class="form-control form-control-sm" name="medFreq_${medId}" placeholder="Sáng, Tối" required></td>
-            <td><input type="number" class="form-control form-control-sm text-center" name="medDuration_${medId}" placeholder="Ngày" min="1" required></td>
-            <td class="text-center">
-                <button type="button" class="btn btn-sm btn-outline-danger border-0" onclick="window.removeMedicine('${medId}')"><i class="bi bi-trash3"></i></button>
-            </td>
-        `;
+        // ĐÂY NÀY SẾP! Đã chuyển sang nối chuỗi truyền thống để JSP không phá code JS nữa
+        tr.innerHTML = 
+            '<td class="fw-semibold text-primary">' + 
+                medName + ' <br><small class="text-muted">Kho: ' + medStock + '</small>' +
+                '<input type="hidden" name="medIds" value="' + medId + '">' +
+            '</td>' +
+            '<td>' +
+                '<div class="input-group input-group-sm" style="width: 110px;">' +
+                    '<button class="btn btn-outline-secondary" type="button" onclick="window.changeQty(\'' + medId + '\', -1, ' + medStock + ')"><i class="bi bi-dash"></i></button>' +
+                    '<input type="number" class="form-control text-center med-qty" name="medQty_' + medId + '" id="qty_' + medId + '" value="1" readonly>' +
+                    '<button class="btn btn-outline-secondary" type="button" onclick="window.changeQty(\'' + medId + '\', 1, ' + medStock + ')"><i class="bi bi-plus"></i></button>' +
+                '</div>' +
+            '</td>' +
+            '<td class="text-danger fw-bold">' + medPrice.toLocaleString('vi-VN') + ' đ</td>' +
+            '<td><input type="text" class="form-control form-control-sm" name="medDosage_' + medId + '" placeholder="1 viên" required></td>' +
+            '<td><input type="text" class="form-control form-control-sm" name="medFreq_' + medId + '" placeholder="Sáng, Tối" required></td>' +
+            '<td><input type="number" class="form-control form-control-sm text-center" name="medDuration_' + medId + '" placeholder="Ngày" min="1" required></td>' +
+            '<td class="text-center">' +
+                '<button type="button" class="btn btn-sm btn-outline-danger border-0" onclick="window.removeMedicine(\'' + medId + '\')"><i class="bi bi-trash3"></i></button>' +
+            '</td>';
+
         tbody.appendChild(tr);
-        
-        document.getElementById('searchMedicine').value = '';
-        window.renderMedicineDropdown(""); // Reset lại list gốc
         window.calculateTotal();
     };
 
-    // TĂNG GIẢM SỐ LƯỢNG
+    // 5. TĂNG GIẢM SỐ LƯỢNG
     window.changeQty = function(medId, change, maxStock) {
         let input = document.getElementById('qty_' + medId);
         let currentVal = parseInt(input.value) || 1;
@@ -333,31 +327,37 @@
         
         if (newVal >= 1 && newVal <= maxStock) {
             input.value = newVal;
+            window.calculateTotal(); 
+        } else if (newVal > maxStock) {
+            alert("Trong kho chỉ còn " + maxStock + " thôi sếp ơi!");
+        }
+    };
+
+    // 6. XÓA DÒNG THUỐC
+    window.removeMedicine = function(medId) {
+        const row = document.getElementById('row_med_' + medId);
+        if (row) {
+            row.remove();
+            const tbody = document.getElementById('medicineListBody');
+            if (tbody.rows.length === 0) {
+                document.getElementById('emptyMedicineWarning').style.display = 'block';
+            }
             window.calculateTotal();
         }
     };
 
-    // XÓA
-    window.removeMedicine = function(medId) {
-        document.getElementById('row_med_' + medId).remove();
-        if (document.getElementById('medicineListBody').children.length === 0) {
-            document.getElementById('emptyMedicineWarning').style.display = 'block';
-        }
-        window.calculateTotal();
-    };
-
-    // TÍNH TỔNG TIỀN
+    // 7. TÍNH TỔNG TIỀN REAL-TIME
     window.calculateTotal = function() {
         let docFee = parseFloat(document.getElementById('inputDoctorFee').value) || 0;
         let roomDays = parseInt(document.getElementById('inputRoomDays').value) || 0;
         let total = docFee + (roomDays * window.ROOM_PRICE_PER_DAY);
         
-        let rows = document.getElementsByClassName('med-row');
-        for (let row of rows) {
+        let rows = document.querySelectorAll('.med-row');
+        rows.forEach(row => {
             let price = parseFloat(row.getAttribute('data-price')) || 0;
-            let qty = parseInt(row.querySelector('.med-qty').value) || 1;
+            let qty = parseInt(row.querySelector('.med-qty').value) || 0;
             total += (price * qty);
-        }
+        });
         
         document.getElementById('displayTotal').innerText = total.toLocaleString('vi-VN');
     };
