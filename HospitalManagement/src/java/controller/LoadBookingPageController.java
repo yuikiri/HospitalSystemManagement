@@ -47,22 +47,18 @@ public class LoadBookingPageController extends HttpServlet {
         response.setContentType("text/html;charset=UTF-8");
 
         try {
-            // 1. GỌI DỮ LIỆU TỪ SERVICE (Giống hệt cách sếp làm ở Test01)
+            // 1. Gọi dữ liệu từ Service
             DepartmentService deptService = new DepartmentService();
             RoomService roomService = new RoomService();
 
-            // Lấy tất cả Khoa (hoặc sếp dùng getClinicalDepartments() tùy ý sếp)
             List<DepartmentDTO> departmentList = deptService.getClinicalDepartments();
             List<RoomDTO> roomList = roomService.getActiveList();
 
-            // 2. NÉM DỮ LIỆU SANG JSP
+            // 2. Ném dữ liệu sang JSP
             request.setAttribute("departmentList", departmentList);
             request.setAttribute("roomList", roomList);
 
-            // 3. CHUYỂN HƯỚNG VỀ FILE GIAO DIỆN
-            // 🚨 LƯU Ý QUAN TRỌNG: Nếu sếp bị lỗi 404 (Not Found), hãy chắc chắn 
-            // đường dẫn này khớp với cây thư mục thực tế của sếp.
-            // VD: "/component/patient/contents/bookAppointment.jsp" hoặc "/patient/contents/bookAppointment.jsp"
+            // 3. Chuyển hướng về file Giao diện
             request.getRequestDispatcher("/component/patient/contents/bookAppointment.jsp").forward(request, response);
             
         } catch (Exception e) {

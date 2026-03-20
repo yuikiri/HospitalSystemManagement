@@ -31,6 +31,7 @@ public class AcceptAppointmentController extends HttpServlet {
      */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        request.setCharacterEncoding("UTF-8");
         HttpSession session = request.getSession();
         DoctorDTO doctor = (DoctorDTO) session.getAttribute("doctor");
 
@@ -38,12 +39,16 @@ public class AcceptAppointmentController extends HttpServlet {
             int appointmentId = Integer.parseInt(request.getParameter("appointmentId"));
             boolean success = new AppointmentDAO().acceptAppointment(appointmentId, doctor.getId());
 
-            if (success) session.setAttribute("successMessage", "Đã nhận ca thành công!");
-            else session.setAttribute("errorMessage", "Nhận ca thất bại (Lịch đã bị hủy hoặc có người nhận rồi)!");
+            if (success) {
+                session.setAttribute("successMessage", "Đã nhận ca thành công!");
+            } else {
+                session.setAttribute("errorMessage", "Nhận ca thất bại (Lịch đã bị hủy hoặc có người nhận rồi)!");
+            }
         } catch (Exception e) {
             session.setAttribute("errorMessage", "Đã xảy ra lỗi hệ thống!");
         }
-        // Trở về Dashboard
+        
+        // Trở về Dashboard (Vì JS sẽ tự giữ nguyên tab Get Appointment)
         response.sendRedirect(request.getContextPath() + "/component/doctor/doctorDashboard.jsp");
     }
 }
