@@ -102,6 +102,10 @@
         <servlet-name>LoadGetAppointmentController1</servlet-name>
         <servlet-class>controller.LoadGetAppointmentController1</servlet-class>
     </servlet>
+    <servlet>
+        <servlet-name>LoadDoctorShiftController</servlet-name>
+        <servlet-class>controller.LoadDoctorShiftController</servlet-class>
+    </servlet>
     <servlet-mapping>
         <servlet-name>MainController</servlet-name>
         <url-pattern>/MainController</url-pattern>
@@ -198,6 +202,10 @@
     <servlet-mapping>
         <servlet-name>LoadGetAppointmentController1</servlet-name>
         <url-pattern>/LoadGetAppointmentController1</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>LoadDoctorShiftController</servlet-name>
+        <url-pattern>/LoadDoctorShiftController</url-pattern>
     </servlet-mapping>
     <session-config>
         <session-timeout>30</session-timeout>

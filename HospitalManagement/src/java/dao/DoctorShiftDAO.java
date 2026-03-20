@@ -82,4 +82,45 @@ public class DoctorShiftDAO {
         } catch (Exception e) { e.printStackTrace(); }
         return list;
     }
+    
+    //==========================================================================
+    //=========================Hoàng
+    //==========================================================================
+    // Lấy danh sách Ca Trực theo ID Bác sĩ (JOIN 4 bảng để gom đủ dữ liệu)
+    public List<DoctorShiftDTO> getShiftsByDoctorId(int doctorId) {
+        List<DoctorShiftDTO> list = new ArrayList<>();
+        String sql = "SELECT ds.doctorId, ds.shiftId, ds.role, d.name AS doctorName, " +
+                     "s.startTime, s.endTime, r.roomNumber, dept.name AS departmentName " +
+                     "FROM DoctorShifts ds " +
+                     "JOIN Doctors d ON ds.doctorId = d.id " +
+                     "JOIN Shifts s ON ds.shiftId = s.id " +
+                     "JOIN Rooms r ON s.roomId = r.id " +
+                     "JOIN Departments dept ON r.departmentId = dept.id " +
+                     "WHERE ds.doctorId = ? AND s.isActive = 1 " +
+                     "ORDER BY s.startTime ASC";
+                     
+        try (Connection conn = new DbUtils().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            ps.setInt(1, doctorId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    list.add(new DoctorShiftDTO(
+                        rs.getInt("doctorId"),
+                        rs.getInt("shiftId"),
+                        rs.getString("role"),
+                        rs.getString("doctorName"),
+                        rs.getTimestamp("startTime"),
+                        rs.getTimestamp("endTime"),
+                        rs.getInt("roomNumber"),
+                        rs.getString("departmentName")
+                    ));
+                }
+            }
+        } catch (Exception e) { 
+            e.printStackTrace(); 
+        }
+        return list;
+    }
+    //========================================================================================================================
 }

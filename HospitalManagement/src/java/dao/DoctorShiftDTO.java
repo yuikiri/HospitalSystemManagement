@@ -18,52 +18,50 @@ public class DoctorShiftDTO {
     private String doctorName;     // JOIN từ bảng Doctors
     private Timestamp startTime;   // JOIN từ bảng Shifts
     private Timestamp endTime;     // JOIN từ bảng Shifts
-    //constructor
+    
+    // THÊM 2 BIẾN NÀY ĐỂ HIỂN THỊ LÊN GIAO DIỆN JSP
+    private int roomNumber;        // JOIN từ bảng Rooms
+    private String departmentName; // JOIN từ bảng Departments
 
     public DoctorShiftDTO() {
     }
 
-    public DoctorShiftDTO(int doctorId, int shiftId, String role, String doctorName, Timestamp startTime, Timestamp endTime) {
+    public DoctorShiftDTO(int doctorId, int shiftId, String role, String doctorName, Timestamp startTime, Timestamp endTime, int roomNumber) {
         this.doctorId = doctorId;
         this.shiftId = shiftId;
         this.role = role;
         this.doctorName = doctorName;
         this.startTime = startTime;
         this.endTime = endTime;
+        this.roomNumber = roomNumber;
     }
 
-    DoctorShiftDTO(int aInt, int aInt0, String string, String string0, Timestamp timestamp, Timestamp timestamp0, int aInt1) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    // 3. CONSTRUCTOR 8 THAM SỐ (Dành cho hàm cũ lúc nãy)
+    public DoctorShiftDTO(int doctorId, int shiftId, String role, String doctorName, Timestamp startTime, Timestamp endTime, int roomNumber, String departmentName) {
+        this.doctorId = doctorId;
+        this.shiftId = shiftId;
+        this.role = role;
+        this.doctorName = doctorName;
+        this.startTime = startTime;
+        this.endTime = endTime;
+        this.roomNumber = roomNumber;
+        this.departmentName = departmentName;
     }
 
-    public int getDoctorId() {
-        return doctorId;
-    }
+    
 
-    public int getShiftId() {
-        return shiftId;
-    }
-
-    public String getRole() {
-        return role;
-    }
-
-    public String getDoctorName() {
-        return doctorName;
-    }
-
-    public Timestamp getStartTime() {
-        return startTime;
-    }
-
-    public Timestamp getEndTime() {
-        return endTime;
-    }
+    public int getDoctorId() { return doctorId; }
+    public int getShiftId() { return shiftId; }
+    public String getRole() { return role; }
+    public String getDoctorName() { return doctorName; }
+    public Timestamp getStartTime() { return startTime; }
+    public Timestamp getEndTime() { return endTime; }
+    public int getRoomNumber() { return roomNumber; }
+    public String getDepartmentName() { return departmentName; }
 
     @Override
     public String toString() {
-        return "DoctorShiftDTO{" + "doctorId=" + doctorId + ", shiftId=" + shiftId + ", role=" + role + ", doctorName=" + doctorName + ", startTime=" + startTime + ", endTime=" + endTime + '}';
+        return "DoctorShiftDTO{" + "doctorId=" + doctorId + ", shiftId=" + shiftId + ", role=" + role + ", doctorName=" + doctorName + ", startTime=" + startTime + ", endTime=" + endTime + ", roomNumber=" + roomNumber + ", departmentName=" + departmentName + '}';
     }
-
     
 }

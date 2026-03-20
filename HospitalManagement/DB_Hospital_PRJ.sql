@@ -1012,3 +1012,9 @@ VALUES (@MR_ID, N'Không dùng thuốc - Chỉ test phí khám', GETDATE(), 'act
 INSERT INTO Payments (medicalRecordId, totalAmount, paymentMethod, status, paidAt, isActive)
 VALUES (@MR_ID, 2000.00, 'banking', 'unpaid', NULL, 1);
 
+
+
+
+
+
+
