@@ -157,9 +157,7 @@
     <div class="col-md-3 d-flex gap-2">
         <button class="btn btn-success fw-bold flex-grow-1" type="button" onclick="window.addMedicine()"><i class="bi bi-plus-lg"></i> Thêm</button>
         
-        <a href="${pageContext.request.contextPath}/Test01Controller" target="_blank" class="btn btn-danger fw-bold" title="Test DB">
-            <i class="bi bi-bug"></i> Test01
-        </a>
+        
     </div>
 </div>
                         </div>

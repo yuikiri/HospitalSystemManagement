@@ -166,6 +166,54 @@ public class DoctorDAO {
         }
         return false;
     }
+    // ==================================================
+    // TÌM KIẾM BÁC SĨ VÀ KHOA (ĐÃ FIX LỖI TIẾNG VIỆT)
+    // ==================================================
+    public List<DoctorDTO> searchDoctors(String keyword) {
+        List<DoctorDTO> list = new ArrayList<>();
+        
+        String sql = "SELECT d.*, dp.name AS departmentName " +
+                     "FROM Doctors d " +
+                     "JOIN Users u ON d.userId = u.id " +
+                     "LEFT JOIN DoctorDepartments dd ON d.id = dd.doctorId " +
+                     "LEFT JOIN Departments dp ON dd.departmentId = dp.id " +
+                     "WHERE u.isActive = 1 ";
+
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            sql += " AND (d.name LIKE ? OR dp.name LIKE ?) ";
+        }
+        
+        try (java.sql.Connection conn = new util.DbUtils().getConnection();
+             java.sql.PreparedStatement ps = conn.prepareStatement(sql)) {
+             
+            if (keyword != null && !keyword.trim().isEmpty()) {
+                String searchParam = "%" + keyword.trim() + "%";
+                
+                // FIX LỖI TẠI ĐÂY: BẮT BUỘC DÙNG setNString CHO SQL SERVER
+                ps.setNString(1, searchParam); 
+                ps.setNString(2, searchParam); 
+            }
+            
+            try (java.sql.ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    DoctorDTO doc = new DoctorDTO();
+                    doc.setId(rs.getInt("id"));
+                    doc.setUserId(rs.getInt("userId"));
+                    doc.setName(rs.getString("name"));
+                    doc.setGender(rs.getInt("gender"));
+                    doc.setPhone(rs.getString("phone"));
+                    doc.setLicenseNumber(rs.getString("licenseNumber"));
+                    
+                    // Ghép tên Khoa vào biến Position để hiển thị lên Web
+                    String deptName = rs.getString("departmentName");
+                    doc.setPosition(deptName != null ? deptName : "Chưa phân khoa");
+                    
+                    list.add(doc);
+                }
+            }
+        } catch (Exception e) { e.printStackTrace(); }
+        return list;
+    }
     
     
     
