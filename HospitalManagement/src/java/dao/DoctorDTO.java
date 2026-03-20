@@ -1,33 +1,20 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package dao;
 
-/**
- *
- * @author Yuikiri
- */
 public class DoctorDTO {
     private int id;
     private int userId;
-    
-    // Các thông tin vay mượn từ bảng Users (Qua lệnh JOIN)
     private String email;
     private String avatarUrl;
-    private int isActive; // Biến này dùng để Admin biết bác sĩ này đã nghỉ việc hay chưa
-    
-    // Các thông tin gốc của Doctor
+    private int isActive;
     private String name;
     private int gender;
     private String position;
     private String phone;
     private String licenseNumber;
-    //constructor
 
-    public DoctorDTO() {
-    }
+    public DoctorDTO() {}
 
+    // Constructor ĐẦY ĐỦ (Dùng cho Login)
     public DoctorDTO(int id, int userId, String email, String avatarUrl, int isActive, String name, int gender, String position, String phone, String licenseNumber) {
         this.id = id;
         this.userId = userId;
@@ -41,6 +28,7 @@ public class DoctorDTO {
         this.licenseNumber = licenseNumber;
     }
 
+
     public DoctorDTO(int id, int userId, String name, int gender, String position, String phone, String licenseNumber) {
         this.id = id;
         this.userId = userId;
@@ -51,51 +39,56 @@ public class DoctorDTO {
         this.licenseNumber = licenseNumber;
     }
 
-    public int getId() {
-        return id;
+    // Getter & Setter (Nhấn Alt + Insert để tạo lại cho đầy đủ nhé)
+    public int getId() { return id; }
+    public int getUserId() { return userId; }
+    public String getEmail() { return email; }
+    public String getAvatarUrl() { return avatarUrl; }
+    public int getIsActive() { return isActive; }
+    public String getName() { return name; }
+    public int getGender() { return gender; }
+    public String getPosition() { return position; }
+    public String getPhone() { return phone; }
+    public String getLicenseNumber() { return licenseNumber; }
+
+    public void setId(int id) {
+        this.id = id;
     }
 
-    public int getUserId() {
-        return userId;
+    public void setUserId(int userId) {
+        this.userId = userId;
     }
 
-    public String getEmail() {
-        return email;
+    public void setEmail(String email) {
+        this.email = email;
     }
 
-    public String getAvatarUrl() {
-        return avatarUrl;
+    public void setAvatarUrl(String avatarUrl) {
+        this.avatarUrl = avatarUrl;
     }
 
-    public int getIsActive() {
-        return isActive;
+    public void setIsActive(int isActive) {
+        this.isActive = isActive;
     }
 
-    public String getName() {
-        return name;
+    public void setName(String name) {
+        this.name = name;
     }
 
-    public int getGender() {
-        return gender;
+    public void setGender(int gender) {
+        this.gender = gender;
     }
 
-    public String getPosition() {
-        return position;
+    public void setPosition(String position) {
+        this.position = position;
     }
 
-    public String getPhone() {
-        return phone;
+    public void setPhone(String phone) {
+        this.phone = phone;
     }
 
-    public String getLicenseNumber() {
-        return licenseNumber;
+    public void setLicenseNumber(String licenseNumber) {
+        this.licenseNumber = licenseNumber;
     }
-
-    @Override
-    public String toString() {
-        return "DoctorDTO{" + "id=" + id + ", userId=" + userId + ", email=" + email + ", avatarUrl=" + avatarUrl + ", isActive=" + isActive + ", name=" + name + ", gender=" + gender + ", position=" + position + ", phone=" + phone + ", licenseNumber=" + licenseNumber + '}';
-    }
-
     
 }
-

@@ -31,10 +31,10 @@
         <i class="fas fa-clipboard-list me-2"></i> Tiếp nhận Lịch hẹn
     </a>
     
-    <a id="menu-doc-shift" class="nav-item-custom" 
-       onclick="loadContent('${pageContext.request.contextPath}/MainController?action=LoadDoctorShift', this)">
-        <i class="fas fa-calendar-alt me-2"></i> Lịch Ca Trực
-    </a>
+    <a href="#" id="menu-doc-schedule" class="nav-link nav-item-custom" 
+   onclick="loadContent('${pageContext.request.contextPath}/MySchedule', this)">
+    <i class="bi bi-calendar-week me-2"></i>Lịch Ca Trực
+</a>
     
     <a id="menu-doc-history" class="nav-item-custom" 
        onclick="loadContent('${pageContext.request.contextPath}/MainController?action=LoadDoctorHistory', this)">

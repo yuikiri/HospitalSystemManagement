@@ -4,6 +4,8 @@ import dao.UserDAO;
 import dao.UserDTO;
 import dao.StaffDAO; // Thêm DAO để fix lỗi thiếu Service của người làm Staff
 import dao.StaffDTO;
+
+
 import entity.User;
 import java.io.IOException;
 import javax.servlet.RequestDispatcher;
@@ -15,7 +17,9 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import service.UserService;
 import service.PatientService;
+
 import util.ErrorMessages;
+
 
 @WebServlet(name = "LoginController", urlPatterns = {"/LoginController"})
 public class LoginController extends HttpServlet {
@@ -29,6 +33,7 @@ public class LoginController extends HttpServlet {
         request.setCharacterEncoding("UTF-8");
         response.setCharacterEncoding("UTF-8");
 
+
         String cp = request.getContextPath(); // Lấy đường dẫn gốc (Bảo vệ đường dẫn Admin)
         String url = "/index.jsp";
         HttpSession session = request.getSession();
@@ -38,6 +43,7 @@ public class LoginController extends HttpServlet {
             String txtEmail = request.getParameter("txtEmail");
             String txtPassword = request.getParameter("txtPassword");
 
+
             UserDAO udao = new UserDAO();
             User user = udao.checkLogin(txtEmail, txtPassword);
 
@@ -45,25 +51,37 @@ public class LoginController extends HttpServlet {
 
                 if (user.getIsActive() == 1) {
 
+
                     // FIX LỖI 1: Bắt buộc dùng "user" thay vì "LOGIN_USER" của Admin để không chết form sếp
                     session.setAttribute("user", user);
 
+
                     String role = user.getRole().toLowerCase().trim();
+
 
                     if (role.equals("admin")) {
                         // Phần của Admin
                         url = "/AdminController";
                     } 
                     else if (role.equals("doctor")) {
-                        // Phần của Doctor (Giữ nguyên logic của sếp)
-                        url = "/component/doctor/doctorDashboard.jsp";
+    try {
+        dao.DoctorDAO doctorDAO = new dao.DoctorDAO(); // Hoặc dùng Service tùy team bạn
+        dao.DoctorDTO doctor = doctorDAO.getDoctorByUserId(user.getId());
+        session.setAttribute("doctor", doctor);
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+    url = "/component/doctor/doctorDashboard.jsp";
+
                     } 
                     else if (role.equals("staff")) {
                         // FIX LỖI 2: Dùng thẳng StaffDAO để tránh lỗi người khác chưa push StaffService
+
                         try {
                             StaffDAO staffDAO = new StaffDAO();
                             StaffDTO staff = staffDAO.getStaffByUserId(user.getId());
                             session.setAttribute("staff", staff);
+
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
@@ -72,6 +90,7 @@ public class LoginController extends HttpServlet {
                     else {
                         // Phần của Patient (Giữ nguyên 100% logic gốc của sếp)
                         PatientService patientService = new PatientService();
+
                         try {
                             dao.PatientDTO patient = patientService.getPatientByUserId(user.getId());
                             session.setAttribute("patient", patient);
@@ -89,12 +108,15 @@ public class LoginController extends HttpServlet {
                     request.setAttribute("message", "Tài khoản của bạn đã bị khóa!");
                     request.setAttribute("txtEmail", txtEmail); // Giữ lại email trên form
                     url = "/index.jsp";
+
                 }
 
             } else {
+
                 request.setAttribute("message", "Email hoặc mật khẩu không chính xác!");
                 request.setAttribute("txtEmail", txtEmail); // Giữ lại email trên form
                 url = "/index.jsp";
+
             }
 
         } else {
@@ -119,9 +141,11 @@ public class LoginController extends HttpServlet {
             return;
         }
 
+
         // Chuyển hướng khi có lỗi đăng nhập
         RequestDispatcher rd = request.getRequestDispatcher(url);
         rd.forward(request, response);
+
     }
 
     @Override
@@ -136,8 +160,10 @@ public class LoginController extends HttpServlet {
         processRequest(request, response);
     }
 
+
     @Override
     public String getServletInfo() {
         return "Login Controller Merged";
     }
+
 }

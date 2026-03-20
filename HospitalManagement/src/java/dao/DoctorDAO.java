@@ -16,6 +16,7 @@ public class DoctorDAO {
 
     // 1. LẤY HỒ SƠ THEO USERID
     public DoctorDTO getDoctorByUserId(int userId) {
+
         String sql = "SELECT * FROM Doctors WHERE userId = ?";
         try ( Connection conn = new util.DbUtils().getConnection();  
               PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -31,7 +32,9 @@ public class DoctorDAO {
             }
         } catch (Exception e) { e.printStackTrace(); }
         return null;
-    }
+
+    
+}
 
     // 2. CẬP NHẬT HỒ SƠ
     public boolean updateDoctorProfile(int id, String name, int gender, String position, String phone, String licenseNumber) {
@@ -80,16 +83,16 @@ public class DoctorDAO {
     
 
     private DoctorDTO mapDoctor(ResultSet rs) throws SQLException {
-        return new DoctorDTO(
-                rs.getInt("id"),
-                rs.getInt("userId"),
-                rs.getString("name"),
-                rs.getInt("gender"),
-                rs.getString("position"),
-                rs.getString("phone"),
-                rs.getString("licenseNumber")
-        );
-    }
+    return new DoctorDTO(
+            rs.getInt("id"),
+            rs.getInt("userId"),
+            rs.getString("name"),
+            rs.getInt("gender"),
+            rs.getString("position"),
+            rs.getString("phone"),
+            rs.getString("licenseNumber")
+    );
+}
 //==================================================
     ////////////////////////Hoàng
     //==================================================

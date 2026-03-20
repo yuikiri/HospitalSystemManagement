@@ -27,7 +27,9 @@ public class RoleFilter implements Filter {
         }
 
         User user = (User) session.getAttribute("user");
-        String role = user.getRole();
+        
+        // ĐÃ FIX LỖI Ở ĐÂY: Thêm .trim() để xóa khoảng trắng thừa từ Database
+        String role = user.getRole().trim();
 
         // ADMIN
         if (url.contains("/component/admin/") && !role.equalsIgnoreCase("admin")) {
