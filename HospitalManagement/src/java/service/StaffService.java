@@ -3,6 +3,10 @@ package service;
 import dao.StaffDAO;
 import dao.StaffDTO;
 import dao.UserDAO;
+import java.sql.Timestamp;
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import util.ErrorMessages;
 
@@ -88,5 +92,8 @@ public class StaffService {
 
         return staffDAO.getAllActiveStaffs();
     }
+    // Hàm này giúp đảm bảo mọi nơi đều dùng chung 1 mốc thời gian không lệch 1 mili giây nào
+// Hàm chuẩn hóa thời gian để dùng chung cho cả Controller và AJAX
+
 
 }
