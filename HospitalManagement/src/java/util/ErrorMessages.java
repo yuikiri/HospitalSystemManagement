@@ -19,6 +19,12 @@ public class ErrorMessages {
     public static final ErrorInfo WRONG_PASSWORD = new ErrorInfo(401, "Mật khẩu hiện tại không chính xác.");
     public static final ErrorInfo WRONG_CURRENT_EMAIL = new ErrorInfo(400, "Email xác nhận không khớp với tài khoản hiện tại.");
     public static final ErrorInfo PASSWORD_MISMATCH = new ErrorInfo(400, "Mật khẩu mới và xác nhận mật khẩu không khớp.");
+    // --- CÁC LỖI THÊM MỚI CHO REGEX (CHỐNG XÂM NHẬP) ---
+    public static final ErrorInfo INVALID_NAME_FORMAT = new ErrorInfo(400, "Họ tên phải từ 2 ký tự trở lên, chỉ gồm chữ cái tiếng Việt và khoảng trắng.");
+    public static final ErrorInfo INVALID_EMAIL_FORMAT = new ErrorInfo(400, "Email không hợp lệ. Tên email phải từ 3 ký tự trở lên (VD: abc@gmail.com).");
+    public static final ErrorInfo INVALID_PHONE_FORMAT = new ErrorInfo(400, "Số điện thoại không hợp lệ (Phải là số Việt Nam 10-11 số).");
+    public static final ErrorInfo INVALID_PASSWORD_FORMAT = new ErrorInfo(400, "Mật khẩu phải từ 8 ký tự, bao gồm chữ HOA, chữ thường, số, ký tự đặc biệt và KHÔNG dùng tiếng Việt.");
+    public static final ErrorInfo INVALID_ADDRESS_FORMAT = new ErrorInfo(400, "Địa chỉ chứa ký tự không hợp lệ.");
 
     // ========================================================================
     // NHÓM 2: QUẢN LÝ NHÂN SỰ & BỆNH NHÂN (Doctors, Staffs, Patients)

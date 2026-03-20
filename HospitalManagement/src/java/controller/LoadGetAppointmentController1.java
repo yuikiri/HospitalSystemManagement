@@ -16,6 +16,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+import service.MedicineService;
 
 /**
  *
@@ -39,19 +40,23 @@ public class LoadGetAppointmentController1 extends HttpServlet {
 
         if (doctor != null) {
             try {
-                // 1. Tìm xem Bác sĩ này thuộc Khoa nào
+                // 1. Lấy Khoa của Bác sĩ
                 DoctorDepartmentDAO ddDAO = new DoctorDepartmentDAO();
                 List<DoctorDepartmentDTO> deptList = ddDAO.getDepartmentsByDoctor(doctor.getId());
                 int departmentId = deptList.isEmpty() ? -1 : deptList.get(0).getDepartmentId();
 
-                // 2. Lấy dữ liệu 2 Tab
+                // 2. Lấy danh sách bệnh nhân
                 AppointmentDAO appDAO = new AppointmentDAO();
                 request.setAttribute("pendingList", appDAO.getPendingAppointmentsByDept(departmentId));
                 request.setAttribute("acceptedList", appDAO.getAcceptedAppointmentsByDoctor(doctor.getId()));
 
-                // NẾU CÓ MEDICINE DAO THÌ GỌI Ở ĐÂY ĐỂ ĐỔ VÀO MODAL KÊ ĐƠN THUỐC
-                // request.setAttribute("medicineList", new dao.MedicineDAO().getAllActiveMedicines());
-            } catch (Exception e) { e.printStackTrace(); }
+                // 3. Lấy danh sách THUỐC
+                MedicineService medService = new MedicineService();
+                request.setAttribute("medicineList", medService.getActiveList());
+
+            } catch (Exception e) { 
+                e.printStackTrace(); 
+            }
         }
         request.getRequestDispatcher("/component/doctor/contents/getAppointment.jsp").forward(request, response);
     }

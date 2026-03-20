@@ -49,7 +49,7 @@ public class MainController extends HttpServlet {
     
     // --- DOCTOR (Bác sĩ) ---
     private static final String LOAD_DOCTOR_PROFILE = "LoadDoctorProfileController";
-    private static final String LOAD_GET_APPOINTMENT = "LoadGetAppointmentController";
+    private static final String LOAD_GET_APPOINTMENT = "LoadGetAppointmentController1";
     private static final String ACCEPT_APPOINTMENT = "AcceptAppointmentController";
     private static final String COMPLETE_APPOINTMENT = "CompleteAppointmentController";
 
