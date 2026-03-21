@@ -75,11 +75,26 @@ public class AdminController extends HttpServlet {
                     break;
                 }
                 case "toggleUser": {
-                    int id = Integer.parseInt(request.getParameter("id"));
-                    userService.toggleUserStatus(id);
-                    response.sendRedirect("AdminController?action=users");
-                    break;
-                }
+    try {
+        int id = Integer.parseInt(request.getParameter("id"));
+        
+       
+        userService.toggleUserStatus(id);
+        
+   
+        User updatedUser = userService.getUserById(id);
+        
+        
+        response.setContentType("text/plain; charset=UTF-8");
+        response.getWriter().write(String.valueOf(updatedUser.getIsActive()));
+        
+    } catch (Exception e) {
+        e.printStackTrace();
+        response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+        response.getWriter().write("error");
+    }
+    break;
+}
                 case "deleteUser": {
                     int id = Integer.parseInt(request.getParameter("id"));
                     userService.deleteUser(id);

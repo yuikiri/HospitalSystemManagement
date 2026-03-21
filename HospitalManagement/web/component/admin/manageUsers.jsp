@@ -333,7 +333,7 @@
                                             <button class="btn-action edit text-primary" title="Chỉnh sửa" onclick="openEdit('${u.id}','${u.userName}','${u.email}','${u.role}')">
                                                 <i class="fa fa-pen-nib"></i>
                                             </button>
-                                            <button class="btn-action lock text-warning" title="${u.isActive==1?'Khóa tài khoản':'Mở khóa'}" onclick="updateStatus(${u.id}, ${u.isActive==1?0:1})">
+                                            <button class="btn-action lock text-warning" title="${u.isActive==1?'Khóa tài khoản':'Mở khóa'}" onclick="updateStatus(${u.id}, ${u.isActive})">
                                                 <i class="fa ${u.isActive==1?'fa-lock':'fa-lock-open'}"></i>
                                             </button>
                                             <button class="btn-action delete text-danger" title="Xóa vào thùng rác" onclick="deleteUser(${u.id})">
@@ -436,7 +436,6 @@
 <script>
     // 1. Chuyển Tab (Fix lại action trash)
     function changeRole(role) {
-        // ĐÃ FIX: Đổi action=trash thành action=userTrash cho khớp với Controller
         if (role === "trash") { 
             window.location.href = "AdminController?action=userTrash"; 
             return; 
@@ -448,7 +447,6 @@
     // 2. Xóa mềm người dùng (Ném vào thùng rác)
     function deleteUser(id) {
         if (confirm("Xác nhận chuyển người dùng này vào thùng rác?")) {
-            // Thay vì dùng fetch ngầm dễ lỗi session, ta dùng window.location cho an toàn
             window.location.href = "AdminController?action=deleteUser&id=" + id;
         }
     }
@@ -460,14 +458,54 @@
         }
     }
 
-    // 4. Bật/Tắt trạng thái hoạt động (Khóa mõm)
-    function updateStatus(id, newStatus) {
-        // Lấy role và statusFilter hiện tại trên giao diện để gửi kèm cho Controller
-        let currentRole = '${activeTab != null ? activeTab : "doctor"}';
-        let currentStatusFilter = document.querySelector("[name=statusFilter]").value;
+    // 4. Bật/Tắt trạng thái hoạt động (Khóa tài khoản) - ĐÃ CẬP NHẬT AJAX/FETCH
+    function updateStatus(id, currentStatus) {
+        let actionText = currentStatus === 1 ? "Khóa tài khoản này?" : "Mở khóa tài khoản này?";
         
-        if (confirm(newStatus === 0 ? "Khóa tài khoản này?" : "Mở khóa tài khoản này?")) {
-            window.location.href = "AdminController?action=updateStatus&id=" + id + "&newStatus=" + newStatus + "&role=" + currentRole + "&statusFilter=" + currentStatusFilter;
+        if (confirm(actionText)) {
+            let row = document.getElementById("user-" + id);
+            if(!row) return; 
+            
+            fetch("AdminController?action=toggleUser&id=" + id, {
+                method: 'GET' 
+            })
+            .then(response => {
+                if (!response.ok) throw new Error('Lỗi mạng hoặc server');
+                return response.text(); 
+            })
+            .then(newStatusText => {
+                // Ép kiểu text trả về thành số (1 hoặc 0)
+                let newStatus = parseInt(newStatusText.trim());
+                
+                if (newStatus === 1 || newStatus === 0) {
+                    // Cập nhật Badge Trạng thái
+                    let statusTd = row.querySelector(".status-badge");
+                    if (newStatus === 1) {
+                        statusTd.innerHTML = '<span class="badge badge-status bg-success bg-opacity-10 text-success px-3 py-2"><i class="fa fa-circle me-1" style="font-size: 8px;"></i> Active</span>';
+                    } else {
+                        statusTd.innerHTML = '<span class="badge badge-status bg-danger bg-opacity-10 text-danger px-3 py-2"><i class="fa fa-circle-xmark me-1"></i> Banned</span>';
+                    }
+                    
+                    // Cập nhật Nút bấm ổ khóa
+                    let lockBtn = row.querySelector(".btn-action.lock");
+                    lockBtn.setAttribute('onclick', 'updateStatus(' + id + ', ' + newStatus + ')');
+                    
+                    let icon = lockBtn.querySelector('i');
+                    if (newStatus === 1) {
+                        lockBtn.title = "Khóa tài khoản";
+                        icon.className = "fa fa-lock";
+                    } else {
+                        lockBtn.title = "Mở khóa";
+                        icon.className = "fa fa-lock-open";
+                    }
+                } else {
+                    alert("Có lỗi xảy ra khi xử lý kết quả.");
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert("Lỗi kết nối. Vui lòng thử lại!");
+            });
         }
     }
 
