@@ -448,4 +448,33 @@ public class AppointmentDAO {
     }
     // ==========================================================
     // ==========================================================
+    // LẤY LỊCH SỬ KHÁM (CÁC CA ĐÃ HOÀN THÀNH) CỦA BÁC SĨ
+    public List<AppointmentDTO> getCompletedAppointmentsByDoctor(int doctorId) {
+        List<AppointmentDTO> list = new ArrayList<>();
+        String sql = "SELECT a.*, p.name AS patientName, d.name AS doctorName, " +
+                     "r.roomNumber, dept.name AS departmentName " +
+                     "FROM Appointments a " +
+                     "JOIN Patients p ON a.patientId = p.id " +
+                     "JOIN Doctors d ON a.doctorId = d.id " +
+                     "JOIN Rooms r ON a.roomId = r.id " +
+                     "JOIN Departments dept ON r.departmentId = dept.id " +
+                     "WHERE a.status = 'completed' AND a.isActive = 1 AND a.doctorId = ? " +
+                     "ORDER BY a.startTime DESC";
+        try (Connection conn = new util.DbUtils().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, doctorId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    list.add(new AppointmentDTO(
+                        rs.getInt("id"), rs.getInt("patientId"), rs.getString("patientName"),
+                        rs.getInt("doctorId"), rs.getString("doctorName"),
+                        rs.getInt("roomId"), rs.getInt("roomNumber"), rs.getString("departmentName"),
+                        rs.getTimestamp("startTime"), rs.getTimestamp("endTime"),
+                        rs.getString("status"), rs.getTimestamp("createdAt"), rs.getInt("isActive")
+                    ));
+                }
+            }
+        } catch (Exception e) { e.printStackTrace(); }
+        return list;
+    }
 }
