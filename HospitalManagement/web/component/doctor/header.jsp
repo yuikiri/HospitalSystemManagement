@@ -23,10 +23,7 @@
     
     <div class="d-flex align-items-center">
         <div class="position-relative me-4" style="cursor: pointer;">
-            <i class="fas fa-bell text-muted fs-5"></i>
-            <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle">
-                <span class="visually-hidden">New alerts</span>
-            </span>
+
         </div>
         
         <div class="bg-white p-1 pe-3 rounded-pill shadow-sm d-flex align-items-center border">
