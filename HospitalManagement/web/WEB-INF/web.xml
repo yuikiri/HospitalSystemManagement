@@ -122,6 +122,14 @@
         <servlet-name>UserScheduleController_1</servlet-name>
         <servlet-class>controller.UserScheduleController</servlet-class>
     </servlet>
+    <servlet>
+        <servlet-name>ForgotPasswordController</servlet-name>
+        <servlet-class>controller.ForgotPasswordController</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>VerifyForgotPwdController</servlet-name>
+        <servlet-class>controller.VerifyForgotPwdController</servlet-class>
+    </servlet>
     <servlet-mapping>
         <servlet-name>MainController</servlet-name>
         <url-pattern>/MainController</url-pattern>
@@ -234,6 +242,14 @@
     <servlet-mapping>
         <servlet-name>UserScheduleController_1</servlet-name>
         <url-pattern>/UserScheduleController_1</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>ForgotPasswordController</servlet-name>
+        <url-pattern>/ForgotPasswordController</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>VerifyForgotPwdController</servlet-name>
+        <url-pattern>/VerifyForgotPwdController</url-pattern>
     </servlet-mapping>
     <session-config>
         <session-timeout>30</session-timeout>

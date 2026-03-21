@@ -52,6 +52,17 @@ public class UserDAO {
     // ==============================
     // REGISTER PATIENT
     // ==============================
+    // 1. Kiểm tra Email có tồn tại không
+    // 2. Đổi mật khẩu dựa trên Email
+    public void updatePasswordByEmail(String email, String newPassword) {
+        String query = "UPDATE Users SET password = ? WHERE email = ?";
+        try (java.sql.Connection conn = new util.DbUtils().getConnection();
+             java.sql.PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setString(1, newPassword); // Nhớ mã hóa MD5/SHA nếu sếp có dùng nhé
+            ps.setString(2, email);
+            ps.executeUpdate();
+        } catch (Exception e) { e.printStackTrace(); }
+    }
 
      public boolean checkEmailExist(String email) {
 

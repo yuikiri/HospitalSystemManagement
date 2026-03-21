@@ -32,42 +32,29 @@ public class ConfirmPaymentController extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         HttpSession session = request.getSession();
 
-        // Kiểm tra bảo mật cơ bản (nếu chưa đăng nhập thì văng ra)
         if (session.getAttribute("user") == null) {
-            response.sendRedirect(request.getContextPath() + "/MainController");
+            response.getWriter().write("error_login");
             return;
         }
 
         try {
-            // 1. Lấy dữ liệu từ form JSP (Thông qua MainController đẩy sang)
+            // 1. Lấy ID Bệnh án
             int appointmentId = Integer.parseInt(request.getParameter("appointmentId"));
-            String paymentMethod = request.getParameter("paymentMethod"); // Giá trị là 'banking'
+            
+            // 2. Ép cứng phương thức thanh toán là 'banking' (khỏi cần truyền từ JSP)
+            String paymentMethod = "banking"; 
 
-            // 2. Gọi DAO để update trạng thái
+            // 3. Gọi DAO cập nhật
             PaymentDAO payDAO = new PaymentDAO();
-
-            // ⚠️ LƯU Ý: Sử dụng hàm markAsPaidByAppointmentId 
-            // (Hàm này tôi đã gửi cho sếp ở phần code PaymentDAO lúc nãy để update xuyên qua Bệnh án)
             boolean success = payDAO.markAsPaidByAppointmentId(appointmentId, paymentMethod);
 
-            if (success) {
-                session.setAttribute("successMessage", "Thanh toán thành công! Hệ thống đã ghi nhận viện phí.");
-            } else {
-                session.setAttribute("errorMessage", "Lỗi xác nhận thanh toán! Vui lòng báo cho Quầy Thu Ngân.");
-            }
+            // 4. Trả về kết quả ngầm cho Javascript
+            response.setContentType("text/plain");
+            response.getWriter().write(success ? "success" : "error");
 
         } catch (Exception e) {
             e.printStackTrace();
-            session.setAttribute("errorMessage", "Hệ thống đang bận hoặc dữ liệu lỗi. Vui lòng thử lại sau.");
+            response.getWriter().write("error");
         }
-
-        // 3. CHUẨN MỚI: ĐÁ VỀ MAIN CONTROLLER ĐỂ LOAD LẠI DASHBOARD (Tuyệt đối không bị rớt CSS)
-        response.sendRedirect(request.getContextPath() + "/MainController?action=LoadPatientDashboard");
-    }
-
-    // Đề phòng trường hợp gọi nhầm GET
-    @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        response.sendRedirect(request.getContextPath() + "/MainController?action=LoadPatientDashboard");
     }
 }

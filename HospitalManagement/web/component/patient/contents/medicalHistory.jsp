@@ -1,167 +1,149 @@
-    <%@page contentType="text/html" pageEncoding="UTF-8"%>
-    <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
-    <%@taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt"%>
+<%@page contentType="text/html" pageEncoding="UTF-8"%>
+<%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
+<%@taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt"%>
 
-    <style>
-        .history-card {
-            border-radius: 16px;
-            border: 1px solid #edf2f9;
-            transition: all 0.3s;
-            background: #fff;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.02);
-        }
-        .history-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 25px rgba(67, 97, 238, 0.1);
-            border-color: var(--primary-light);
-        }
-        .status-badge {
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-weight: 500;
-            font-size: 0.85rem;
-        }
-        .bg-pending {
-            background-color: #fff3cd;
-            color: #856404;
-        }
-        .bg-accepted {
-            background-color: #cff4fc;
-            color: #055160;
-        }
-        .bg-success-soft {
-            background-color: #d1e7dd;
-            color: #0f5132;
-        }
-        .bg-danger-soft {
-            background-color: #f8d7da;
-            color: #842029;
-        }
-        .prescription-table th {
-            background-color: #f8fafc;
-            color: var(--text-muted);
-            font-weight: 600;
-            font-size: 0.9rem;
-        }
-        .qr-container img {
-            width: 100%;
-            max-width: 200px;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-        }
-    </style>
+<style>
+    .history-card {
+        border-radius: 16px;
+        border: 1px solid #edf2f9;
+        transition: all 0.3s;
+        background: #fff;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.02);
+    }
+    .history-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 25px rgba(67, 97, 238, 0.1);
+        border-color: var(--primary-light);
+    }
+    .status-badge {
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-weight: 500;
+        font-size: 0.85rem;
+    }
+    .bg-pending { background-color: #fff3cd; color: #856404; }
+    .bg-accepted { background-color: #cff4fc; color: #055160; }
+    .bg-success-soft { background-color: #d1e7dd; color: #0f5132; }
+    .bg-danger-soft { background-color: #f8d7da; color: #842029; }
+    .prescription-table th {
+        background-color: #f8fafc;
+        color: var(--text-muted);
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+    .qr-container img {
+        width: 100%;
+        max-width: 200px;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+</style>
 
-    <div class="fade-in">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h4 class="fw-bold text-primary"><i class="fas fa-file-medical-alt me-2"></i> Quản lý Hồ sơ & Viện phí</h4>
+<div class="fade-in">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="fw-bold text-primary"><i class="fas fa-file-medical-alt me-2"></i> Quản lý Hồ sơ & Viện phí</h4>
 
-            <ul class="nav nav-pills bg-white p-1 rounded-pill shadow-sm" id="historyTabs" role="tablist">
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link active rounded-pill px-4 fw-medium" data-bs-toggle="pill" data-bs-target="#waiting">Đang chờ khám</button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link rounded-pill px-4 fw-medium" data-bs-toggle="pill" data-bs-target="#completed">Lịch sử khám bệnh</button>
-                </li>
-            </ul>
-        </div>
-
-        <div class="tab-content" id="historyTabsContent">
-            <div class="tab-pane fade show active" id="waiting" role="tabpanel">
-                <c:if test="${empty waitingList}">
-                    <div class="text-center p-5 text-muted"><i class="fas fa-calendar-times fs-1 mb-3"></i><p>Bạn chưa có lịch hẹn nào đang chờ.</p></div>
-                        </c:if>
-                        <c:forEach items="${waitingList}" var="app">
-                    <div class="history-card p-4 mb-3">
-                        <div class="row align-items-center">
-                            <div class="col-md-2 text-center border-end">
-                                <h5 class="text-primary fw-bold mb-0"><fmt:formatDate value="${app.startTime}" pattern="dd/MM/yyyy"/></h5>
-                                <small class="text-muted"><fmt:formatDate value="${app.startTime}" pattern="HH:mm"/></small>
-                            </div>
-                            <div class="col-md-7 ps-4">
-                                <h5 class="fw-bold text-dark mb-1">Khám ${app.departmentName}</h5>
-                                <p class="text-muted mb-0"><i class="fas fa-user-md me-2"></i>Bác sĩ: 
-                                    <c:choose>
-                                        <c:when test="${not empty app.doctorName}"><b>${app.doctorName}</b></c:when>
-                                        <c:otherwise><i class="text-warning">Đang chờ xếp bác sĩ...</i></c:otherwise>
-                                    </c:choose>
-                                    | Phòng: ${app.roomNumber}
-                                </p>
-                            </div>
-                            <div class="col-md-3 text-end">
-                                <c:choose>
-                                    <c:when test="${app.status == 'pending'}">
-                                        <span class="status-badge bg-pending mb-2 d-inline-block"><i class="fas fa-clock me-1"></i> Chờ xác nhận</span><br>
-
-                                        <form action="${pageContext.request.contextPath}/MainController" method="POST" class="d-inline">
-                                            <input type="hidden" name="action" value="CancelAppointment">
-                                            <input type="hidden" name="appointmentId" value="${app.appointmentId}">
-                                            <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3" onclick="return confirm('Bạn có chắc chắn muốn hủy lịch này?');"><i class="fas fa-times"></i> Hủy lịch</button>
-                                        </form>
-
-                                    </c:when>
-                                    <c:when test="${app.status == 'accepted'}">
-                                        <span class="status-badge bg-accepted mb-2 d-inline-block"><i class="fas fa-user-check me-1"></i> Đã tiếp nhận</span><br>
-                                        <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3" onclick="alert('Bác sĩ đã tiếp nhận hồ sơ. Vui lòng liên hệ Hotline bệnh viện để hủy!')"><i class="fas fa-ban"></i> Hủy lịch</button>
-                                    </c:when>
-                                </c:choose>
-                            </div>
-                        </div>
-                    </div>
-                </c:forEach>
-            </div>
-
-            <div class="tab-pane fade" id="completed" role="tabpanel">
-                <c:if test="${empty completedList}">
-                    <div class="text-center p-5 text-muted"><i class="fas fa-box-open fs-1 mb-3"></i><p>Không có lịch sử khám bệnh.</p></div>
-                        </c:if>
-                        <c:forEach items="${completedList}" var="app">
-                    <div class="history-card p-4 mb-3">
-                        <div class="row align-items-center">
-                            <div class="col-md-2 text-center border-end">
-                                <h5 class="text-primary fw-bold mb-0"><fmt:formatDate value="${app.startTime}" pattern="dd/MM/yyyy"/></h5>
-                                <small class="text-muted"><fmt:formatDate value="${app.startTime}" pattern="HH:mm"/></small>
-                            </div>
-                            <div class="col-md-6 ps-4">
-                                <h5 class="fw-bold text-dark mb-1">Khám ${app.departmentName}</h5>
-                                <p class="text-muted mb-1"><i class="fas fa-user-md me-2"></i>Bác sĩ: <b>${app.doctorName != null ? app.doctorName : 'N/A'}</b></p>
-
-                                <c:if test="${app.status == 'completed'}">
-                                    <p class="mb-0 text-danger fw-bold">Tổng tiền: <fmt:formatNumber value="${app.totalAmount}" type="number" pattern="#,##0"/> VNĐ</p>
-                                </c:if>
-                            </div>
-
-                            <div class="col-md-4 text-end">
-                                <c:choose>
-                                    <c:when test="${app.status == 'completed'}">
-                                        <span class="status-badge bg-success-soft mb-2 d-inline-block"><i class="fas fa-check-circle me-1"></i> Hoàn thành</span><br>
-
-                                        <button class="btn btn-sm btn-light text-primary rounded-pill px-3 me-1" data-bs-toggle="modal" data-bs-target="#recordDetailModal_${app.appointmentId}">
-                                            <i class="fas fa-eye"></i> Chi tiết
-                                        </button>
-
-                                        <c:if test="${app.paymentStatus == 'unpaid'}">
-                                            <button class="btn btn-sm btn-primary rounded-pill px-3 shadow-sm" data-bs-toggle="modal" data-bs-target="#qrPayModal_${app.appointmentId}">
-                                                <i class="fas fa-qrcode"></i> Thanh toán
-                                            </button>
-                                        </c:if>
-                                        <c:if test="${app.paymentStatus == 'paid'}">
-                                            <span class="btn btn-sm btn-success rounded-pill px-3 disabled shadow-sm"><i class="fas fa-check"></i> Đã thu tiền</span>
-                                        </c:if>
-                                    </c:when>
-
-                                    <c:when test="${app.status == 'cancelled'}">
-                                        <span class="status-badge bg-danger-soft mb-2 d-inline-block"><i class="fas fa-times-circle me-1"></i> Đã hủy</span>
-                                    </c:when>
-                                </c:choose>
-                            </div>
-                        </div>
-                    </div>
-                </c:forEach>
-            </div>
-        </div>
+        <ul class="nav nav-pills bg-white p-1 rounded-pill shadow-sm" id="historyTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active rounded-pill px-4 fw-medium" data-bs-toggle="pill" data-bs-target="#waiting">Đang chờ khám</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link rounded-pill px-4 fw-medium" data-bs-toggle="pill" data-bs-target="#completed">Lịch sử khám bệnh</button>
+            </li>
+        </ul>
     </div>
 
-    <c:forEach items="${completedList}" var="app">
+    <div class="tab-content" id="historyTabsContent">
+        <div class="tab-pane fade show active" id="waiting" role="tabpanel">
+            <c:if test="${empty waitingList}">
+                <div class="text-center p-5 text-muted"><i class="fas fa-calendar-times fs-1 mb-3"></i><p>Bạn chưa có lịch hẹn nào đang chờ.</p></div>
+            </c:if>
+            <c:forEach items="${waitingList}" var="app">
+                <div class="history-card p-4 mb-3">
+                    <div class="row align-items-center">
+                        <div class="col-md-2 text-center border-end">
+                            <h5 class="text-primary fw-bold mb-0"><fmt:formatDate value="${app.startTime}" pattern="dd/MM/yyyy"/></h5>
+                            <small class="text-muted"><fmt:formatDate value="${app.startTime}" pattern="HH:mm"/></small>
+                        </div>
+                        <div class="col-md-7 ps-4">
+                            <h5 class="fw-bold text-dark mb-1">Khám ${app.departmentName}</h5>
+                            <p class="text-muted mb-0"><i class="fas fa-user-md me-2"></i>Bác sĩ: 
+                                <c:choose>
+                                    <c:when test="${not empty app.doctorName}"><b>${app.doctorName}</b></c:when>
+                                    <c:otherwise><i class="text-warning">Đang chờ xếp bác sĩ...</i></c:otherwise>
+                                </c:choose>
+                                | Phòng: ${app.roomNumber}
+                            </p>
+                        </div>
+                        <div class="col-md-3 text-end">
+                            <c:choose>
+                                <c:when test="${app.status == 'pending'}">
+                                    <span class="status-badge bg-pending mb-2 d-inline-block"><i class="fas fa-clock me-1"></i> Chờ xác nhận</span><br>
+                                    <form action="${pageContext.request.contextPath}/MainController" method="POST" class="d-inline">
+                                        <input type="hidden" name="action" value="CancelAppointment">
+                                        <input type="hidden" name="appointmentId" value="${app.appointmentId}">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3" onclick="return confirm('Bạn có chắc chắn muốn hủy lịch này?');"><i class="fas fa-times"></i> Hủy lịch</button>
+                                    </form>
+                                </c:when>
+                                <c:when test="${app.status == 'accepted'}">
+                                    <span class="status-badge bg-accepted mb-2 d-inline-block"><i class="fas fa-user-check me-1"></i> Đã tiếp nhận</span><br>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3" onclick="alert('Bác sĩ đã tiếp nhận hồ sơ. Vui lòng liên hệ Hotline bệnh viện để hủy!')"><i class="fas fa-ban"></i> Hủy lịch</button>
+                                </c:when>
+                            </c:choose>
+                        </div>
+                    </div>
+                </div>
+            </c:forEach>
+        </div>
+
+        <div class="tab-pane fade" id="completed" role="tabpanel">
+            <c:if test="${empty completedList}">
+                <div class="text-center p-5 text-muted"><i class="fas fa-box-open fs-1 mb-3"></i><p>Không có lịch sử khám bệnh.</p></div>
+            </c:if>
+            <c:forEach items="${completedList}" var="app">
+                <div class="history-card p-4 mb-3">
+                    <div class="row align-items-center">
+                        <div class="col-md-2 text-center border-end">
+                            <h5 class="text-primary fw-bold mb-0"><fmt:formatDate value="${app.startTime}" pattern="dd/MM/yyyy"/></h5>
+                            <small class="text-muted"><fmt:formatDate value="${app.startTime}" pattern="HH:mm"/></small>
+                        </div>
+                        <div class="col-md-6 ps-4">
+                            <h5 class="fw-bold text-dark mb-1">Khám ${app.departmentName}</h5>
+                            <p class="text-muted mb-1"><i class="fas fa-user-md me-2"></i>Bác sĩ: <b>${app.doctorName != null ? app.doctorName : 'N/A'}</b></p>
+                            <c:if test="${app.status == 'completed'}">
+                                <p class="mb-0 text-danger fw-bold">Tổng tiền: <fmt:formatNumber value="${app.totalAmount}" type="number" pattern="#,##0"/> VNĐ</p>
+                            </c:if>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <c:choose>
+                                <c:when test="${app.status == 'completed'}">
+                                    <span class="status-badge bg-success-soft mb-2 d-inline-block"><i class="fas fa-check-circle me-1"></i> Hoàn thành</span><br>
+                                    <button class="btn btn-sm btn-light text-primary rounded-pill px-3 me-1" data-bs-toggle="modal" data-bs-target="#recordDetailModal_${app.appointmentId}">
+                                        <i class="fas fa-eye"></i> Chi tiết
+                                    </button>
+                                    
+                                    <c:if test="${app.paymentStatus == 'unpaid'}">
+                                        <button class="btn btn-sm btn-primary rounded-pill px-3 shadow-sm" data-bs-toggle="modal" data-bs-target="#qrPayModal_${app.appointmentId}">
+                                            <i class="fas fa-qrcode"></i> Thanh toán
+                                        </button>
+                                    </c:if>
+                                    <c:if test="${app.paymentStatus == 'paid'}">
+                                        <span class="btn btn-sm btn-success rounded-pill px-3 disabled shadow-sm"><i class="fas fa-check"></i> Đã thu tiền</span>
+                                    </c:if>
+                                </c:when>
+                                <c:when test="${app.status == 'cancelled'}">
+                                    <span class="status-badge bg-danger-soft mb-2 d-inline-block"><i class="fas fa-times-circle me-1"></i> Đã hủy</span>
+                                </c:when>
+                            </c:choose>
+                        </div>
+                    </div>
+                </div>
+            </c:forEach>
+        </div>
+    </div>
+</div>
+
+<c:forEach items="${completedList}" var="app">
     <c:if test="${app.status == 'completed'}">
         
         <div class="modal fade" id="recordDetailModal_${app.appointmentId}" tabindex="-1">
@@ -259,54 +241,22 @@
                             <h4 class="fw-bold text-danger mb-1"><fmt:formatNumber value="${app.totalAmount}" pattern="#,##0"/> VNĐ</h4>
                             <p class="small text-muted mb-4">Nội dung: <b>ThanhToan${app.appointmentId}</b></p>
 
-                            <button type="button" class="btn btn-primary w-100 rounded-pill fw-bold" disabled style="opacity: 0.8;">
-                                <i class="fas fa-spinner fa-spin me-2"></i> Đang chờ Ting Ting...
+                            <button type="button" class="btn btn-success w-100 rounded-pill fw-bold shadow-sm" onclick="confirmManualPayment(${app.appointmentId})">
+                                <i class="fas fa-check-circle me-2"></i> Tôi đã chuyển khoản xong
                             </button>
 
-                            <p class="mt-3 mb-0" style="font-size: 0.75rem; color: #aaa;">Hệ thống sẽ cập nhật trạng thái ngay lập tức.</p>
+                            <p class="mt-3 mb-0" style="font-size: 0.75rem; color: #aaa;">Vui lòng chuyển khoản đúng số tiền và nội dung trước khi ấn xác nhận.</p>
                         </div>
                     </div>
                 </div>
             </div>
-
-            <script>
-                // Tạo biến đếm độc lập cho từng Modal
-                let checkInterval_${app.appointmentId};
-
-                document.getElementById('qrPayModal_${app.appointmentId}').addEventListener('shown.bs.modal', function () {
-                    checkInterval_${app.appointmentId} = setInterval(function() {
-                        let checkUrl = '${pageContext.request.contextPath}/MainController?action=CheckPaymentStatus&appointmentId=${app.appointmentId}';
-                        
-                        fetch(checkUrl)
-                            .then(response => response.text())
-                            .then(status => {
-                                if (status.trim() === 'paid') {
-                                    clearInterval(checkInterval_${app.appointmentId}); 
-                                    
-                                    alert("✅ TING TING! Hệ thống đã nhận được tiền viện phí. Cảm ơn bạn!");
-                                    
-                                    bootstrap.Modal.getInstance(document.getElementById('qrPayModal_${app.appointmentId}')).hide();
-                                    
-                                    let reloadUrl = '${pageContext.request.contextPath}/MainController?action=LoadMedicalHistory';
-                                    loadContent(reloadUrl, document.getElementById('menu-history'));
-                                }
-                            })
-                            .catch(err => console.log("Waiting for payment..."));
-                    }, 3000); 
-                });
-
-                document.getElementById('qrPayModal_${app.appointmentId}').addEventListener('hidden.bs.modal', function () {
-                    if (checkInterval_${app.appointmentId}) {
-                        clearInterval(checkInterval_${app.appointmentId});
-                    }
-                });
-            </script>
         </c:if>
 
     </c:if>
 </c:forEach>
 
 <script>
+    // Hàm 1: Mở Modal QR (Từ Modal Chi tiết)
     window.openQrModal = function (currentModalId, targetModalId) {
         var currentEl = document.getElementById(currentModalId);
         var currentModal = bootstrap.Modal.getInstance(currentEl);
@@ -318,6 +268,50 @@
             var targetEl = document.getElementById(targetModalId);
             var targetModal = new bootstrap.Modal(targetEl);
             targetModal.show();
-        }, 400);
+        }, 400); 
+    }
+
+    // Hàm 2: Bấm xác nhận Thanh toán ngầm (Không bị nhảy trang)
+    window.confirmManualPayment = function (appId) {
+        if(confirm('Bạn có chắc chắn là đã chuyển khoản thành công không?')) {
+            
+            // 1. Gửi request ngầm đi (AJAX)
+            fetch('${pageContext.request.contextPath}/MainController?action=ConfirmPayment', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: 'appointmentId=' + appId
+            })
+            .then(res => res.text())
+            .then(data => {
+                if (data.trim() === 'success') {
+                    
+                    // 2. Tắt cái Modal QR hiện tại đi cho mượt
+                    var modalEl = document.getElementById('qrPayModal_' + appId);
+                    var modalObj = bootstrap.Modal.getInstance(modalEl);
+                    if(modalObj) modalObj.hide();
+                    
+                    // Xóa lớp nền đen của Modal (Tránh bị kẹt màn hình xám)
+                    document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+                    document.body.classList.remove('modal-open');
+                    document.body.style.paddingRight = '';
+
+                    // 3. Thông báo
+                    alert("✅ Xác nhận thành công! Hệ thống đã ghi nhận viện phí.");
+                    
+                    // 4. Load lại đúng cái ruột Lịch sử Khám
+                    let reloadUrl = '${pageContext.request.contextPath}/LoadMedicalHistoryController';
+                    if (typeof loadContent === 'function') {
+                        loadContent(reloadUrl, document.getElementById('menu-history'));
+                    } else {
+                        window.location.reload();
+                    }
+                } else {
+                    alert("❌ Có lỗi xảy ra, vui lòng thử lại!");
+                }
+            })
+            .catch(err => {
+                alert("Lỗi kết nối mạng!");
+            });
+        }
     }
 </script>

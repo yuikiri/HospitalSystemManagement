@@ -16,12 +16,7 @@
 
     <div class="d-flex align-items-center">
         
-        <div class="position-relative me-4" style="cursor: pointer;">
-            <i class="fas fa-bell text-muted fs-5"></i>
-            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.6rem;">
-                3
-            </span>
-        </div>
+        
 
         <div class="d-flex align-items-center">
             <img src="${not empty sessionScope.account.avatarUrl ? sessionScope.account.avatarUrl : 'https://ui-avatars.com/api/?name=Patient&background=4361ee&color=fff'}" 
